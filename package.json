@@ -52,7 +52,7 @@
     "dotenv": "^16.0.0",
     "erlpack": "discord/erlpack",
     "kurasuta": "^2.2.3",
-    "mongoose": "6.2.9",
+    "mongoose": "6.4.0",
     "petitio": "^1.4.0",
     "utf-8-validate": "^5.0.4",
     "zlib-sync": "^0.1.7"
