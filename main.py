@@ -36,7 +36,8 @@ shard_logger.setLevel(logging.WARNING)
 
 
 async def run_bot():
-    intents = disnake.Intents.default()
+    intents = disnake.Intents.none()
+    intents.guilds = True  # noqa
     # intents.members = True  # noqa
     # intents.messages = True  # noqa
     # intents.message_content = True  # noqa

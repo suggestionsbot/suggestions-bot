@@ -6,7 +6,9 @@ from suggestions.objects import Suggestion
 
 class SuggestionsMongoManager(MongoManager):
     def __init__(self, connection_url):
-        super().__init__(connection_url=connection_url, database_name="suggestions")
+        super().__init__(
+            connection_url=connection_url, database_name="suggestions-rewrite"
+        )
 
         self.suggestions: Document = Document(
             self.db, "suggestions", converter=Suggestion
