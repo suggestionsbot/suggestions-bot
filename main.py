@@ -37,7 +37,7 @@ shard_logger.setLevel(logging.WARNING)
 
 async def run_bot():
     intents = disnake.Intents.none()
-    intents.guilds = True  # noqa
+    # intents.guilds = True  # noqa
     # intents.members = True  # noqa
     # intents.messages = True  # noqa
     # intents.message_content = True  # noqa
@@ -50,6 +50,7 @@ async def run_bot():
         load_builtin_commands=True,
         test_guilds=[737166408525283348],
         chunk_guilds_at_startup=False,
+        member_cache_flags=disnake.MemberCacheFlags.none(),
     )
 
     log = logging.getLogger(__name__)
