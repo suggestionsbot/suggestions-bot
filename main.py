@@ -1,0 +1,138 @@
+import asyncio
+import contextlib
+import io
+import logging
+import os
+import sys
+import textwrap
+from traceback import format_exception
+
+import disnake
+from bot_base.paginators.disnake_paginator import DisnakePaginator
+from disnake.ext import commands
+
+from suggestions import SuggestionsBot
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)-7s | %(asctime)s | %(filename)18s:%(funcName)-21s | %(message)s",
+    datefmt="%d/%m/%Y %I:%M:%S %p",
+)
+
+disnake_logger = logging.getLogger("disnake")
+disnake_logger.setLevel(logging.INFO)
+gateway_logger = logging.getLogger("disnake.gateway")
+gateway_logger.setLevel(logging.WARNING)
+client_logger = logging.getLogger("disnake.client")
+client_logger.setLevel(logging.WARNING)
+http_logger = logging.getLogger("disnake.http")
+http_logger.setLevel(logging.WARNING)
+shard_logger = logging.getLogger("disnake.shard")
+shard_logger.setLevel(logging.WARNING)
+
+
+async def run_bot():
+    intents = disnake.Intents.default()
+    # intents.members = True  # noqa
+    # intents.messages = True  # noqa
+    # intents.message_content = True  # noqa
+
+    bot = SuggestionsBot(
+        intents=intents,
+        command_prefix="s.",
+        case_insensitive=True,
+        strip_after_prefix=True,
+        load_builtin_commands=True,
+        test_guilds=[737166408525283348],
+        chunk_guilds_at_startup=False,
+    )
+
+    log = logging.getLogger(__name__)
+
+    @bot.listen("on_ready")
+    async def on_ready():
+        log.info("Suggestions main: Ready")
+        log.info(bot.get_uptime())
+
+    @bot.slash_command()
+    @commands.is_owner()
+    async def shutdown(ctx):
+        """Gracefully shut the bot down."""
+        await ctx.send("Initiating shutdown now.")
+        await bot.graceful_shutdown()
+
+    @bot.slash_command()
+    async def stats(interaction: disnake.ApplicationCommandInteraction):
+        """Get bot stats!"""
+        package_version = disnake.__version__
+        python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
+        embed: disnake.Embed = disnake.Embed(
+            title=f"Stats for {bot.user.name}",
+            description=f"Guilds: {len(bot.guilds)}\nShards: {len(bot.shards)}\n---\n"
+            f"Running on Python {python_version} and Disnake {package_version} "
+            f"with an uptime of {bot.get_uptime()}",
+        )
+        await interaction.send(embed=embed, ephemeral=False)
+
+    def clean_code(content):
+        """Automatically removes code blocks from the code."""
+        # remove ```py\n```
+        if content.startswith("```") and content.endswith("```"):
+            return "\n".join(content.split("\n")[1:])[:-3]
+        else:
+            return content
+
+    @bot.slash_command()
+    @commands.is_owner()
+    async def eval(ctx, code):
+        """
+        Evaluates given code.
+        """
+        code = clean_code(code)
+
+        local_variables = {
+            "disnake": disnake,
+            "commands": commands,
+            "bot": bot,
+            "interaction": ctx,
+        }
+
+        stdout = io.StringIO()
+
+        try:
+            with contextlib.redirect_stdout(stdout):
+                exec(
+                    f"async def func():\n{textwrap.indent(code, '    ')}",
+                    local_variables,
+                )
+
+                obj = await local_variables["func"]()
+                result = f"{stdout.getvalue()}\n-- {obj}\n"
+
+        except Exception as e:
+            result = "".join(format_exception(e, e, e.__traceback__))  # noqa
+
+        async def format_page(code, page_number):
+            embed = disnake.Embed(title=f"Eval for {ctx.author.name}")
+            embed.description = f"```{code}```"
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            [result[i : i + 2000] for i in range(0, len(result), 2000)],
+        )
+        paginator.format_page = format_page
+        await paginator.start(interaction=ctx)
+
+    await bot.load()
+    # await bot.start(os.environ["TOKEN"])
+    await bot.start(os.environ["PROD_TOKEN"])
+
+
+asyncio.run(run_bot())
