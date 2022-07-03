@@ -23,12 +23,15 @@ class State:
     """Simplistic way to pass state in a detached manner."""
 
     def __init__(self, database: SuggestionsMongoManager):
-        self._is_closing: bool = False
+        self.is_closing: bool = False
         self.database: SuggestionsMongoManager = database
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
 
         self._background_tasks: list[asyncio.Task] = []
+
+    def add_background_task(self, task: asyncio.Task) -> None:
+        self._background_tasks.append(task)
 
     @property
     def suggestions_db(self) -> Document:
@@ -39,7 +42,7 @@ class State:
         return self._background_tasks
 
     def notify_shutdown(self):
-        self._is_closing = True
+        self.is_closing = True
 
     async def populate_sid_cache(self, guild_id: int) -> list:
         """Populates a guilds current active suggestion ids"""
@@ -93,11 +96,11 @@ class State:
 
     async def load(self):
         task_1 = asyncio.create_task(self.evict_caches())
-        self._background_tasks.append(task_1)
+        self.add_background_task(task_1)
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""
-        while not self._is_closing:
+        while not self.is_closing:
             self.autocomplete_cache.force_clean()
             log.debug("Cleaned state caches")
 
@@ -110,5 +113,5 @@ class State:
                 remaining_seconds -= 5
                 await asyncio.sleep(5)
 
-                if self._is_closing:
+                if self.is_closing:
                     return

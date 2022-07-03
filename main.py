@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import datetime
 import io
 import logging
 import os
@@ -133,8 +134,8 @@ async def run_bot():
         await paginator.start(interaction=ctx)
 
     await bot.load()
-    # await bot.start(os.environ["TOKEN"])
-    await bot.start(os.environ["PROD_TOKEN"])
+    TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
+    await bot.start(TOKEN)
 
 
 asyncio.run(run_bot())
