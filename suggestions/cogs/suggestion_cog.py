@@ -8,6 +8,7 @@ from bot_base import NonExistentEntry
 from disnake import TextInputStyle
 from disnake.ext import commands
 
+from suggestions import checks
 from suggestions.objects import Suggestion
 
 if TYPE_CHECKING:
@@ -29,16 +30,9 @@ class SuggestionsCog(commands.Cog):
 
     @commands.slash_command()
     @commands.guild_only()
+    @checks.ensure_guild_has_beta()
     async def suggest(self, interaction: disnake.ApplicationCommandInteraction):
         """Create a new suggestion."""
-        embed: disnake.Embed = disnake.Embed(
-            title="Maintenance mode",
-            description="Sadly this command is in maintenance mode and un-available.\n"
-            "Follow the announcements channel for further updates.",
-            colour=disnake.Color.from_rgb(255, 148, 148),
-        )
-        return await interaction.send(embed=embed)
-
         await interaction.response.send_modal(
             custom_id="suggestions_create_modal",
             title="Suggest something",
@@ -69,19 +63,13 @@ class SuggestionsCog(commands.Cog):
 
     @commands.slash_command()
     @commands.guild_only()
+    @checks.ensure_guild_has_beta()
     async def approve(
         self,
         interaction: disnake.ApplicationCommandInteraction,
         suggestion_id: str,
     ):
         """Approve a suggestion."""
-        embed: disnake.Embed = disnake.Embed(
-            title="Maintenance mode",
-            description="Sadly this command is in maintenance mode and un-available.\n"
-            "Follow the announcements channel for further updates.",
-            colour=disnake.Color.from_rgb(255, 148, 148),
-        )
-        return await interaction.send(embed=embed)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.mark_approved(self.state)
         await interaction.send(embed=await suggestion.as_embed(self.bot))
@@ -92,19 +80,13 @@ class SuggestionsCog(commands.Cog):
 
     @commands.slash_command()
     @commands.guild_only()
+    @checks.ensure_guild_has_beta()
     async def reject(
         self,
         interaction: disnake.ApplicationCommandInteraction,
         suggestion_id: str,
     ):
         """Reject a suggestion."""
-        embed: disnake.Embed = disnake.Embed(
-            title="Maintenance mode",
-            description="Sadly this command is in maintenance mode and un-available.\n"
-            "Follow the announcements channel for further updates.",
-            colour=disnake.Color.from_rgb(255, 148, 148),
-        )
-        return await interaction.send(embed=embed)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.mark_rejected(self.state)
         await interaction.send(embed=await suggestion.as_embed(self.bot))

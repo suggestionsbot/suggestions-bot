@@ -5,14 +5,14 @@ import datetime
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
 import disnake
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
-from suggestions import State
+from suggestions import State, Colors
+from suggestions.exceptions import BetaOnly
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
 
@@ -25,6 +25,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
+        self.colors: Colors = Colors
         self.state: State = State(self.db)
         self.stats: Stats = Stats(self.db)
         self.old_prefixed_commands: set[str] = {
@@ -103,6 +104,23 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         await self.invoke(ctx)
 
+    async def on_slash_command_error(
+        self,
+        interaction: disnake.ApplicationCommandInteraction,
+        exception: commands.CommandError,
+    ) -> None:
+        exception = getattr(exception, "original", exception)
+        if isinstance(exception, BetaOnly):
+            embed: disnake.Embed = disnake.Embed(
+                title="Beta restrictions",
+                description="Sadly this command is in maintenance mode and un-available.\n"
+                "Follow the announcements channel for further updates.",
+                colour=disnake.Color.from_rgb(255, 148, 148),
+            )
+            return await interaction.send(embed=embed, ephemeral=True)
+
+        raise exception
+
     async def load(self):
         await self.state.load()
         await self.update_bot_listings()
@@ -128,16 +146,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
-        if not self.is_prod and 1 == 2:
+        if not self.is_prod:
             log.warning("Cancelling bot listing updates as we aren't in production.")
             return
-
-        await self.wait_until_ready()
 
         state: State = self.state
         time_between_updates: datetime.timedelta = datetime.timedelta(minutes=30)
 
         async def process():
+            await self.wait_until_ready()
+
             headers = {"Authorization": f'Bearer {os.environ["SUGGESTIONS_API_KEY"]}'}
             while not state.is_closing:
                 body = {

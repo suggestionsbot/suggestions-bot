@@ -30,6 +30,7 @@ class State:
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
         self.existing_suggestion_ids: Set[str] = set()
+        self.guilds_with_beta: Set[int] = set()
 
         self._background_tasks: list[asyncio.Task] = []
 

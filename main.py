@@ -63,10 +63,16 @@ async def run_bot():
 
     @bot.slash_command()
     @commands.is_owner()
-    async def shutdown(ctx):
+    async def shutdown(interaction: disnake.ApplicationCommandInteraction):
         """Gracefully shut the bot down."""
-        await ctx.send("Initiating shutdown now.")
+        await interaction.send("Initiating shutdown now.", ephemeral=True)
         await bot.graceful_shutdown()
+
+    @bot.slash_command()
+    @commands.is_owner()
+    async def colors(interaction: disnake.ApplicationCommandInteraction):
+        """Shows the bots color palette."""
+        await bot.colors.show_colors(interaction)
 
     @bot.slash_command()
     async def stats(interaction: disnake.ApplicationCommandInteraction):

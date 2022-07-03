@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import random
-import string
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional
 
@@ -17,14 +15,14 @@ if TYPE_CHECKING:
 
 
 class SuggestionState(Enum):
-    open = 0
+    pending = 0
     approved = 1
     rejected = 2
 
     @staticmethod
     def from_str(value: str) -> SuggestionState:
         mappings = {
-            "open": SuggestionState.open,
+            "pending": SuggestionState.pending,
             "approved": SuggestionState.approved,
             "rejected": SuggestionState.rejected,
         }
@@ -170,7 +168,7 @@ class Suggestion:
         suggestion: Suggestion = Suggestion(
             guild_id=guild_id,
             suggestion=suggestion,
-            state=SuggestionState.open,
+            state=SuggestionState.pending,
             suggestion_id=suggestion_id,
             suggestion_author_id=author_id,
             created_at=datetime.datetime.now(),
