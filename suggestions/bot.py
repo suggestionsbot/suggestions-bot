@@ -113,9 +113,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         if isinstance(exception, BetaOnly):
             embed: disnake.Embed = disnake.Embed(
                 title="Beta restrictions",
-                description="Sadly this command is in maintenance mode and un-available.\n"
-                "Follow the announcements channel for further updates.",
-                colour=disnake.Color.from_rgb(255, 148, 148),
+                description="This command is restricted to beta guilds only, "
+                "please check back at a later date.",
+                colour=self.colors.beta_required,
             )
             return await interaction.send(embed=embed, ephemeral=True)
 
