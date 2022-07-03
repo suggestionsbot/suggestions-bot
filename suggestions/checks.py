@@ -36,3 +36,17 @@ def ensure_guild_has_beta():
         return True
 
     return commands.check(check)  # type: ignore
+
+
+def ensure_guild_has_suggestions_channel():
+    async def check(interaction: disnake.Interaction):
+        ...
+
+    return commands.check(check)
+
+
+def ensure_guild_has_logs_channel():
+    async def check(interaction: disnake.Interaction):
+        ...
+
+    return commands.check(check)

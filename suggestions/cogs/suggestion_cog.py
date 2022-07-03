@@ -29,8 +29,9 @@ class SuggestionsCog(commands.Cog):
         log.info(f"{self.__class__.__name__}: Ready")
 
     @commands.slash_command()
-    @commands.guild_only()
+    @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
+    @commands.guild_only()
     async def suggest(self, interaction: disnake.ApplicationCommandInteraction):
         """Create a new suggestion."""
         await interaction.response.send_modal(
@@ -62,8 +63,9 @@ class SuggestionsCog(commands.Cog):
         await modal_inter.send(embed=await suggestion.as_embed(self.bot))
 
     @commands.slash_command()
-    @commands.guild_only()
+    @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
+    @commands.guild_only()
     async def approve(
         self,
         interaction: disnake.ApplicationCommandInteraction,
@@ -79,8 +81,9 @@ class SuggestionsCog(commands.Cog):
         return await self.get_sid_for(inter, user_input)
 
     @commands.slash_command()
-    @commands.guild_only()
+    @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
+    @commands.guild_only()
     async def reject(
         self,
         interaction: disnake.ApplicationCommandInteraction,
