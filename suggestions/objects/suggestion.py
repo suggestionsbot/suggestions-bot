@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import random
 import string
 from enum import Enum
@@ -48,7 +49,13 @@ class Suggestion:
         suggestion: str,
         suggestion_id: str,
         suggestion_author_id: int,
+        created_at: datetime.datetime,
         state: Union[Literal["open", "approved", "rejected"], SuggestionState],
+        *,
+        channel_id: Optional[int] = None,
+        message_id: Optional[int] = None,
+        resolved_by: Optional[int] = None,
+        resolved_at: Optional[datetime.datetime] = None,
         **kwargs,
     ):
         """
@@ -63,18 +70,36 @@ class Suggestion:
             The id of the suggestion
         suggestion_author_id: int
             The id of the person who created the suggestion
+        created_at: datetime.datetime
+            When this suggestion was created
         state: Union[Literal["open", "approved", "rejected"], SuggestionState]
             The current state of the suggestion itself
+
+        Other Parameters
+        ----------------
+        resolved_by: Optional[int]
+            Who changed the final state of this suggestion
+        resolved_at: Optional[datetime.datetime]
+            When this suggestion was resolved
+        channel_id: Optional[int]
+            The channel this suggestion is currently in
+        message_id: Optional[int]
+            The current message ID. This could be the suggestion
+            or the log channel message.
         """
         self.guild_id: int = guild_id
         self.suggestion: str = suggestion
         self.suggestion_id: str = suggestion_id
         self.suggestion_author_id: int = suggestion_author_id
+        self.created_at: datetime.datetime = created_at
         self.state: SuggestionState = (
             SuggestionState.from_str(state)
             if not isinstance(state, SuggestionState)
             else state
         )
+
+        self.resolved_by: Optional[int] = resolved_by
+        self.resolved_at: Optional[datetime.datetime] = resolved_at
 
     @property
     def color(self) -> disnake.Color:
@@ -141,20 +166,19 @@ class Suggestion:
         Suggestion
             A valid suggestion.
         """
-        suggestion_id = "".join(
-            random.choices(string.ascii_lowercase + string.digits, k=6)
-        )
+        suggestion_id = state.get_new_suggestion_id()
         suggestion: Suggestion = Suggestion(
             guild_id=guild_id,
             suggestion=suggestion,
             state=SuggestionState.open,
             suggestion_id=suggestion_id,
             suggestion_author_id=author_id,
+            created_at=datetime.datetime.now(),
         )
-        await state.suggestions_db.insert(suggestion.as_dict())
+        await state.suggestions_db.insert(suggestion)
         return suggestion
 
-    def filter_dict(self) -> dict:
+    def as_filter(self) -> dict:
         return {"suggestion_id": self.suggestion_id}
 
     def as_dict(self) -> dict:
@@ -184,10 +208,10 @@ class Suggestion:
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.approved
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
-        await state.suggestions_db.update(self.filter_dict(), self.as_dict())
+        await state.suggestions_db.update(self, self)
 
     async def mark_rejected(self, state: State):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.rejected
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
-        await state.suggestions_db.update(self.filter_dict(), self.as_dict())
+        await state.suggestions_db.update(self, self)

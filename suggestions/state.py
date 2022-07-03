@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
+import string
 from datetime import timedelta
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING, List, Dict, Set
 
 from alaric import AQ
 from alaric.comparison import EQ
@@ -27,8 +29,23 @@ class State:
         self.database: SuggestionsMongoManager = database
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
+        self.existing_suggestion_ids: Set[str] = set()
 
         self._background_tasks: list[asyncio.Task] = []
+
+    def get_new_suggestion_id(self) -> str:
+        """Generate a new SID, ensuring uniqueness."""
+        suggestion_id = "".join(
+            random.choices(string.ascii_lowercase + string.digits, k=6)
+        )
+        while suggestion_id in self.existing_suggestion_ids:
+            suggestion_id = "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=6)
+            )
+            log.debug("Encountered an existing SID")
+
+        self.existing_suggestion_ids.add(suggestion_id)
+        return suggestion_id
 
     def add_background_task(self, task: asyncio.Task) -> None:
         self._background_tasks.append(task)
@@ -97,6 +114,15 @@ class State:
     async def load(self):
         task_1 = asyncio.create_task(self.evict_caches())
         self.add_background_task(task_1)
+
+        # Populate existing suggestion id's
+        suggestion_ids: List[Dict] = await self.suggestions_db.get_all(
+            {},
+            projections=PROJECTION(SHOW("suggestion_id")),
+            try_convert=False,
+        )
+        for entry in suggestion_ids:
+            self.existing_suggestion_ids.add(entry["suggestion_id"])
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""

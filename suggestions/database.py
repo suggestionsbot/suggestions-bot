@@ -1,7 +1,7 @@
 from alaric import Document
 from bot_base.db import MongoManager
 
-from suggestions.objects import Suggestion
+from suggestions.objects import Suggestion, GuildConfig
 
 
 class SuggestionsMongoManager(MongoManager):
@@ -13,4 +13,6 @@ class SuggestionsMongoManager(MongoManager):
         self.suggestions: Document = Document(
             self.db, "suggestions", converter=Suggestion
         )
-        self.command_usage_stats: Document = Document(self.db, "command_usage_stats")
+        self.guild_configs: Document = Document(
+            self.db, "guild_configs", converter=GuildConfig
+        )

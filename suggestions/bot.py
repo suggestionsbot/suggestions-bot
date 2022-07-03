@@ -21,11 +21,9 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        # We use this for graceful shutdowns to end background tasks
-        self._is_closing: bool = False
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
-            os.environ["PRODMONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
+            os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
         self.state: State = State(self.db)
         self.stats: Stats = Stats(self.db)
@@ -123,7 +121,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         This can take up to a minute.
         """
-        self._is_closing = True
         self.state.notify_shutdown()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")
