@@ -5,13 +5,14 @@ import datetime
 import logging
 import os
 from pathlib import Path
+from typing import Type
 
 import aiohttp
 import disnake
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
-from suggestions import State, Colors
+from suggestions import State, Colors, Emojis
 from suggestions.exceptions import BetaOnly
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
@@ -25,9 +26,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
-        self.colors: Colors = Colors
+        self.colors: Type[Colors] = Colors
         self.state: State = State(self.db)
         self.stats: Stats = Stats(self.db)
+        self.suggestion_emojis: Type[Emojis] = Emojis
         self.old_prefixed_commands: set[str] = {
             "changelog",
             "channel",

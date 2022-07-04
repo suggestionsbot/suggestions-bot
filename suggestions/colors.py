@@ -5,10 +5,11 @@ from bot_base.paginators.disnake_paginator import DisnakePaginator
 class Colors:
     """A class to keep colors in a single place."""
 
+    error = disnake.Color.from_rgb(214, 48, 49)
     beta_required = disnake.Color.from_rgb(7, 0, 77)
-    pending_suggestion = disnake.Color.from_rgb(241, 211, 2)
-    approved_suggestion = disnake.Color.from_rgb(66, 226, 184)
-    rejected_suggestion = disnake.Color.from_rgb(230, 95, 92)
+    pending_suggestion = disnake.Color.from_rgb(255, 214, 99)
+    approved_suggestion = disnake.Color.from_rgb(0, 230, 64)
+    rejected_suggestion = disnake.Color.from_rgb(207, 0, 15)
 
     @classmethod
     async def show_colors(cls, interaction):
@@ -16,6 +17,10 @@ class Colors:
         paginator: DisnakePaginator = DisnakePaginator(
             1,
             [
+                [
+                    "Error",
+                    cls.error,
+                ],
                 [
                     "Beta Required",
                     cls.beta_required,
