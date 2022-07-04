@@ -49,6 +49,8 @@ class SuggestionsCog(commands.Cog):
             ],
         )
 
+        guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
+
         modal_inter: disnake.ModalInteraction = await self.bot.wait_for(
             "modal_submit",
             check=lambda i: i.custom_id == "suggestions_create_modal"
@@ -67,7 +69,11 @@ class SuggestionsCog(commands.Cog):
         channel: WrappedChannel = await self.bot.get_or_fetch_channel(
             guild_config.suggestions_channel_id
         )
-        await channel.send(embed=await suggestion.as_embed(self.bot))
+        message = await channel.send(embed=await suggestion.as_embed(self.bot))
+        suggestion.message_id = message.id
+        suggestion.channel_id = channel.id
+        await self.state.suggestions_db.upsert(suggestion, suggestion)
+
         await modal_inter.send("Thanks for your suggestion!", ephemeral=True)
 
         try:
@@ -77,20 +83,22 @@ class SuggestionsCog(commands.Cog):
                 f"Please wait until it gets approved or rejected by a staff member.\n\n"
                 f"Your suggestion ID (sID) for reference is **{suggestion.suggestion_id}**.",
                 timestamp=self.state.now,
+                color=self.bot.colors.embed_color,
             )
             embed.set_author(
-                name=interaction.guild.name,
-                icon_url=interaction.guild.icon.url,
+                name=guild.name,
+                icon_url=guild.icon.url,
             )
             embed.set_footer(
                 text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
             )
-            await interaction.author.send()
-        except disnake.HTTPException:
+            await interaction.author.send(embed=embed)
+        except disnake.HTTPException as e:
             log.debug(
                 "Failed to DM %s regarding there suggestion",
                 interaction.author.id,
             )
+            raise e
 
     @commands.slash_command(
         dm_permission=False,

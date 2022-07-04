@@ -11,7 +11,7 @@ from disnake import Embed
 
 
 if TYPE_CHECKING:
-    from suggestions import SuggestionsBot, State
+    from suggestions import SuggestionsBot, State, Colors
 
 
 class SuggestionState(Enum):
@@ -107,13 +107,15 @@ class Suggestion:
 
     @property
     def color(self) -> disnake.Color:
+        from suggestions import Colors
+
         if self.state is SuggestionState.rejected:
-            return disnake.Color.red()
+            return Colors.rejected_suggestion
 
         elif self.state is SuggestionState.approved:
-            return disnake.Color.green()
+            return Colors.approved_suggestion
 
-        return disnake.Color.yellow()
+        return Colors.pending_suggestion
 
     @classmethod
     async def from_id(cls, suggestion_id: str, state: State) -> Suggestion:

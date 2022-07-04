@@ -6,6 +6,7 @@ class Colors:
     """A class to keep colors in a single place."""
 
     error = disnake.Color.from_rgb(214, 48, 49)
+    embed_color = disnake.Color.from_rgb(255, 214, 99)
     beta_required = disnake.Color.from_rgb(7, 0, 77)
     pending_suggestion = disnake.Color.from_rgb(255, 214, 99)
     approved_suggestion = disnake.Color.from_rgb(0, 230, 64)

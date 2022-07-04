@@ -40,11 +40,11 @@ class State:
     def get_new_suggestion_id(self) -> str:
         """Generate a new SID, ensuring uniqueness."""
         suggestion_id = "".join(
-            random.choices(string.ascii_lowercase + string.digits, k=6)
+            random.choices(string.ascii_lowercase + string.digits, k=8)
         )
         while suggestion_id in self.existing_suggestion_ids:
             suggestion_id = "".join(
-                random.choices(string.ascii_lowercase + string.digits, k=6)
+                random.choices(string.ascii_lowercase + string.digits, k=8)
             )
             log.debug("Encountered an existing SID")
 
@@ -64,7 +64,7 @@ class State:
 
     @property
     def now(self) -> datetime.datetime:
-        return datetime.datetime.utcnow()
+        return datetime.datetime.now()
 
     @property
     def background_tasks(self) -> list[asyncio.Task]:
