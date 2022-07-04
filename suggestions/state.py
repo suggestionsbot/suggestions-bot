@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import logging
 import random
 import string
@@ -62,21 +63,28 @@ class State:
         return self.database.guild_configs
 
     @property
+    def now(self) -> datetime.datetime:
+        return datetime.datetime.utcnow()
+
+    @property
     def background_tasks(self) -> list[asyncio.Task]:
         return self._background_tasks
 
     def notify_shutdown(self):
         self.is_closing = True
 
+    def refresh_guild_config(self, guild_config: GuildConfig) -> None:
+        self.guilds_configs[guild_config.guild_id] = guild_config
+
     async def populate_sid_cache(self, guild_id: int) -> list:
         """Populates a guilds current active suggestion ids"""
         self.autocomplete_cache.delete_entry(guild_id)
         data: List[Dict] = await self.database.suggestions.find_many(
             AQ(AND(EQ("guild_id", guild_id), EQ("state", "open"))),
-            projections=PROJECTION(SHOW("suggestion_id")),
+            projections=PROJECTION(SHOW("_id")),
             try_convert=False,
         )
-        data: List[str] = [d["suggestion_id"] for d in data]
+        data: List[str] = [d["_id"] for d in data]
         self.autocomplete_cache.add_entry(
             guild_id, data, ttl=self.autocomplete_cache_ttl
         )
@@ -125,11 +133,11 @@ class State:
         # Populate existing suggestion id's
         suggestion_ids: List[Dict] = await self.suggestions_db.get_all(
             {},
-            projections=PROJECTION(SHOW("suggestion_id")),
+            projections=PROJECTION(SHOW("_id")),
             try_convert=False,
         )
         for entry in suggestion_ids:
-            self.existing_suggestion_ids.add(entry["suggestion_id"])
+            self.existing_suggestion_ids.add(entry["_id"])
 
         # Populate existing guilds
         guilds: List[GuildConfig] = await self.guild_config_db.get_all()

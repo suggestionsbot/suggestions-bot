@@ -35,7 +35,7 @@ class SuggestionState(Enum):
         elif self is SuggestionState.approved:
             return "approved"
 
-        return "open"
+        return "pending"
 
 
 class Suggestion:
@@ -96,6 +96,8 @@ class Suggestion:
             else state
         )
 
+        self.channel_id: Optional[int] = channel_id
+        self.message_id: Optional[int] = message_id
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
 
@@ -175,7 +177,7 @@ class Suggestion:
             state=SuggestionState.pending,
             _id=suggestion_id,
             suggestion_author_id=author_id,
-            created_at=datetime.datetime.now(),
+            created_at=state.now,
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
@@ -185,13 +187,28 @@ class Suggestion:
         return {"_id": self.suggestion_id}
 
     def as_dict(self) -> dict:
-        return {
+        data = {
             "guild_id": self.guild_id,
             "state": self.state.as_str(),
             "suggestion": self.suggestion,
             "_id": self.suggestion_id,
             "suggestion_author_id": self.suggestion_author_id,
+            "created_at": self.created_at,
         }
+
+        if self.resolved_by:
+            data["resolved_by"] = self.resolved_by
+
+        if self.resolved_at:
+            data["resolved_at"] = self.resolved_at
+
+        if self.message_id:
+            data["message_id"] = self.message_id
+
+        if self.channel_id:
+            data["channel_id"] = self.channel_id
+
+        return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
@@ -200,7 +217,7 @@ class Suggestion:
                 description=f"**Submitter**\n{user.display_name}\n\n"
                 f"**Suggestion**\n{self.suggestion}",
                 colour=self.color,
-                timestamp=datetime.datetime.now(),
+                timestamp=bot.state.now,
             )
             .set_thumbnail(user.display_avatar)
             .set_footer(
@@ -208,14 +225,20 @@ class Suggestion:
             )
         )
 
-    async def mark_approved(self, state: State):
+    async def mark_approved_by(self, state: State, resolved_by: int):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.approved
+        self.resolved_at = state.now
+        self.resolved_by = resolved_by
+
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
 
-    async def mark_rejected(self, state: State):
+    async def mark_rejected_by(self, state: State, resolved_by: int):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.rejected
+        self.resolved_at = state.now
+        self.resolved_by = resolved_by
+
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)

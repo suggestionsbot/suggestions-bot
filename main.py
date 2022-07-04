@@ -139,6 +139,7 @@ async def run_bot():
         paginator.format_page = format_page
         await paginator.start(interaction=ctx)
 
+    # await bot.db.guild_configs.insert({"_id": 737166408525283348})
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
     await bot.start(TOKEN)

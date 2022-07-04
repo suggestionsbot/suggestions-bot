@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Dict, Optional
 
 from alaric import AQ
@@ -7,6 +8,8 @@ from alaric.comparison import EQ
 
 if TYPE_CHECKING:
     from suggestions import State
+
+log = logging.getLogger(__name__)
 
 
 class GuildConfig:
@@ -41,10 +44,14 @@ class GuildConfig:
         GuildConfig
             The valid guilds config
         """
-        guild_config: Optional[GuildConfig] = await state.suggestions_db.find(
+        if guild_id in state.guilds_configs:
+            return state.guilds_configs[guild_id]
+
+        guild_config: Optional[GuildConfig] = await state.guild_config_db.find(
             AQ(EQ("_id", guild_id))
         )
         if not guild_config:
+            log.info("Created new GuildConfig for %s", guild_id)
             return GuildConfig(_id=guild_id)
 
         return guild_config

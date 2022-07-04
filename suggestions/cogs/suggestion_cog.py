@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 
 import disnake
 from bot_base import NonExistentEntry
+from bot_base.wraps import WrappedChannel
 from disnake import TextInputStyle
 from disnake.ext import commands
 
 from suggestions import checks
-from suggestions.objects import Suggestion
+from suggestions.objects import Suggestion, GuildConfig
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -32,7 +33,7 @@ class SuggestionsCog(commands.Cog):
     @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
     @commands.guild_only()
-    async def suggest(self, interaction: disnake.ApplicationCommandInteraction):
+    async def suggest(self, interaction: disnake.GuildCommandInteraction):
         """Create a new suggestion."""
         await interaction.response.send_modal(
             custom_id="suggestions_create_modal",
@@ -60,7 +61,36 @@ class SuggestionsCog(commands.Cog):
             state=self.state,
             author_id=interaction.author.id,
         )
-        await modal_inter.send(embed=await suggestion.as_embed(self.bot))
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+            guild_config.suggestions_channel_id
+        )
+        await channel.send(embed=await suggestion.as_embed(self.bot))
+        await modal_inter.send("Thanks for your suggestion!", ephemeral=True)
+
+        try:
+            embed: disnake.Embed = disnake.Embed(
+                description=f"Hey, {interaction.author.mention}. Your suggestion has been sent "
+                f"to {channel.mention} to be voted on!\n\n"
+                f"Please wait until it gets approved or rejected by a staff member.\n\n"
+                f"Your suggestion ID (sID) for reference is **{suggestion.suggestion_id}**.",
+                timestamp=self.state.now,
+            )
+            embed.set_author(
+                name=interaction.guild.name,
+                icon_url=interaction.guild.icon.url,
+            )
+            embed.set_footer(
+                text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
+            )
+            await interaction.author.send()
+        except disnake.HTTPException:
+            log.debug(
+                "Failed to DM %s regarding there suggestion",
+                interaction.author.id,
+            )
 
     @commands.slash_command(
         dm_permission=False,
@@ -71,12 +101,12 @@ class SuggestionsCog(commands.Cog):
     @commands.guild_only()
     async def approve(
         self,
-        interaction: disnake.ApplicationCommandInteraction,
+        interaction: disnake.GuildCommandInteraction,
         suggestion_id: str,
     ):
         """Approve a suggestion."""
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
-        await suggestion.mark_approved(self.state)
+        await suggestion.mark_approved_by(self.state, interaction.author.id)
         await interaction.send(embed=await suggestion.as_embed(self.bot))
 
     @approve.autocomplete("suggestion_id")
@@ -92,12 +122,12 @@ class SuggestionsCog(commands.Cog):
     @commands.guild_only()
     async def reject(
         self,
-        interaction: disnake.ApplicationCommandInteraction,
+        interaction: disnake.GuildCommandInteraction,
         suggestion_id: str,
     ):
         """Reject a suggestion."""
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
-        await suggestion.mark_rejected(self.state)
+        await suggestion.mark_rejected_by(self.state, interaction.author.id)
         await interaction.send(embed=await suggestion.as_embed(self.bot))
 
     @reject.autocomplete("suggestion_id")
@@ -122,6 +152,7 @@ class SuggestionsCog(commands.Cog):
 
         if len(possible_choices) > 25:
             return []
+
         return possible_choices
 
 
