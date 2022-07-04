@@ -145,6 +145,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             )
             return await interaction.send(embed=embed, ephemeral=True)
 
+        elif isinstance(exception, commands.MissingPermissions):
+            perms = ",".join(i for i in exception.missing_permissions)
+            embed: disnake.Embed = disnake.Embed(
+                title="Missing Permissions",
+                color=self.colors.error,
+                description=f"I need the following permissions in order to run this command.\n{perms}\n"
+                f"Please contact an administrator and ask them to provide them for me.",
+            )
+            return await interaction.send(embed=embed, ephemeral=True)
+
         raise exception
 
     async def load(self):

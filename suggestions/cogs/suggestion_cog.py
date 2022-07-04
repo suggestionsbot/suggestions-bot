@@ -69,10 +69,36 @@ class SuggestionsCog(commands.Cog):
         channel: WrappedChannel = await self.bot.get_or_fetch_channel(
             guild_config.suggestions_channel_id
         )
-        message = await channel.send(embed=await suggestion.as_embed(self.bot))
+        message: disnake.Message = await channel.send(
+            embed=await suggestion.as_embed(self.bot)
+        )
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+
+        try:
+            await message.add_reaction(self.bot.suggestion_emojis.default_up_vote())
+            await message.add_reaction(self.bot.suggestion_emojis.default_down_vote())
+        except disnake.Forbidden:
+            log.info(
+                "Guild(id=%s, name=%s) attempted to suggest however I lack permissions to add emojis.",
+                guild.id,
+                guild.name,
+            )
+            await message.delete()
+            await self.suggestions_db.delete(suggestion.as_filter())
+            raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
+        except disnake.HTTPException:
+            log.info(
+                "Guild(id=%s, name=%s) attempted to suggest however I lack permissions to add external emojis.",
+                guild.id,
+                guild.name,
+            )
+            await message.delete()
+            await self.suggestions_db.delete(suggestion.as_filter())
+            raise commands.MissingPermissions(
+                missing_permissions=["Use External Emojis"]
+            )
 
         await modal_inter.send("Thanks for your suggestion!", ephemeral=True)
 
@@ -106,6 +132,10 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
+    @commands.bot_has_guild_permissions(
+        manage_messages=True,
+        use_external_emojis=True,
+    )
     @commands.guild_only()
     async def approve(
         self,
@@ -113,6 +143,7 @@ class SuggestionsCog(commands.Cog):
         suggestion_id: str,
     ):
         """Approve a suggestion."""
+        # TODO Move this to logs channel
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.mark_approved_by(self.state, interaction.author.id)
         await interaction.send(embed=await suggestion.as_embed(self.bot))
@@ -127,6 +158,10 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
+    @commands.bot_has_guild_permissions(
+        manage_messages=True,
+        use_external_emojis=True,
+    )
     @commands.guild_only()
     async def reject(
         self,
@@ -134,6 +169,7 @@ class SuggestionsCog(commands.Cog):
         suggestion_id: str,
     ):
         """Reject a suggestion."""
+        # TODO Move this to logs channel
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.mark_rejected_by(self.state, interaction.author.id)
         await interaction.send(embed=await suggestion.as_embed(self.bot))

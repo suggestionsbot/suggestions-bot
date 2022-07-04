@@ -6,10 +6,10 @@ class Emojis:
     tick = "<:nerdSuccess:605265580416565269>"
     cross = "<:nerdError:605265598343020545>"
 
-    @property
-    def default_up_vote(self):
-        return self.tick
+    @classmethod
+    def default_up_vote(cls):
+        return cls.tick
 
-    @property
-    def default_down_vote(self):
-        return self.cross
+    @classmethod
+    def default_down_vote(cls):
+        return cls.cross
