@@ -14,6 +14,8 @@ from alaric.projections import PROJECTION, SHOW
 from bot_base import NonExistentEntry
 from bot_base.caches import TimedCache
 
+from suggestions.objects import GuildConfig
+
 if TYPE_CHECKING:
     from alaric import Document
     from suggestions.database import SuggestionsMongoManager
@@ -30,7 +32,7 @@ class State:
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
         self.existing_suggestion_ids: Set[str] = set()
-        self.guilds_with_beta: Set[int] = set()
+        self.guilds_configs: Dict[int, GuildConfig] = {}
 
         self._background_tasks: list[asyncio.Task] = []
 
@@ -54,6 +56,10 @@ class State:
     @property
     def suggestions_db(self) -> Document:
         return self.database.suggestions
+
+    @property
+    def guild_config_db(self) -> Document:
+        return self.database.guild_configs
 
     @property
     def background_tasks(self) -> list[asyncio.Task]:
@@ -124,6 +130,11 @@ class State:
         )
         for entry in suggestion_ids:
             self.existing_suggestion_ids.add(entry["suggestion_id"])
+
+        # Populate existing guilds
+        guilds: List[GuildConfig] = await self.guild_config_db.get_all()
+        for guild in guilds:
+            self.guilds_configs[guild.guild_id] = guild
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""

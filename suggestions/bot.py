@@ -13,7 +13,11 @@ from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
 from suggestions import State, Colors, Emojis
-from suggestions.exceptions import BetaOnly
+from suggestions.exceptions import (
+    BetaOnly,
+    MissingSuggestionsChannel,
+    MissingLogsChannel,
+)
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
 
@@ -118,6 +122,26 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 description="This command is restricted to beta guilds only, "
                 "please check back at a later date.",
                 colour=self.colors.beta_required,
+            )
+            return await interaction.send(embed=embed, ephemeral=True)
+
+        elif isinstance(exception, MissingSuggestionsChannel):
+            embed: disnake.Embed = disnake.Embed(
+                title="Missing Suggestions Channel",
+                description="This command requires a suggestion channel to use.\n"
+                "Please contact an administrator and ask them to set one up "
+                "using the following command.\n`/config channel`",
+                color=self.colors.error,
+            )
+            return await interaction.send(embed=embed, ephemeral=True)
+
+        elif isinstance(exception, MissingLogsChannel):
+            embed: disnake.Embed = disnake.Embed(
+                title="Missing Logs Channel",
+                description="This command requires a log channel to use.\n"
+                "Please contact an administrator and ask them to set one up "
+                "using the following command.\n`/config logs`",
+                color=self.colors.error,
             )
             return await interaction.send(embed=embed, ephemeral=True)
 

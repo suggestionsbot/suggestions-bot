@@ -28,7 +28,7 @@ class SuggestionsCog(commands.Cog):
     async def on_ready(self):
         log.info(f"{self.__class__.__name__}: Ready")
 
-    @commands.slash_command()
+    @commands.slash_command(dm_permission=False)
     @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
     @commands.guild_only()
@@ -62,7 +62,10 @@ class SuggestionsCog(commands.Cog):
         )
         await modal_inter.send(embed=await suggestion.as_embed(self.bot))
 
-    @commands.slash_command()
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(manage_guild=True),
+    )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
     @commands.guild_only()
@@ -80,7 +83,10 @@ class SuggestionsCog(commands.Cog):
     async def approve_suggestion_id_autocomplete(self, inter, user_input):
         return await self.get_sid_for(inter, user_input)
 
-    @commands.slash_command()
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(manage_guild=True),
+    )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
     @commands.guild_only()

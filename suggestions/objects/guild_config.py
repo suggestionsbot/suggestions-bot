@@ -12,14 +12,18 @@ if TYPE_CHECKING:
 class GuildConfig:
     def __init__(
         self,
-        guild_id: int,
+        _id: int,
         log_channel_id: Optional[int] = None,
         suggestions_channel_id: Optional[int] = None,
         **kwargs,
     ):
-        self.guild_id: int = guild_id
+        self._id: int = _id
         self.log_channel_id: Optional[int] = log_channel_id
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
+
+    @property
+    def guild_id(self) -> int:
+        return self._id
 
     @classmethod
     async def from_id(cls, guild_id: int, state: State) -> GuildConfig:
@@ -38,19 +42,19 @@ class GuildConfig:
             The valid guilds config
         """
         guild_config: Optional[GuildConfig] = await state.suggestions_db.find(
-            AQ(EQ("guild_id", guild_id))
+            AQ(EQ("_id", guild_id))
         )
         if not guild_config:
-            return GuildConfig(guild_id=guild_id)
+            return GuildConfig(_id=guild_id)
 
         return guild_config
 
     def as_dict(self) -> Dict:
         return {
-            "guild_id": self.guild_id,
+            "_id": self.guild_id,
             "log_channel_id": self.log_channel_id,
             "suggestions_channel_id": self.suggestions_channel_id,
         }
 
     def as_filter(self) -> Dict:
-        return {"guild_id": self.guild_id}
+        return {"_id": self.guild_id}

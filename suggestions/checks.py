@@ -7,30 +7,38 @@ from alaric import AQ
 from alaric.comparison import EQ
 from disnake.ext import commands
 
-from suggestions.exceptions import BetaOnly
+from suggestions.exceptions import (
+    BetaOnly,
+    MissingSuggestionsChannel,
+    MissingLogsChannel,
+)
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
     from suggestions.objects import GuildConfig
 
 
+async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[GuildConfig]:
+    guild_id: int = interaction.guild_id
+    suggestions: SuggestionsBot = interaction.client  # type: ignore
+    if guild_id not in suggestions.state.guilds_configs:
+        guild_exists: Optional[GuildConfig] = await suggestions.db.guild_configs.find(
+            AQ(EQ("guild_id", interaction.guild_id))
+        )
+        if bool(guild_exists):
+            suggestions.state.guilds_configs[guild_id] = guild_exists
+
+    if guild_id not in suggestions.state.guilds_configs:
+        return None
+
+    return suggestions.state.guilds_configs[guild_id]
+
+
 def ensure_guild_has_beta():
     async def check(interaction: disnake.Interaction):
-        if not interaction.guild_id:
-            raise BetaOnly
+        guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
 
-        guild_id: int = interaction.guild_id
-        suggestions: SuggestionsBot = interaction.client  # type: ignore
-        if guild_id not in suggestions.state.guilds_with_beta:
-            guild_exists: Optional[
-                GuildConfig
-            ] = await suggestions.db.guild_configs.find(
-                AQ(EQ("guild_id", interaction.guild_id))
-            )
-            if bool(guild_exists):
-                suggestions.state.guilds_with_beta.add(guild_id)
-
-        if guild_id not in suggestions.state.guilds_with_beta:
+        if not bool(guild_config):
             raise BetaOnly(interaction.guild_id)
 
         return True
@@ -40,13 +48,29 @@ def ensure_guild_has_beta():
 
 def ensure_guild_has_suggestions_channel():
     async def check(interaction: disnake.Interaction):
-        ...
+        guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
 
-    return commands.check(check)
+        if not bool(guild_config):
+            raise MissingSuggestionsChannel
+
+        if not guild_config.suggestions_channel_id:
+            raise MissingSuggestionsChannel
+
+        return True
+
+    return commands.check(check)  # type: ignore
 
 
 def ensure_guild_has_logs_channel():
     async def check(interaction: disnake.Interaction):
-        ...
+        guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
 
-    return commands.check(check)
+        if not bool(guild_config):
+            raise MissingLogsChannel
+
+        if not guild_config.log_channel_id:
+            raise MissingLogsChannel
+
+        return True
+
+    return commands.check(check)  # type: ignore

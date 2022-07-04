@@ -43,9 +43,9 @@ class Suggestion:
 
     def __init__(
         self,
+        _id: str,
         guild_id: int,
         suggestion: str,
-        suggestion_id: str,
         suggestion_author_id: int,
         created_at: datetime.datetime,
         state: Union[Literal["open", "approved", "rejected"], SuggestionState],
@@ -64,7 +64,7 @@ class Suggestion:
             The guild this suggestion is in
         suggestion: str
             The suggestion content itself
-        suggestion_id: str
+        _id: str
             The id of the suggestion
         suggestion_author_id: int
             The id of the person who created the suggestion
@@ -85,9 +85,9 @@ class Suggestion:
             The current message ID. This could be the suggestion
             or the log channel message.
         """
+        self._id: str = _id
         self.guild_id: int = guild_id
         self.suggestion: str = suggestion
-        self.suggestion_id: str = suggestion_id
         self.suggestion_author_id: int = suggestion_author_id
         self.created_at: datetime.datetime = created_at
         self.state: SuggestionState = (
@@ -98,6 +98,10 @@ class Suggestion:
 
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
+
+    @property
+    def suggestion_id(self) -> str:
+        return self._id
 
     @property
     def color(self) -> disnake.Color:
@@ -131,7 +135,7 @@ class Suggestion:
             No suggestion found with that id
         """
         suggestion: Optional[Suggestion] = await state.suggestions_db.find(
-            AQ(EQ("suggestion_id", suggestion_id))
+            AQ(EQ("_id", suggestion_id))
         )
         if not suggestion:
             raise ValueError(f"No suggestion found with the id {suggestion_id}")
@@ -169,7 +173,7 @@ class Suggestion:
             guild_id=guild_id,
             suggestion=suggestion,
             state=SuggestionState.pending,
-            suggestion_id=suggestion_id,
+            _id=suggestion_id,
             suggestion_author_id=author_id,
             created_at=datetime.datetime.now(),
         )
@@ -177,14 +181,14 @@ class Suggestion:
         return suggestion
 
     def as_filter(self) -> dict:
-        return {"suggestion_id": self.suggestion_id}
+        return {"_id": self.suggestion_id}
 
     def as_dict(self) -> dict:
         return {
             "guild_id": self.guild_id,
             "state": self.state.as_str(),
             "suggestion": self.suggestion,
-            "suggestion_id": self.suggestion_id,
+            "_id": self.suggestion_id,
             "suggestion_author_id": self.suggestion_author_id,
         }
 
