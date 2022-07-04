@@ -178,6 +178,7 @@ class Suggestion:
             created_at=datetime.datetime.now(),
         )
         await state.suggestions_db.insert(suggestion)
+        state.add_sid_to_cache(guild_id, suggestion_id)
         return suggestion
 
     def as_filter(self) -> dict:
@@ -199,10 +200,11 @@ class Suggestion:
                 description=f"**Submitter**\n{user.display_name}\n\n"
                 f"**Suggestion**\n{self.suggestion}",
                 colour=self.color,
+                timestamp=datetime.datetime.now(),
             )
             .set_thumbnail(user.display_avatar)
             .set_footer(
-                text=f"Author ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
+                text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
             )
         )
 
