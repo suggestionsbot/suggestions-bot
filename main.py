@@ -61,14 +61,14 @@ async def run_bot():
         log.info("Suggestions main: Ready")
         log.info(bot.get_uptime())
 
-    @bot.slash_command()
+    @bot.slash_command(guild_ids=[737166408525283348])
     @commands.is_owner()
     async def shutdown(interaction: disnake.ApplicationCommandInteraction):
         """Gracefully shut the bot down."""
         await interaction.send("Initiating shutdown now.", ephemeral=True)
         await bot.graceful_shutdown()
 
-    @bot.slash_command()
+    @bot.slash_command(guild_ids=[737166408525283348])
     @commands.is_owner()
     async def colors(interaction: disnake.ApplicationCommandInteraction):
         """Shows the bots color palette."""
@@ -95,7 +95,7 @@ async def run_bot():
         else:
             return content
 
-    @bot.slash_command()
+    @bot.slash_command(guild_ids=[737166408525283348])
     @commands.is_owner()
     async def eval(ctx, code):
         """
