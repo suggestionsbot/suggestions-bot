@@ -80,22 +80,23 @@ class SuggestionsCog(commands.Cog):
             await message.add_reaction(self.bot.suggestion_emojis.default_up_vote())
             await message.add_reaction(self.bot.suggestion_emojis.default_down_vote())
         except disnake.Forbidden:
-            log.info(
-                "Guild(id=%s, name=%s) attempted to suggest however I lack permissions to add emojis.",
-                guild.id,
-                guild.name,
-            )
-            await message.delete()
+
             await self.suggestions_db.delete(suggestion.as_filter())
+            try:
+                await message.delete()
+            except disnake.Forbidden:
+                raise commands.MissingPermissions(
+                    missing_permissions=["Add Reactions", "Manage Messages"]
+                )
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
         except disnake.HTTPException:
-            log.info(
-                "Guild(id=%s, name=%s) attempted to suggest however I lack permissions to add external emojis.",
-                guild.id,
-                guild.name,
-            )
-            await message.delete()
             await self.suggestions_db.delete(suggestion.as_filter())
+            try:
+                await message.delete()
+            except disnake.Forbidden:
+                raise commands.MissingPermissions(
+                    missing_permissions=["Use External Emojis", "Manage Messages"]
+                )
             raise commands.MissingPermissions(
                 missing_permissions=["Use External Emojis"]
             )
