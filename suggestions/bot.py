@@ -252,7 +252,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif isinstance(exception, disnake.HTTPException):
             if exception.code == 40060:
                 log.debug(
-                    "Interaction has already been acknowledged, ignoring HTTPException"
+                    "disnake.HTTPException: Interaction has already been acknowledged"
                 )
                 return
 
