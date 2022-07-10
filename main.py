@@ -53,7 +53,7 @@ async def run_bot():
         case_insensitive=True,
         strip_after_prefix=True,
         load_builtin_commands=True,
-        test_guilds=[737166408525283348],
+        # test_guilds=[737166408525283348],
         chunk_guilds_at_startup=False,
         member_cache_flags=disnake.MemberCacheFlags.none(),
     )
