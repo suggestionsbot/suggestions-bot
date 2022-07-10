@@ -9,6 +9,7 @@ import textwrap
 from traceback import format_exception
 from typing import List
 
+import cooldowns
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
@@ -19,6 +20,8 @@ from disnake.ext import commands
 from suggestions import SuggestionsBot
 
 from dotenv import load_dotenv
+
+from suggestions.cooldown_bucket import InteractionBucket
 
 load_dotenv()
 
@@ -32,12 +35,12 @@ disnake_logger = logging.getLogger("disnake")
 disnake_logger.setLevel(logging.DEBUG)
 gateway_logger = logging.getLogger("disnake.gateway")
 gateway_logger.setLevel(logging.INFO)
-# client_logger = logging.getLogger("disnake.client")
-# client_logger.setLevel(logging.WARNING)
-# http_logger = logging.getLogger("disnake.http")
-# http_logger.setLevel(logging.WARNING)
-# shard_logger = logging.getLogger("disnake.shard")
-# shard_logger.setLevel(logging.WARNING)
+client_logger = logging.getLogger("disnake.client")
+client_logger.setLevel(logging.INFO)
+http_logger = logging.getLogger("disnake.http")
+http_logger.setLevel(logging.INFO)
+shard_logger = logging.getLogger("disnake.shard")
+shard_logger.setLevel(logging.INFO)
 
 suggestions_logger = logging.getLogger("suggestions")
 suggestions_logger.setLevel(logging.DEBUG)
@@ -91,6 +94,7 @@ async def run_bot():
         await bot.colors.show_colors(interaction)
 
     @bot.slash_command()
+    @cooldowns.cooldown(1, 5, bucket=InteractionBucket.author)
     async def stats(interaction: disnake.ApplicationCommandInteraction):
         """Get bot stats!"""
         package_version = disnake.__version__

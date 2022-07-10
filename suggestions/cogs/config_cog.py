@@ -3,10 +3,12 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+import cooldowns
 import disnake
 from disnake.ext import commands
 
 from suggestions import checks
+from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.objects import GuildConfig
 
@@ -29,6 +31,7 @@ class ConfigCog(commands.Cog):
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @cooldowns.cooldown(1, 10, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_beta()
     async def config(self, interaction: disnake.GuildCommandInteraction):
         pass

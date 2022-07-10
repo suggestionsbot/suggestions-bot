@@ -9,6 +9,7 @@ from typing import Type, Optional
 
 import aiohttp
 import disnake
+from cooldowns import CallableOnCooldown
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
@@ -234,6 +235,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "The provided guild config choice doesn't exist.",
                     error_code=ErrorCode.INVALID_GUILD_CONFIG_CHOICE,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, CallableOnCooldown):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command on Cooldown",
+                    f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
+                    error_code=ErrorCode.COMMAND_ON_COOLDOWN,
                 ),
                 ephemeral=True,
             )

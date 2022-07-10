@@ -3,12 +3,14 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional
 
+import cooldowns
 import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
 from disnake.ext import commands
 
 from suggestions import checks
+from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong
 from suggestions.objects import Suggestion, GuildConfig
 
@@ -30,6 +32,7 @@ class SuggestionsCog(commands.Cog):
         log.info(f"{self.__class__.__name__}: Ready")
 
     @commands.slash_command(dm_permission=False)
+    @cooldowns.cooldown(1, 10, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
     async def suggest(
@@ -126,6 +129,7 @@ class SuggestionsCog(commands.Cog):
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @cooldowns.cooldown(1, 10, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
     async def approve(
@@ -169,6 +173,7 @@ class SuggestionsCog(commands.Cog):
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @cooldowns.cooldown(1, 10, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
     async def reject(

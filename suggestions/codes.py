@@ -12,6 +12,7 @@ class ErrorCode(IntEnum):
     OWNER_ONLY = 6
     SUGGESTION_CONTENT_TOO_LONG = 7
     INVALID_GUILD_CONFIG_CHOICE = 8
+    COMMAND_ON_COOLDOWN = 9
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
