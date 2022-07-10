@@ -11,7 +11,13 @@ class InteractionBucket(Enum):
 
     def process(self, *args, **kwargs):
         # Handle cogs
-        inter: Interaction = args[0] if isinstance(args[0], Interaction) else args[1]
+        try:
+            inter: Interaction = (
+                args[0] if isinstance(args[0], Interaction) else args[1]
+            )
+        except IndexError:
+            inter: Interaction = kwargs.get("interaction")
+
         if self is InteractionBucket.author:
             return inter.author.id
 
