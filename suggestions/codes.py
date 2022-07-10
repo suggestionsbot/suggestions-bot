@@ -11,6 +11,7 @@ class ErrorCode(IntEnum):
     SUGGESTION_NOT_FOUND = 5
     OWNER_ONLY = 6
     SUGGESTION_CONTENT_TOO_LONG = 7
+    INVALID_GUILD_CONFIG_CHOICE = 8
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

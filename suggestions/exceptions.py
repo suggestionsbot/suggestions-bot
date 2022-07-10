@@ -29,3 +29,7 @@ class SuggestionNotFound(disnake.DiscordException):
 
 class SuggestionTooLong(disnake.DiscordException):
     """The suggestion content was too long."""
+
+
+class InvalidGuildConfigOption(disnake.DiscordException):
+    """The provided guild config choice doesn't exist."""

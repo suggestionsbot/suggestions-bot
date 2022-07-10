@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import disnake
-from alaric import AQ
-from alaric.comparison import EQ
 from disnake.ext import commands
 
+from suggestions import checks
+from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.objects import GuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
 
 log = logging.getLogger(__name__)
-# TODO Ways to see current guild settings
 
 
 class ConfigCog(commands.Cog):
@@ -30,6 +29,7 @@ class ConfigCog(commands.Cog):
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @checks.ensure_guild_has_beta()
     @commands.guild_only()
     async def config(self, interaction: disnake.GuildCommandInteraction):
         pass
@@ -71,6 +71,75 @@ class ConfigCog(commands.Cog):
             f"I have set this guilds log channel to {channel.mention}",
             ephemeral=True,
         )
+
+    @config.sub_command()
+    @commands.guild_only()
+    async def get(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        config=commands.Param(
+            description="The optional configuration to view",
+            choices=["Log channel", "Suggestions channel"],
+            default=None,
+        ),
+    ):
+        """Show a current configuration"""
+        if not config:
+            return await self.send_full_config(interaction)
+
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild = await self.bot.fetch_guild(interaction.guild_id)
+        embed: disnake.Embed = disnake.Embed(
+            description=f"Configuration for {guild.name}\n\n",
+            color=self.bot.colors.embed_color,
+            timestamp=self.bot.state.now,
+        ).set_author(name=guild.name, icon_url=guild.icon.url)
+
+        if config == "Log channel":
+            log_channel = (
+                f"Log channel: <#{guild_config.log_channel_id}>"
+                if guild_config.log_channel_id
+                else "Not set"
+            )
+            embed.description += log_channel
+
+        elif config == "Suggestions channel":
+            suggestions_channel = (
+                f"Suggestion channel: <#{guild_config.suggestions_channel_id}>"
+                if guild_config.suggestions_channel_id
+                else "Not set"
+            )
+            embed.description += suggestions_channel
+
+        else:
+            raise InvalidGuildConfigOption
+
+        await interaction.send(embed=embed, ephemeral=True)
+
+    async def send_full_config(self, interaction: disnake.GuildCommandInteraction):
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        log_channel = (
+            f"<#{guild_config.log_channel_id}>"
+            if guild_config.log_channel_id
+            else "Not set"
+        )
+        suggestions_channel = (
+            f"<#{guild_config.suggestions_channel_id}>"
+            if guild_config.suggestions_channel_id
+            else "Not set"
+        )
+        guild = await self.bot.fetch_guild(interaction.guild_id)
+        embed: disnake.Embed = disnake.Embed(
+            description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
+            f"Log channel: {log_channel}",
+            color=self.bot.colors.embed_color,
+            timestamp=self.bot.state.now,
+        ).set_author(name=guild.name, icon_url=guild.icon.url)
+        await interaction.send(embed=embed, ephemeral=True)
 
 
 def setup(bot):

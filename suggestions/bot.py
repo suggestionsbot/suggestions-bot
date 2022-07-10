@@ -20,6 +20,7 @@ from suggestions.exceptions import (
     ErrorHandled,
     SuggestionNotFound,
     SuggestionTooLong,
+    InvalidGuildConfigOption,
 )
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
@@ -220,6 +221,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "Your suggestion content was too long, please limit it to 1000 characters or less.",
                     error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, InvalidGuildConfigOption):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "The provided guild config choice doesn't exist.",
+                    error_code=ErrorCode.INVALID_GUILD_CONFIG_CHOICE,
                 ),
                 ephemeral=True,
             )
