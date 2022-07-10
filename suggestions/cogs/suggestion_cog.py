@@ -104,10 +104,13 @@ class SuggestionsCog(commands.Cog):
                 timestamp=self.state.now,
                 color=self.bot.colors.embed_color,
             )
-            embed.set_author(
-                name=guild.name,
-                icon_url=guild.icon.url,
-            )
+            try:
+                embed.set_author(
+                    name=guild.name,
+                    icon_url=guild.icon.url,
+                )
+            except AttributeError:
+                pass
             embed.set_footer(
                 text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
             )
@@ -246,6 +249,12 @@ class SuggestionsCog(commands.Cog):
             values: list[str] = await self.state.populate_sid_cache(
                 interaction.guild_id
             )
+        else:
+            if not values:
+                log.debug("Values was found, but empty thus populating")
+                values: list[str] = await self.state.populate_sid_cache(
+                    interaction.guild_id
+                )
 
         possible_choices = [v for v in values if user_input.lower() in v.lower()]
 
