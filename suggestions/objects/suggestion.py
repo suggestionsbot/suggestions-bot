@@ -352,5 +352,5 @@ class Suggestion:
         )
         try:
             await user.send(embed=embed)
-        except disnake.Forbidden:
+        except disnake.HTTPException:
             log.debug("Failed to dm %s to tell them about there suggestion", user.id)

@@ -241,7 +241,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     async def load(self):
         await self.state.load()
         await self.update_bot_listings()
-        await self.suggestion_emojis.populate_emojis()
 
         count = 0
         extensions = Path("./suggestions/cogs").rglob("*.py")

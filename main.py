@@ -67,6 +67,7 @@ async def run_bot():
     async def on_ready():
         log.info("Suggestions main: Ready")
         log.info(bot.get_uptime())
+        await bot.suggestion_emojis.populate_emojis()
 
     @bot.slash_command(
         dm_permission=False,
