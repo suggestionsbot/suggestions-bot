@@ -44,26 +44,34 @@ class SuggestionsCog(commands.Cog):
         if len(suggestion) > 1000:
             raise SuggestionTooLong
 
+        log.warning(0)
         await interaction.response.defer(ephemeral=True)
+        log.warning(1)
         guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
+        log.warning(2)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
             guild_id=interaction.guild_id,
             state=self.state,
             author_id=interaction.author.id,
         )
+        log.warning(3)
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
+        log.warning(4)
         channel: WrappedChannel = await self.bot.get_or_fetch_channel(
             guild_config.suggestions_channel_id
         )
+        log.warning(5)
         message: disnake.Message = await channel.send(
             embed=await suggestion.as_embed(self.bot)
         )
+        log.warning(6)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        log.warning(7)
 
         try:
             await message.add_reaction(
@@ -72,7 +80,9 @@ class SuggestionsCog(commands.Cog):
             await message.add_reaction(
                 await self.bot.suggestion_emojis.default_down_vote()
             )
+            log.warning(8)
         except disnake.Forbidden as e:
+            log.warning(8.1)
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()
@@ -82,6 +92,7 @@ class SuggestionsCog(commands.Cog):
                 )
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
         except disnake.HTTPException as e:
+            log.warning(8.2)
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()
@@ -92,9 +103,9 @@ class SuggestionsCog(commands.Cog):
             raise commands.MissingPermissions(
                 missing_permissions=["Use External Emojis"]
             )
-
+        log.warning(9)
         await interaction.send("Thanks for your suggestion!", ephemeral=True)
-
+        log.warning(10)
         try:
             embed: disnake.Embed = disnake.Embed(
                 description=f"Hey, {interaction.author.mention}. Your suggestion has been sent "
@@ -104,22 +115,28 @@ class SuggestionsCog(commands.Cog):
                 timestamp=self.state.now,
                 color=self.bot.colors.embed_color,
             )
+            log.warning(11)
             try:
                 embed.set_author(
                     name=guild.name,
                     icon_url=guild.icon.url,
                 )
+                log.warning(11.1)
             except AttributeError:
+                log.warning(11.2)
                 pass
             embed.set_footer(
                 text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
             )
+            log.warning(12)
             await interaction.author.send(embed=embed)
+            log.warning(13)
         except disnake.HTTPException as e:
             log.debug(
                 "Failed to DM %s regarding there suggestion",
                 interaction.author.id,
             )
+            log.warning(14)
 
         log.debug(
             "User %s created new suggestion %s in guild %s",
