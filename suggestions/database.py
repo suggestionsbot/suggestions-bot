@@ -16,3 +16,4 @@ class SuggestionsMongoManager(MongoManager):
         self.guild_configs: Document = Document(
             self.db, "guild_configs", converter=GuildConfig
         )
+        self.beta_links: Document = Document(self.db, "beta_links")

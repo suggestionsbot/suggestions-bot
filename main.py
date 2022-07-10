@@ -7,8 +7,12 @@ import os
 import sys
 import textwrap
 from traceback import format_exception
+from typing import List
 
 import disnake
+from alaric import AQ
+from alaric.comparison import EQ
+from alaric.projections import PROJECTION, SHOW
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 from disnake.ext import commands
 
@@ -150,6 +154,48 @@ async def run_bot():
         )
         paginator.format_page = format_page
         await paginator.start(interaction=ctx)
+
+    @bot.slash_command(
+        dm_permission=False,
+    )
+    @commands.guild_only()
+    async def activate(interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @activate.sub_command()
+    @commands.guild_only()
+    async def beta(interaction: disnake.GuildCommandInteraction):
+        """Activate beta for your guild."""
+        main_guild = await bot.fetch_guild(bot.main_guild_id)
+        member = await main_guild.fetch_member(interaction.author.id)
+        role_ids: List[int] = [role.id for role in member.roles]
+        if bot.beta_role_id not in role_ids:
+            return await interaction.send(
+                "You do not have beta access.", ephemeral=True
+            )
+
+        initial_check = await bot.db.beta_links.find(
+            AQ(EQ("user_id", interaction.author.id)),
+            projections=PROJECTION(SHOW("user_id"), SHOW("guild_id")),
+        )
+        if initial_check:
+            guild = await bot.fetch_guild(initial_check["guild_id"])
+            return await interaction.send(
+                f"You have already activated beta on {guild.name}.", ephemeral=True
+            )
+
+        await bot.db.beta_links.insert(
+            {"user_id": interaction.author.id, "guild_id": interaction.guild_id}
+        )
+        await bot.db.guild_configs.insert({"_id": interaction.guild_id})
+        await interaction.send(
+            "Thanks! I have activated beta for you in this guild.", ephemeral=True
+        )
+        log.info(
+            "Activated beta for %s in guild %s",
+            interaction.author.id,
+            interaction.guild_id,
+        )
 
     # await bot.db.guild_configs.insert({"_id": 737166408525283348})
     await bot.load()

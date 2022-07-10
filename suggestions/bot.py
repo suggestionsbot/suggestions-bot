@@ -32,6 +32,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
         self.version: str = "Beta Release 1.0.0"
         self.main_guild_id: int = 601219766258106399
+        self.beta_role_id: int = 995588041991274547
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
@@ -262,7 +263,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
-        if not self.is_prod:
+        if not self.is_prod or 1 == 1:  # Disable for now
             log.warning("Cancelling bot listing updates as we aren't in production.")
             return
 
