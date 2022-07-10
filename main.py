@@ -105,7 +105,7 @@ async def run_bot():
         embed.add_field(name="Guilds", value=len(bot.guilds))
         embed.add_field(name="Shards", value=len(bot.shards))
         embed.add_field(name="Uptime", value=bot.get_uptime())
-        embed.add_field(name="Disnake", value=package_version)
+        embed.add_field(name="Disnake", value="Custom fork")
         embed.add_field(name="Python", value=python_version)
         embed.add_field(name="Version", value=bot.version)
 
