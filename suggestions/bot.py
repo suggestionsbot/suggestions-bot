@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
         self.version: str = "Beta Release 1.0.0"
+        self.main_guild_id: int = 601219766258106399
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]

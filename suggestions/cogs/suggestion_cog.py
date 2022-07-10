@@ -42,6 +42,7 @@ class SuggestionsCog(commands.Cog):
         if len(suggestion) > 1000:
             raise SuggestionTooLong
 
+        await interaction.response.defer(ephemeral=True)
         guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
@@ -63,8 +64,12 @@ class SuggestionsCog(commands.Cog):
         await self.state.suggestions_db.upsert(suggestion, suggestion)
 
         try:
-            await message.add_reaction(self.bot.suggestion_emojis.default_up_vote())
-            await message.add_reaction(self.bot.suggestion_emojis.default_down_vote())
+            await message.add_reaction(
+                await self.bot.suggestion_emojis.default_up_vote()
+            )
+            await message.add_reaction(
+                await self.bot.suggestion_emojis.default_down_vote()
+            )
         except disnake.Forbidden as e:
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
@@ -74,7 +79,7 @@ class SuggestionsCog(commands.Cog):
                     missing_permissions=["Add Reactions", "Manage Messages"]
                 )
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
-        except disnake.HTTPException:
+        except disnake.HTTPException as e:
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()

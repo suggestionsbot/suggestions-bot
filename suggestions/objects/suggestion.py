@@ -252,8 +252,8 @@ class Suggestion:
 
     async def _as_resolved_embed(self, bot: SuggestionsBot) -> Embed:
         results = (
-            f"**Results**\n{bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
-            f"{bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
+            f"**Results**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+            f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
         )
 
         text = "Approved" if self.state == SuggestionState.approved else "Rejected"
@@ -320,11 +320,13 @@ class Suggestion:
         if not self.resolved_by:
             # We need to store results
             # -1 As the bot shouldn't count
+            default_up_vote = await bot.suggestion_emojis.default_up_vote()
+            default_down_vote = await bot.suggestion_emojis.default_down_vote()
             for reaction in message.reactions:
-                if str(reaction.emoji) == bot.suggestion_emojis.default_up_vote():
+                if str(reaction.emoji) == str(default_up_vote):
                     self.total_up_votes = reaction.count - 1
 
-                elif str(reaction.emoji) == bot.suggestion_emojis.default_down_vote():
+                elif str(reaction.emoji) == str(default_down_vote):
                     self.total_down_votes = reaction.count - 1
 
         await message.delete()
