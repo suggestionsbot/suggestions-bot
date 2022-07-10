@@ -141,23 +141,33 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Approve a suggestion."""
+        log.warning(0)
         await interaction.response.defer(ephemeral=True)
+        log.warning(1)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
+        log.warning(2)
         await suggestion.try_delete(self.bot, interaction)
+        log.warning(3)
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
+        log.warning(4)
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
+        log.warning(5)
         channel: WrappedChannel = await self.bot.get_or_fetch_channel(
             guild_config.log_channel_id
         )
+        log.warning(6)
         message: disnake.Message = await channel.send(
             embed=await suggestion.as_embed(self.bot)
         )
+        log.warning(7)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        log.warning(8)
         await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
+        log.warning(9)
         log.debug(
             "User %s approved suggestion %s in guild %s",
             interaction.author.id,
@@ -185,23 +195,33 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Reject a suggestion."""
+        log.warning(0)
         await interaction.response.defer(ephemeral=True)
+        log.warning(1)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
+        log.warning(2)
         await suggestion.try_delete(self.bot, interaction)
+        log.warning(3)
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
+        log.warning(4)
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
+        log.warning(5)
         channel: WrappedChannel = await self.bot.get_or_fetch_channel(
             guild_config.log_channel_id
         )
+        log.warning(6)
         message: disnake.Message = await channel.send(
             embed=await suggestion.as_embed(self.bot)
         )
+        log.warning(7)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        log.warning(8)
         await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
+        log.warning(9)
         log.debug(
             "User %s rejected suggestion %s in guild %s",
             interaction.author.id,
