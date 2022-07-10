@@ -9,6 +9,7 @@ class ErrorCode(IntEnum):
     MISSING_SUGGESTIONS_CHANNEL = 3
     MISSING_LOG_CHANNEL = 4
     SUGGESTION_NOT_FOUND = 5
+    OWNER_ONLY = 6
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

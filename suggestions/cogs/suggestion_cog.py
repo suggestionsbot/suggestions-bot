@@ -33,33 +33,15 @@ class SuggestionsCog(commands.Cog):
     @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
     @commands.guild_only()
-    async def suggest(self, interaction: disnake.GuildCommandInteraction):
+    async def suggest(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        suggestion: str = commands.Param(),
+    ):
         """Create a new suggestion."""
-        custom_id = f"suggestions_create_modal:{interaction.id}"
-        await interaction.response.send_modal(
-            custom_id=custom_id,
-            title="Suggest something",
-            components=[
-                disnake.ui.TextInput(
-                    label="Suggestion",
-                    placeholder="Placeholder suggestions",
-                    custom_id="actual_suggestion",
-                    max_length=1000,
-                    style=TextInputStyle.paragraph,
-                ),
-            ],
-        )
-
         guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
-
-        modal_inter: disnake.ModalInteraction = await self.bot.wait_for(
-            "modal_submit",
-            check=lambda i: i.custom_id == custom_id
-            and i.author.id == interaction.author.id,
-            timeout=60,
-        )
         suggestion: Suggestion = await Suggestion.new(
-            suggestion=modal_inter.text_values["actual_suggestion"],
+            suggestion=suggestion,
             guild_id=interaction.guild_id,
             state=self.state,
             author_id=interaction.author.id,
@@ -101,7 +83,7 @@ class SuggestionsCog(commands.Cog):
                 missing_permissions=["Use External Emojis"]
             )
 
-        await modal_inter.send("Thanks for your suggestion!", ephemeral=True)
+        await interaction.send("Thanks for your suggestion!", ephemeral=True)
 
         try:
             embed: disnake.Embed = disnake.Embed(
@@ -143,7 +125,7 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Approve a suggestion."""
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.try_delete(self.bot, interaction)
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
@@ -159,9 +141,7 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
-        await interaction.followup.send(
-            f"You have approved **{suggestion_id}**", ephemeral=True
-        )
+        await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
 
     @approve.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):
@@ -183,7 +163,7 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Reject a suggestion."""
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.try_delete(self.bot, interaction)
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
@@ -199,9 +179,7 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
-        await interaction.followup.send(
-            f"You have rejected **{suggestion_id}**", ephemeral=True
-        )
+        await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
 
     @reject.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):

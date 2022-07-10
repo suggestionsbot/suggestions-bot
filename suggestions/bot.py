@@ -201,6 +201,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        elif isinstance(exception, commands.NotOwner):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "You do not have permission to run this command.",
+                    error_code=ErrorCode.OWNER_ONLY,
+                ),
+                ephemeral=True,
+            )
+
         raise exception
 
     async def load(self):

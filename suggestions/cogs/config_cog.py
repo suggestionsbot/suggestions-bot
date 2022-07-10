@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
 
 log = logging.getLogger(__name__)
+# TODO Ways to see current guild settings
 
 
 class ConfigCog(commands.Cog):
