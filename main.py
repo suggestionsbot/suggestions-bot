@@ -94,7 +94,7 @@ async def run_bot():
         await bot.colors.show_colors(interaction)
 
     @bot.slash_command()
-    @cooldowns.cooldown(1, 5, bucket=InteractionBucket.author)
+    @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
     async def stats(interaction: disnake.ApplicationCommandInteraction):
         """Get bot stats!"""
         package_version = disnake.__version__
