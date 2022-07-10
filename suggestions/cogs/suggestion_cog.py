@@ -36,7 +36,7 @@ class SuggestionsCog(commands.Cog):
     async def suggest(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion: str,
+        suggestion: str = commands.Param(description="Your suggestion"),
     ):
         """Create a new suggestion."""
         if len(suggestion) > 1000:
