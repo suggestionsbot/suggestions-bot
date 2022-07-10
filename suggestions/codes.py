@@ -10,6 +10,7 @@ class ErrorCode(IntEnum):
     MISSING_LOG_CHANNEL = 4
     SUGGESTION_NOT_FOUND = 5
     OWNER_ONLY = 6
+    SUGGESTION_CONTENT_TOO_LONG = 7
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

@@ -89,7 +89,7 @@ async def run_bot():
         python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
         embed: disnake.Embed = disnake.Embed(
             title=f"Stats for {bot.user.name}",
-            description=f"Guilds: {len(bot.guilds)}\nShards: {len(bot.shards)}\n---\n"
+            description=f"Bot Version: {bot.version}\nGuilds: {len(bot.guilds)}\nShards: {len(bot.shards)}\n---\n"
             f"Running on Python {python_version} and Disnake {package_version} "
             f"with an uptime of {bot.get_uptime()}",
         )

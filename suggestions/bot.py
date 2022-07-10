@@ -19,6 +19,7 @@ from suggestions.exceptions import (
     MissingLogsChannel,
     ErrorHandled,
     SuggestionNotFound,
+    SuggestionTooLong,
 )
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
@@ -28,6 +29,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
+        self.version: str = "Beta Release 1.0.0"
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
@@ -207,6 +209,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "You do not have permission to run this command.",
                     error_code=ErrorCode.OWNER_ONLY,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, SuggestionTooLong):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "Your suggestion content was too long, please limit it to 1000 characters or less.",
+                    error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
                 ),
                 ephemeral=True,
             )

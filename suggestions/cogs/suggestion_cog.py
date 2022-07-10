@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Optional
 import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
-from disnake import TextInputStyle
 from disnake.ext import commands
 
-from suggestions import checks, ErrorCode
+from suggestions import checks
+from suggestions.exceptions import SuggestionTooLong
 from suggestions.objects import Suggestion, GuildConfig
 
 if TYPE_CHECKING:
@@ -36,9 +36,12 @@ class SuggestionsCog(commands.Cog):
     async def suggest(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion: str = commands.Param(),
+        suggestion: str,
     ):
         """Create a new suggestion."""
+        if len(suggestion) > 1000:
+            raise SuggestionTooLong
+
         guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,

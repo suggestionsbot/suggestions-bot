@@ -25,3 +25,7 @@ class ErrorHandled(disnake.DiscordException):
 
 class SuggestionNotFound(disnake.DiscordException):
     """Cannot find a suggestion with this id."""
+
+
+class SuggestionTooLong(disnake.DiscordException):
+    """The suggestion content was too long."""
