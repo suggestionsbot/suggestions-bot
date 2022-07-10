@@ -92,6 +92,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif error_code:
             embed.set_footer(text=f"Error code {error_code.value}")
 
+            log.debug("Encountered %s", error_code.name)
+
         return embed
 
     async def process_commands(self, message: disnake.Message):

@@ -52,6 +52,11 @@ class ConfigCog(commands.Cog):
             f"I have set this guilds suggestion channel to {channel.mention}",
             ephemeral=True,
         )
+        log.debug(
+            "User %s modified suggestions channel in guild %s",
+            interaction.author.id,
+            interaction.guild_id,
+        )
 
     @config.sub_command()
     @commands.guild_only()
@@ -70,6 +75,11 @@ class ConfigCog(commands.Cog):
         await interaction.send(
             f"I have set this guilds log channel to {channel.mention}",
             ephemeral=True,
+        )
+        log.debug(
+            "User %s modified logs channel in guild %s",
+            interaction.author.id,
+            interaction.guild_id,
         )
 
     @config.sub_command()
@@ -117,6 +127,12 @@ class ConfigCog(commands.Cog):
             raise InvalidGuildConfigOption
 
         await interaction.send(embed=embed, ephemeral=True)
+        log.debug(
+            "User %s viewed the %s config in guild %s",
+            interaction.author.id,
+            config,
+            interaction.guild_id,
+        )
 
     async def send_full_config(self, interaction: disnake.GuildCommandInteraction):
         guild_config: GuildConfig = await GuildConfig.from_id(
@@ -140,6 +156,11 @@ class ConfigCog(commands.Cog):
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=guild.icon.url)
         await interaction.send(embed=embed, ephemeral=True)
+        log.debug(
+            "User %s viewed the global config in guild %s",
+            interaction.author.id,
+            interaction.guild_id,
+        )
 
 
 def setup(bot):

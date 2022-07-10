@@ -115,7 +115,13 @@ class SuggestionsCog(commands.Cog):
                 "Failed to DM %s regarding there suggestion",
                 interaction.author.id,
             )
-            raise e
+
+        log.debug(
+            "User %s created new suggestion %s in guild %s",
+            interaction.author.id,
+            suggestion.suggestion_id,
+            interaction.guild_id,
+        )
 
     @commands.slash_command(
         dm_permission=False,
@@ -150,6 +156,12 @@ class SuggestionsCog(commands.Cog):
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
+        log.debug(
+            "User %s approved suggestion %s in guild %s",
+            interaction.author.id,
+            suggestion.suggestion_id,
+            interaction.guild_id,
+        )
 
     @approve.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):
@@ -188,6 +200,12 @@ class SuggestionsCog(commands.Cog):
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
+        log.debug(
+            "User %s rejected suggestion %s in guild %s",
+            interaction.author.id,
+            suggestion.suggestion_id,
+            interaction.guild_id,
+        )
 
     @reject.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):

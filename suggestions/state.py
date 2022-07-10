@@ -48,7 +48,7 @@ class State:
             suggestion_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.debug("Encountered an existing SID")
+            log.critical("Encountered an existing SID")
 
         self.existing_suggestion_ids.add(suggestion_id)
         return suggestion_id
@@ -90,6 +90,7 @@ class State:
         self.autocomplete_cache.add_entry(
             guild_id, data, ttl=self.autocomplete_cache_ttl
         )
+        log.debug("Populated sid cache for guild %s", guild_id)
         return data
 
     def add_sid_to_cache(self, guild_id: int, suggestion_id: str) -> None:
@@ -109,6 +110,8 @@ class State:
                 guild_id, current_values, override=True, ttl=self.autocomplete_cache_ttl
             )
 
+        log.debug("Added sid %s to cache for guild %s", suggestion_id, guild_id)
+
     def remove_sid_from_cache(self, guild_id: int, suggestion_id: str) -> None:
         """Removes a suggestion from the cache when it's state is no longer open."""
         try:
@@ -126,6 +129,11 @@ class State:
                     current_values,
                     override=True,
                     ttl=self.autocomplete_cache_ttl,
+                )
+                log.debug(
+                    "Removed sid %s from the cache for guild %s",
+                    suggestion_id,
+                    guild_id,
                 )
 
     async def load(self):
@@ -150,7 +158,7 @@ class State:
         """Cleans the caches every 10 minutes"""
         while not self.is_closing:
             self.autocomplete_cache.force_clean()
-            log.debug("Cleaned state caches")
+            log.debug("Cleaned autocomplete caches")
 
             # This allows for immediate task finishing rather
             # than being forced to wait the whole 10 minutes
