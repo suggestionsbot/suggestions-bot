@@ -30,12 +30,10 @@ class ConfigCog(commands.Cog):
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
     @checks.ensure_guild_has_beta()
-    @commands.guild_only()
     async def config(self, interaction: disnake.GuildCommandInteraction):
         pass
 
     @config.sub_command()
-    @commands.guild_only()
     async def channel(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -59,7 +57,6 @@ class ConfigCog(commands.Cog):
         )
 
     @config.sub_command()
-    @commands.guild_only()
     async def logs(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -83,7 +80,6 @@ class ConfigCog(commands.Cog):
         )
 
     @config.sub_command()
-    @commands.guild_only()
     async def get(
         self,
         interaction: disnake.GuildCommandInteraction,

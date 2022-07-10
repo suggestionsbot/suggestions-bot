@@ -32,7 +32,6 @@ class SuggestionsCog(commands.Cog):
     @commands.slash_command(dm_permission=False)
     @checks.ensure_guild_has_suggestions_channel()
     @checks.ensure_guild_has_beta()
-    @commands.guild_only()
     async def suggest(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -129,7 +128,6 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
-    @commands.guild_only()
     async def approve(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -173,7 +171,6 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
-    @commands.guild_only()
     async def reject(
         self,
         interaction: disnake.GuildCommandInteraction,

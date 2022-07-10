@@ -162,12 +162,10 @@ async def run_bot():
     @bot.slash_command(
         dm_permission=False,
     )
-    @commands.guild_only()
     async def activate(interaction: disnake.GuildCommandInteraction):
         pass
 
     @activate.sub_command()
-    @commands.guild_only()
     async def beta(interaction: disnake.GuildCommandInteraction):
         """Activate beta for your guild."""
         main_guild = await bot.fetch_guild(bot.main_guild_id)

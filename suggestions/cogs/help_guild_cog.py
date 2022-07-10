@@ -28,7 +28,6 @@ class HelpGuildCog(commands.Cog):
         default_member_permissions=disnake.Permissions(manage_guild=True),
         guild_ids=[601219766258106399, 737166408525283348],
     )
-    @commands.guild_only()
     async def error_code(
         self,
         interaction: disnake.GuildCommandInteraction,
