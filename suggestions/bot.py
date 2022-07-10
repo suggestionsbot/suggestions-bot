@@ -249,6 +249,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        elif isinstance(exception, disnake.HTTPException):
+            if exception.code == 40060:
+                log.debug(
+                    "Interaction has already been acknowledged, ignoring HTTPException"
+                )
+                return
+
         raise exception
 
     async def load(self):
