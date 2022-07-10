@@ -101,7 +101,18 @@ async def run_bot():
             f"Running on Python {python_version} and Disnake {package_version} "
             f"with an uptime of {bot.get_uptime()}",
         )
+        embed: disnake.Embed = disnake.Embed(
+            color=bot.colors.embed_color, timestamp=bot.state.now
+        )
+        embed.add_field(name="Guilds", value=len(bot.guilds))
+        embed.add_field(name="Shards", value=len(bot.shards))
+        embed.add_field(name="Uptime", value=bot.get_uptime())
+        embed.add_field(name="Disnake", value=package_version)
+        embed.add_field(name="Python", value=python_version)
+        # embed.ad
+
         await interaction.send(embed=embed, ephemeral=False)
+        log.debug("User %s viewed stats", interaction.author.id)
 
     def clean_code(content):
         """Automatically removes code blocks from the code."""
