@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import disnake
 from bot_base import NonExistentEntry
@@ -9,7 +9,7 @@ from bot_base.wraps import WrappedChannel
 from disnake import TextInputStyle
 from disnake.ext import commands
 
-from suggestions import checks
+from suggestions import checks, ErrorCode
 from suggestions.objects import Suggestion, GuildConfig
 
 if TYPE_CHECKING:
@@ -35,8 +35,9 @@ class SuggestionsCog(commands.Cog):
     @commands.guild_only()
     async def suggest(self, interaction: disnake.GuildCommandInteraction):
         """Create a new suggestion."""
+        custom_id = f"suggestions_create_modal:{interaction.id}"
         await interaction.response.send_modal(
-            custom_id="suggestions_create_modal",
+            custom_id=custom_id,
             title="Suggest something",
             components=[
                 disnake.ui.TextInput(
@@ -53,7 +54,7 @@ class SuggestionsCog(commands.Cog):
 
         modal_inter: disnake.ModalInteraction = await self.bot.wait_for(
             "modal_submit",
-            check=lambda i: i.custom_id == "suggestions_create_modal"
+            check=lambda i: i.custom_id == custom_id
             and i.author.id == interaction.author.id,
             timeout=60,
         )
@@ -79,8 +80,7 @@ class SuggestionsCog(commands.Cog):
         try:
             await message.add_reaction(self.bot.suggestion_emojis.default_up_vote())
             await message.add_reaction(self.bot.suggestion_emojis.default_down_vote())
-        except disnake.Forbidden:
-
+        except disnake.Forbidden as e:
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()
@@ -133,21 +133,32 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
-    @commands.bot_has_guild_permissions(
-        manage_messages=True,
-        use_external_emojis=True,
-    )
     @commands.guild_only()
     async def approve(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion_id: str,
+        suggestion_id: str = commands.Param(description="The sID you wish to approve"),
+        response: Optional[str] = commands.Param(
+            description="An optional response to add to the suggestion", default=None
+        ),
     ):
         """Approve a suggestion."""
-        # TODO Move this to logs channel
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
-        await suggestion.mark_approved_by(self.state, interaction.author.id)
-        await interaction.send(embed=await suggestion.as_embed(self.bot))
+        await suggestion.try_delete(self.bot, interaction)
+        await suggestion.mark_approved_by(self.state, interaction.author.id, response)
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+            guild_config.log_channel_id
+        )
+        message: disnake.Message = await channel.send(
+            embed=await suggestion.as_embed(self.bot)
+        )
+        suggestion.message_id = message.id
+        suggestion.channel_id = channel.id
+        await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
 
     @approve.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):
@@ -159,21 +170,32 @@ class SuggestionsCog(commands.Cog):
     )
     @checks.ensure_guild_has_logs_channel()
     @checks.ensure_guild_has_beta()
-    @commands.bot_has_guild_permissions(
-        manage_messages=True,
-        use_external_emojis=True,
-    )
     @commands.guild_only()
     async def reject(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion_id: str,
+        suggestion_id: str = commands.Param(description="The sID you wish to approve"),
+        response: Optional[str] = commands.Param(
+            description="An optional response to add to the suggestion", default=None
+        ),
     ):
         """Reject a suggestion."""
-        # TODO Move this to logs channel
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
-        await suggestion.mark_rejected_by(self.state, interaction.author.id)
-        await interaction.send(embed=await suggestion.as_embed(self.bot))
+        await suggestion.try_delete(self.bot, interaction)
+        await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+            guild_config.log_channel_id
+        )
+        message: disnake.Message = await channel.send(
+            embed=await suggestion.as_embed(self.bot)
+        )
+        suggestion.message_id = message.id
+        suggestion.channel_id = channel.id
+        await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
 
     @reject.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):

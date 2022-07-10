@@ -18,6 +18,7 @@ from bot_base.caches import TimedCache
 from suggestions.objects import GuildConfig
 
 if TYPE_CHECKING:
+    from suggestions import SuggestionsBot
     from alaric import Document
     from suggestions.database import SuggestionsMongoManager
 
@@ -27,7 +28,8 @@ log = logging.getLogger(__name__)
 class State:
     """Simplistic way to pass state in a detached manner."""
 
-    def __init__(self, database: SuggestionsMongoManager):
+    def __init__(self, database: SuggestionsMongoManager, bot: SuggestionsBot):
+        self.bot: SuggestionsBot = bot
         self.is_closing: bool = False
         self.database: SuggestionsMongoManager = database
         self.autocomplete_cache: TimedCache = TimedCache()
@@ -80,7 +82,7 @@ class State:
         """Populates a guilds current active suggestion ids"""
         self.autocomplete_cache.delete_entry(guild_id)
         data: List[Dict] = await self.database.suggestions.find_many(
-            AQ(AND(EQ("guild_id", guild_id), EQ("state", "open"))),
+            AQ(AND(EQ("guild_id", guild_id), EQ("state", "pending"))),
             projections=PROJECTION(SHOW("_id")),
             try_convert=False,
         )

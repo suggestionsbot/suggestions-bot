@@ -1,5 +1,6 @@
 from typing import Optional
 
+import disnake
 from disnake.ext.commands import CheckFailure
 
 
@@ -16,3 +17,11 @@ class MissingSuggestionsChannel(CheckFailure):
 
 class MissingLogsChannel(CheckFailure):
     """This command requires a logs channel to run."""
+
+
+class ErrorHandled(disnake.DiscordException):
+    """This tells error handlers the error was already handled, and can be ignored."""
+
+
+class SuggestionNotFound(disnake.DiscordException):
+    """Cannot find a suggestion with this id."""

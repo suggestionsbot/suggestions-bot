@@ -5,18 +5,20 @@ import datetime
 import logging
 import os
 from pathlib import Path
-from typing import Type
+from typing import Type, Optional
 
 import aiohttp
 import disnake
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
-from suggestions import State, Colors, Emojis
+from suggestions import State, Colors, Emojis, ErrorCode
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
     MissingLogsChannel,
+    ErrorHandled,
+    SuggestionNotFound,
 )
 from suggestions.stats import Stats
 from suggestions.database import SuggestionsMongoManager
@@ -31,9 +33,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
         self.colors: Type[Colors] = Colors
-        self.state: State = State(self.db)
         self.stats: Stats = Stats(self.db)
-        self.suggestion_emojis: Type[Emojis] = Emojis
+        self.state: State = State(self.db, self)
+        self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",
             "channel",
@@ -62,6 +64,30 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self.stats.register_command_usage(ctx.command.qualified_name)
         log.debug(f"Command executed: `{ctx.command.qualified_name}`")
+
+    def error_embed(
+        self,
+        title: str,
+        description: str,
+        *,
+        footer_text: Optional[str] = None,
+        error_code: Optional[ErrorCode] = None,
+    ) -> disnake.Embed:
+        # TODO Also show a button to self diagnose with a link for more info
+        embed = disnake.Embed(
+            title=title,
+            description=description,
+            color=self.colors.error,
+            timestamp=self.state.now,
+        )
+        if footer_text and error_code:
+            raise ValueError("Can't provide both footer_text and error_code")
+        elif footer_text:
+            embed.set_footer(text=footer_text)
+        elif error_code:
+            embed.set_footer(text=f"Error code {error_code.value}")
+
+        return embed
 
     async def process_commands(self, message: disnake.Message):
         try:
@@ -116,7 +142,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         exception: commands.CommandError,
     ) -> None:
         exception = getattr(exception, "original", exception)
-        if isinstance(exception, BetaOnly):
+
+        if isinstance(exception, ErrorHandled):
+            return
+
+        elif isinstance(exception, BetaOnly):
             embed: disnake.Embed = disnake.Embed(
                 title="Beta restrictions",
                 description="This command is restricted to beta guilds only, "
@@ -126,34 +156,50 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return await interaction.send(embed=embed, ephemeral=True)
 
         elif isinstance(exception, MissingSuggestionsChannel):
-            embed: disnake.Embed = disnake.Embed(
-                title="Missing Suggestions Channel",
-                description="This command requires a suggestion channel to use.\n"
-                "Please contact an administrator and ask them to set one up "
-                "using the following command.\n`/config channel`",
-                color=self.colors.error,
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Suggestions Channel",
+                    "This command requires a suggestion channel to use.\n"
+                    "Please contact an administrator and ask them to set one up "
+                    "using the following command.\n`/config channel`",
+                    error_code=ErrorCode.MISSING_SUGGESTIONS_CHANNEL,
+                ),
+                ephemeral=True,
             )
-            return await interaction.send(embed=embed, ephemeral=True)
 
         elif isinstance(exception, MissingLogsChannel):
-            embed: disnake.Embed = disnake.Embed(
-                title="Missing Logs Channel",
-                description="This command requires a log channel to use.\n"
-                "Please contact an administrator and ask them to set one up "
-                "using the following command.\n`/config logs`",
-                color=self.colors.error,
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Logs Channel",
+                    "This command requires a log channel to use.\n"
+                    "Please contact an administrator and ask them to set one up "
+                    "using the following command.\n`/config logs`",
+                    error_code=ErrorCode.MISSING_LOG_CHANNEL,
+                ),
+                ephemeral=True,
             )
-            return await interaction.send(embed=embed, ephemeral=True)
 
         elif isinstance(exception, commands.MissingPermissions):
             perms = ",".join(i for i in exception.missing_permissions)
-            embed: disnake.Embed = disnake.Embed(
-                title="Missing Permissions",
-                color=self.colors.error,
-                description=f"I need the following permissions in order to run this command.\n{perms}\n"
-                f"Please contact an administrator and ask them to provide them for me.",
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Permissions",
+                    f"I need the following permissions in order to run this command.\n{perms}\n"
+                    f"Please contact an administrator and ask them to provide them for me.",
+                    error_code=ErrorCode.MISSING_PERMISSIONS,
+                ),
+                ephemeral=True,
             )
-            return await interaction.send(embed=embed, ephemeral=True)
+
+        elif isinstance(exception, SuggestionNotFound):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "No suggestion exists with this id.",
+                    error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                ),
+                ephemeral=True,
+            )
 
         raise exception
 

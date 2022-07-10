@@ -7,11 +7,13 @@ from typing import TYPE_CHECKING, Literal, Union, Optional
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
+from bot_base.wraps import WrappedChannel
 from disnake import Embed
 
+from suggestions.exceptions import ErrorHandled, SuggestionNotFound
 
 if TYPE_CHECKING:
-    from suggestions import SuggestionsBot, State, Colors
+    from suggestions import SuggestionsBot, State, Colors, ErrorCode
 
 
 class SuggestionState(Enum):
@@ -50,9 +52,12 @@ class Suggestion:
         created_at: datetime.datetime,
         state: Union[Literal["open", "approved", "rejected"], SuggestionState],
         *,
+        total_up_votes: Optional[int] = None,
+        total_down_votes: Optional[int] = None,
         channel_id: Optional[int] = None,
         message_id: Optional[int] = None,
         resolved_by: Optional[int] = None,
+        resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
         **kwargs,
     ):
@@ -77,6 +82,8 @@ class Suggestion:
         ----------------
         resolved_by: Optional[int]
             Who changed the final state of this suggestion
+        resolution_note: Optional[str]
+            A note to add to the suggestion on resolve
         resolved_at: Optional[datetime.datetime]
             When this suggestion was resolved
         channel_id: Optional[int]
@@ -84,6 +91,10 @@ class Suggestion:
         message_id: Optional[int]
             The current message ID. This could be the suggestion
             or the log channel message.
+        total_up_votes: Optional[int]
+            How many up votes this had when closed
+        total_down_votes: Optional[int]
+            How many down votes this had when closed
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -100,6 +111,9 @@ class Suggestion:
         self.message_id: Optional[int] = message_id
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
+        self.resolution_note: Optional[str] = resolution_note
+        self.total_up_votes: Optional[int] = total_up_votes
+        self.total_down_votes: Optional[int] = total_down_votes
 
     @property
     def suggestion_id(self) -> str:
@@ -142,7 +156,7 @@ class Suggestion:
             AQ(EQ("_id", suggestion_id))
         )
         if not suggestion:
-            raise ValueError(f"No suggestion found with the id {suggestion_id}")
+            raise SuggestionNotFound(f"No suggestion found with the id {suggestion_id}")
 
         return suggestion
 
@@ -200,19 +214,25 @@ class Suggestion:
 
         if self.resolved_by:
             data["resolved_by"] = self.resolved_by
+            data["resolution_note"] = self.resolution_note
 
-        if self.resolved_at:
+        if self.resolution_note:
             data["resolved_at"] = self.resolved_at
 
         if self.message_id:
             data["message_id"] = self.message_id
-
-        if self.channel_id:
             data["channel_id"] = self.channel_id
+
+        if self.total_up_votes:
+            data["total_up_votes"] = self.total_up_votes
+            data["total_down_votes"] = self.total_down_votes
 
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
+        if self.resolved_by:
+            return await self._as_resolved_embed(bot)
+
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
         return (
             Embed(
@@ -227,20 +247,83 @@ class Suggestion:
             )
         )
 
-    async def mark_approved_by(self, state: State, resolved_by: int):
+    async def _as_resolved_embed(self, bot: SuggestionsBot) -> Embed:
+        results = (
+            f"**Results**\n{bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+            f"{bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
+        )
+
+        text = "Approved" if self.state == SuggestionState.approved else "Rejected"
+        embed = Embed(
+            description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
+            f"**Submitter**\n<@{self.suggestion_author_id}>\n\n"
+            f"**{text} By**\n<@{self.resolved_by}>\n\n",
+            colour=self.color,
+            timestamp=bot.state.now,
+        ).set_footer(text=f"sID: {self.suggestion_id}")
+
+        if self.resolution_note:
+            embed.description += f"**Response**\n{self.resolution_note}"
+
+        return embed
+
+    async def mark_approved_by(
+        self, state: State, resolved_by: int, resolution_note: Optional[str] = None
+    ):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.approved
         self.resolved_at = state.now
         self.resolved_by = resolved_by
+        if resolution_note:
+            self.resolution_note = resolution_note
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
 
-    async def mark_rejected_by(self, state: State, resolved_by: int):
+    async def mark_rejected_by(
+        self, state: State, resolved_by: int, resolution_note: Optional[str] = None
+    ):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.rejected
         self.resolved_at = state.now
         self.resolved_by = resolved_by
+        if resolution_note:
+            self.resolution_note = resolution_note
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
+
+    async def try_delete(
+        self,
+        bot: SuggestionsBot,
+        interaction: disnake.GuildCommandInteraction,
+    ):
+        try:
+            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.HTTPException:
+            await interaction.send(
+                embed=bot.error_embed(
+                    "Command failed",
+                    "Looks like this suggestion was deleted.",
+                    footer_text=f"Error code {ErrorCode.SUGGESTION_MESSAGE_DELETED.value}",
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
+        if not self.resolved_by:
+            # We need to store results
+            # -1 As the bot shouldn't count
+            for reaction in message.reactions:
+                if str(reaction.emoji) == bot.suggestion_emojis.default_up_vote():
+                    self.total_up_votes = reaction.count - 1
+
+                elif str(reaction.emoji) == bot.suggestion_emojis.default_down_vote():
+                    self.total_down_votes = reaction.count - 1
+
+        await message.delete()
+
+        self.message_id = None
+        self.channel_id = None
+        await bot.db.suggestions.update(self, self)
