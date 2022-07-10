@@ -161,9 +161,17 @@ class SuggestionsCog(commands.Cog):
             guild_config.log_channel_id
         )
         log.warning(6)
-        message: disnake.Message = await channel.send(
-            embed=await suggestion.as_embed(self.bot)
-        )
+        try:
+            message: disnake.Message = await channel.send(
+                embed=await suggestion.as_embed(self.bot)
+            )
+        except disnake.Forbidden:
+            log.warning(6.1)
+            raise commands.MissingPermissions(
+                missing_permissions=[
+                    "Missing permissions to send in configured log channel"
+                ]
+            )
         log.warning(7)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
@@ -215,9 +223,17 @@ class SuggestionsCog(commands.Cog):
             guild_config.log_channel_id
         )
         log.warning(6)
-        message: disnake.Message = await channel.send(
-            embed=await suggestion.as_embed(self.bot)
-        )
+        try:
+            message: disnake.Message = await channel.send(
+                embed=await suggestion.as_embed(self.bot)
+            )
+        except disnake.Forbidden:
+            log.warning(6.1)
+            raise commands.MissingPermissions(
+                missing_permissions=[
+                    "Missing permissions to send in configured log channel"
+                ]
+            )
         log.warning(7)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
