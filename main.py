@@ -32,7 +32,7 @@ logging.basicConfig(
 )
 
 disnake_logger = logging.getLogger("disnake")
-disnake_logger.setLevel(logging.DEBUG)
+disnake_logger.setLevel(logging.INFO)
 gateway_logger = logging.getLogger("disnake.gateway")
 gateway_logger.setLevel(logging.INFO)
 client_logger = logging.getLogger("disnake.client")
