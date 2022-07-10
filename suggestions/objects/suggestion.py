@@ -226,7 +226,7 @@ class Suggestion:
             data["message_id"] = self.message_id
             data["channel_id"] = self.channel_id
 
-        if self.total_up_votes:
+        if self.total_up_votes is not None:
             data["total_up_votes"] = self.total_up_votes
             data["total_down_votes"] = self.total_down_votes
 
