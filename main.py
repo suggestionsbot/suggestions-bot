@@ -39,6 +39,9 @@ http_logger.setLevel(logging.WARNING)
 shard_logger = logging.getLogger("disnake.shard")
 shard_logger.setLevel(logging.WARNING)
 
+suggestions_logger = logging.getLogger("suggestions")
+suggestions_logger.setLevel(logging.DEBUG)
+
 
 async def run_bot():
     intents = disnake.Intents.none()
