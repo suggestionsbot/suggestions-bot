@@ -282,7 +282,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     async with session.post(
                         os.environ["SUGGESTIONS_STATS_API_URL"], json=body
                     ) as r:
-                        print(r)
+                        pass
 
                 log.debug("Updated bot listings")
 
