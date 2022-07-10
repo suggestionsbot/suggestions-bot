@@ -23,7 +23,7 @@ async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[Guild
     suggestions: SuggestionsBot = interaction.client  # type: ignore
     if guild_id not in suggestions.state.guilds_configs:
         guild_exists: Optional[GuildConfig] = await suggestions.db.guild_configs.find(
-            AQ(EQ("guild_id", interaction.guild_id))
+            AQ(EQ("_id", interaction.guild_id))
         )
         if bool(guild_exists):
             suggestions.state.guilds_configs[guild_id] = guild_exists
