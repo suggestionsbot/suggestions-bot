@@ -249,13 +249,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
-        elif isinstance(exception, disnake.HTTPException):
-            if exception.code == 40060:
-                log.debug(
-                    "disnake.HTTPException: Interaction has already been acknowledged"
-                )
-                return
-
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
             return
@@ -263,6 +256,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif isinstance(exception, disnake.Forbidden):
             log.debug("disnake.Forbidden: %s", exception.text)
             return
+
+        elif isinstance(exception, disnake.HTTPException):
+            if exception.code == 40060:
+                log.debug(
+                    "disnake.HTTPException: Interaction has already been acknowledged"
+                )
+                return
 
         raise exception
 
