@@ -100,12 +100,6 @@ async def run_bot():
         package_version = disnake.__version__
         python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
         embed: disnake.Embed = disnake.Embed(
-            title=f"Stats for {bot.user.name}",
-            description=f"Bot Version: {bot.version}\nGuilds: {len(bot.guilds)}\nShards: {len(bot.shards)}\n---\n"
-            f"Running on Python {python_version} and Disnake {package_version} "
-            f"with an uptime of {bot.get_uptime()}",
-        )
-        embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color, timestamp=bot.state.now
         )
         embed.add_field(name="Guilds", value=len(bot.guilds))
@@ -113,7 +107,7 @@ async def run_bot():
         embed.add_field(name="Uptime", value=bot.get_uptime())
         embed.add_field(name="Disnake", value=package_version)
         embed.add_field(name="Python", value=python_version)
-        # embed.ad
+        embed.add_field(name="Version", value=bot.version)
 
         await interaction.send(embed=embed, ephemeral=False)
         log.debug("User %s viewed stats", interaction.author.id)
