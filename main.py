@@ -177,6 +177,7 @@ async def run_bot():
     @activate.sub_command()
     async def beta(interaction: disnake.GuildCommandInteraction):
         """Activate beta for your guild."""
+        await interaction.response.defer(ephemeral=True)
         main_guild = await bot.fetch_guild(bot.main_guild_id)
         member = await main_guild.fetch_member(interaction.author.id)
         role_ids: List[int] = [role.id for role in member.roles]
