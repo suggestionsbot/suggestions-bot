@@ -143,6 +143,7 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Approve a suggestion."""
+        await interaction.response.defer()
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.try_delete(self.bot, interaction)
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
@@ -158,7 +159,9 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
-        await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
+        await interaction.followup.send(
+            f"You have approved **{suggestion_id}**", ephemeral=True
+        )
 
     @approve.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):
@@ -180,6 +183,7 @@ class SuggestionsCog(commands.Cog):
         ),
     ):
         """Reject a suggestion."""
+        await interaction.response.defer()
         suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
         await suggestion.try_delete(self.bot, interaction)
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
@@ -195,7 +199,9 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
-        await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
+        await interaction.followup.send(
+            f"You have rejected **{suggestion_id}**", ephemeral=True
+        )
 
     @reject.autocomplete("suggestion_id")
     async def approve_suggestion_id_autocomplete(self, inter, user_input):

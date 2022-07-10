@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional
 
@@ -14,6 +15,8 @@ from suggestions.exceptions import ErrorHandled, SuggestionNotFound
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors, ErrorCode
+
+log = logging.getLogger(__name__)
 
 
 class SuggestionState(Enum):
@@ -279,6 +282,7 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
+        await self.try_notify_user_of_decision(state.bot)
 
     async def mark_rejected_by(
         self, state: State, resolved_by: int, resolution_note: Optional[str] = None
@@ -292,6 +296,7 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
+        await self.try_notify_user_of_decision(state.bot)
 
     async def try_delete(
         self,
@@ -327,3 +332,23 @@ class Suggestion:
         self.message_id = None
         self.channel_id = None
         await bot.db.suggestions.update(self, self)
+
+    async def try_notify_user_of_decision(self, bot: SuggestionsBot):
+        user = await bot.get_or_fetch_user(self.suggestion_author_id)
+        guild = await bot.fetch_guild(self.guild_id)
+        text = "approved" if self.state == SuggestionState.approved else "rejected"
+        embed: Embed = (
+            Embed(
+                description=f"Hey, {user.mention}. Your suggestion has been "
+                f"{text} by <@{self.resolved_by}>!\n\nYour suggestion ID (sID) for reference "
+                f"was **{self.suggestion_id}**.",
+                timestamp=bot.state.now,
+                color=self.color,
+            )
+            .set_footer(text=f"Guild ID: {self.guild_id} | sID: {self.suggestion_id}")
+            .set_author(name=guild.name, icon_url=guild.icon.url)
+        )
+        try:
+            await user.send(embed=embed)
+        except disnake.Forbidden:
+            log.debug("Failed to dm %s to tell them about there suggestion", user.id)
