@@ -54,8 +54,9 @@ class ConfigCog(commands.Cog):
             ephemeral=True,
         )
         log.debug(
-            "User %s modified suggestions channel in guild %s",
+            "User %s changed suggestions channel to %s in guild %s",
             interaction.author.id,
+            channel.id,
             interaction.guild_id,
         )
 
@@ -77,8 +78,9 @@ class ConfigCog(commands.Cog):
             ephemeral=True,
         )
         log.debug(
-            "User %s modified logs channel in guild %s",
+            "User %s changed logs channel to %s in guild %s",
             interaction.author.id,
+            channel.id,
             interaction.guild_id,
         )
 

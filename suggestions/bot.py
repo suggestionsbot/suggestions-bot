@@ -256,6 +256,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 )
                 return
 
+        elif isinstance(exception, disnake.NotFound):
+            log.debug("disnake.NotFound: %s", exception.text)
+            return
+
+        elif isinstance(exception, disnake.Forbidden):
+            log.debug("disnake.Forbidden: %s", exception.text)
+            return
+
         raise exception
 
     async def load(self):
