@@ -135,13 +135,18 @@ class Suggestion:
         return Colors.pending_suggestion
 
     @classmethod
-    async def from_id(cls, suggestion_id: str, state: State) -> Suggestion:
+    async def from_id(
+        cls, suggestion_id: str, guild_id: int, state: State
+    ) -> Suggestion:
         """Returns a valid Suggestion instance from an id.
 
         Parameters
         ----------
         suggestion_id: str
             The suggestion we want
+        guild_id: int
+            The guild its meant to be in.
+            Secures against cross guild privledge escalation
         state: State
             Internal state to marshall data
 
@@ -159,7 +164,17 @@ class Suggestion:
             AQ(EQ("_id", suggestion_id))
         )
         if not suggestion:
-            raise SuggestionNotFound(f"No suggestion found with the id {suggestion_id}")
+            raise SuggestionNotFound(
+                f"No suggestion found with the id {suggestion_id} in this guild"
+            )
+
+        if suggestion.guild_id != guild_id:
+            log.critical(
+                "Someone in guild %s looked up a suggestion not from their guild"
+            )
+            raise SuggestionNotFound(
+                f"No suggestion found with the id {suggestion_id} in this guild"
+            )
 
         return suggestion
 

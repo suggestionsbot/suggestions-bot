@@ -164,7 +164,9 @@ class SuggestionsCog(commands.Cog):
         log.warning(0)
         await interaction.response.defer(ephemeral=True)
         log.warning(1)
-        suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, interaction.guild_id, self.state
+        )
         log.warning(2)
         await suggestion.try_delete(self.bot, interaction)
         log.warning(3)
@@ -226,7 +228,9 @@ class SuggestionsCog(commands.Cog):
         log.warning(0)
         await interaction.response.defer(ephemeral=True)
         log.warning(1)
-        suggestion: Suggestion = await Suggestion.from_id(suggestion_id, self.state)
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, interaction.guild_id, self.state
+        )
         log.warning(2)
         await suggestion.try_delete(self.bot, interaction)
         log.warning(3)
