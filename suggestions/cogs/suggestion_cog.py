@@ -59,14 +59,18 @@ class SuggestionsCog(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        log.warning(4)
-        channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-            guild_config.suggestions_channel_id
-        )
-        log.warning(5)
-        message: disnake.Message = await channel.send(
-            embed=await suggestion.as_embed(self.bot)
-        )
+        try:
+            log.warning(4)
+            channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+                guild_config.suggestions_channel_id
+            )
+            log.warning(5)
+            message: disnake.Message = await channel.send(
+                embed=await suggestion.as_embed(self.bot)
+            )
+        except disnake.Forbidden as e:
+            await self.suggestions_db.delete(suggestion.as_filter())
+            raise
         log.warning(6)
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
