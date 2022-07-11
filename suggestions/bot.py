@@ -251,11 +251,25 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
-            return
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "You do not have permission to run this command.",
+                    error_code=ErrorCode.OWNER_ONLY,
+                ),
+                ephemeral=True,
+            )
 
         elif isinstance(exception, disnake.Forbidden):
-            log.debug("disnake.Forbidden: %s", exception.text)
-            return
+            return await interaction.send(
+                embed=self.error_embed(
+                    exception.text,
+                    "Looks like something went wrong. "
+                    "Please make sure I have all the correct permissions in your configured channels..",
+                    error_code=ErrorCode.GENERIC_FORBIDDEN,
+                ),
+                ephemeral=True,
+            )
 
         elif isinstance(exception, disnake.HTTPException):
             if exception.code == 40060:
@@ -263,6 +277,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "disnake.HTTPException: Interaction has already been acknowledged"
                 )
                 return
+
+        if interaction.deferred_without_send:
+            # Fix "Bot is thinking" hanging on edge cases...
+            await interaction.send(
+                embed=self.error_embed(
+                    "Something went wrong",
+                    "Please contact support.",
+                    error_code=ErrorCode.UNHANDLED_ERROR,
+                ),
+                ephemeral=True,
+            )
 
         raise exception
 

@@ -27,7 +27,7 @@ load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(levelname)-7s | %(asctime)s | %(filename)18s:%(funcName)-21s | %(message)s",
+    format="%(levelname)-7s | %(asctime)s | %(filename)19s:%(funcName)-23s | %(message)s",
     datefmt="%d/%m/%Y %I:%M:%S %p",
 )
 

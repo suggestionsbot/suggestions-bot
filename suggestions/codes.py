@@ -13,6 +13,8 @@ class ErrorCode(IntEnum):
     SUGGESTION_CONTENT_TOO_LONG = 7
     INVALID_GUILD_CONFIG_CHOICE = 8
     COMMAND_ON_COOLDOWN = 9
+    GENERIC_FORBIDDEN = 10
+    UNHANDLED_ERROR = 11
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
