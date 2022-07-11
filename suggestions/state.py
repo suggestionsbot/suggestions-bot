@@ -35,6 +35,8 @@ class State:
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
         self.existing_suggestion_ids: Set[str] = set()
+
+        # TODO Move these to a TTL cache
         self.guild_configs: Dict[int, GuildConfig] = {}
         self.user_configs: Dict[int, UserConfig] = {}
 
