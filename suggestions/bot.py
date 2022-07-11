@@ -262,7 +262,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             )
 
         elif isinstance(exception, commands.NotOwner):
-            return await interaction.send(
+            await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
                     "You do not have permission to run this command.",
@@ -270,6 +270,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ),
                 ephemeral=True,
             )
+            raise exception
 
         elif isinstance(exception, disnake.HTTPException):
             if exception.code == 40060:
