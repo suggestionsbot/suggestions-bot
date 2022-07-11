@@ -11,10 +11,11 @@ from alaric.comparison import EQ
 from bot_base.wraps import WrappedChannel
 from disnake import Embed
 
+from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
 
 if TYPE_CHECKING:
-    from suggestions import SuggestionsBot, State, Colors, ErrorCode
+    from suggestions import SuggestionsBot, State, Colors
 
 log = logging.getLogger(__name__)
 
