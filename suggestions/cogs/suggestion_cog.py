@@ -91,9 +91,11 @@ class SuggestionsCog(commands.Cog):
             try:
                 await message.delete()
             except disnake.Forbidden:
+                log.warning("8.1.1")
                 raise commands.MissingPermissions(
                     missing_permissions=["Add Reactions", "Manage Messages"]
                 )
+            log.warning("8.1.2")
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
         except disnake.HTTPException as e:
             log.warning(8.2)
@@ -101,9 +103,11 @@ class SuggestionsCog(commands.Cog):
             try:
                 await message.delete()
             except disnake.Forbidden:
+                log.warning("8.2.1")
                 raise commands.MissingPermissions(
                     missing_permissions=["Use External Emojis", "Manage Messages"]
                 )
+            log.warning("8.2.2")
             raise commands.MissingPermissions(
                 missing_permissions=["Use External Emojis"]
             )

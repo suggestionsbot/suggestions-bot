@@ -209,16 +209,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
-        elif isinstance(exception, commands.NotOwner):
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "You do not have permission to run this command.",
-                    error_code=ErrorCode.OWNER_ONLY,
-                ),
-                ephemeral=True,
-            )
-
         elif isinstance(exception, SuggestionTooLong):
             return await interaction.send(
                 embed=self.error_embed(
@@ -267,6 +257,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Looks like something went wrong. "
                     "Please make sure I have all the correct permissions in your configured channels.",
                     error_code=ErrorCode.GENERIC_FORBIDDEN,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, commands.NotOwner):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "You do not have permission to run this command.",
+                    error_code=ErrorCode.OWNER_ONLY,
                 ),
                 ephemeral=True,
             )
