@@ -345,6 +345,11 @@ class Suggestion:
                 elif str(reaction.emoji) == str(default_down_vote):
                     self.total_down_votes = reaction.count - 1
 
+            if self.total_up_votes is None or self.total_down_votes is None:
+                log.error(
+                    "Failed to find our emojis on suggestion %s", self.suggestion_id
+                )
+
         await message.delete()
 
         self.message_id = None
