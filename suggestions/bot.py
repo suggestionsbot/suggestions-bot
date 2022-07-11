@@ -265,7 +265,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 embed=self.error_embed(
                     exception.text,
                     "Looks like something went wrong. "
-                    "Please make sure I have all the correct permissions in your configured channels..",
+                    "Please make sure I have all the correct permissions in your configured channels.",
                     error_code=ErrorCode.GENERIC_FORBIDDEN,
                 ),
                 ephemeral=True,
