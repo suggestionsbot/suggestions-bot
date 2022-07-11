@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class ConfigCog(commands.Cog):
+class GuildConfigCog(commands.Cog):
     def __init__(self, bot):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
@@ -165,4 +165,4 @@ class ConfigCog(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(ConfigCog(bot))
+    bot.add_cog(GuildConfigCog(bot))

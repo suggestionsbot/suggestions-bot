@@ -12,7 +12,7 @@ from disnake.ext import commands
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong
-from suggestions.objects import Suggestion, GuildConfig
+from suggestions.objects import Suggestion, GuildConfig, UserConfig
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -108,8 +108,6 @@ class SuggestionsCog(commands.Cog):
                 missing_permissions=["Use External Emojis"]
             )
         log.warning(9)
-        await interaction.send("Thanks for your suggestion!", ephemeral=True)
-        log.warning(10)
         try:
             embed: disnake.Embed = disnake.Embed(
                 description=f"Hey, {interaction.author.mention}. Your suggestion has been sent "
@@ -119,21 +117,31 @@ class SuggestionsCog(commands.Cog):
                 timestamp=self.state.now,
                 color=self.bot.colors.embed_color,
             )
-            log.warning(11)
+            log.warning(10)
             try:
                 embed.set_author(
                     name=guild.name,
                     icon_url=guild.icon.url,
                 )
-                log.warning(11.1)
+                log.warning(10.1)
             except AttributeError:
-                log.warning(11.2)
+                log.warning(10.2)
                 pass
             embed.set_footer(
                 text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
             )
-            log.warning(12)
-            await interaction.author.send(embed=embed)
+            log.warning(11)
+            user_config: UserConfig = await UserConfig.from_id(
+                interaction.author.id, self.bot.state
+            )
+            if user_config.dm_messages_disabled:
+                log.warning(12.1)
+                await interaction.send(embed=embed, ephemeral=True)
+            else:
+                log.warning(12.2)
+                await interaction.send("Thanks for your suggestion!", ephemeral=True)
+                log.warning(12.3)
+                await interaction.author.send(embed=embed)
             log.warning(13)
         except disnake.HTTPException as e:
             log.debug(

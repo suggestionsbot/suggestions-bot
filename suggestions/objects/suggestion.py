@@ -13,6 +13,7 @@ from disnake import Embed
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
+from suggestions.objects import UserConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
@@ -357,6 +358,17 @@ class Suggestion:
         await bot.db.suggestions.update(self, self)
 
     async def try_notify_user_of_decision(self, bot: SuggestionsBot):
+        user_config: UserConfig = await UserConfig.from_id(
+            self.suggestion_author_id, bot.state
+        )
+        if user_config.dm_messages_disabled:
+            log.debug(
+                "User %s has dm messages disabled, failed to notify change to suggestion %s",
+                self.suggestion_author_id,
+                self.suggestion_id,
+            )
+            return
+
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
         guild = await bot.fetch_guild(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
@@ -375,4 +387,4 @@ class Suggestion:
         try:
             await user.send(embed=embed)
         except disnake.HTTPException:
-            log.debug("Failed to dm %s to tell them about there suggestion", user.id)
+            log.debug("Failed to dm %s to tell them about their suggestion", user.id)

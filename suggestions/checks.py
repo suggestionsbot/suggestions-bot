@@ -21,17 +21,17 @@ if TYPE_CHECKING:
 async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[GuildConfig]:
     guild_id: int = interaction.guild_id
     suggestions: SuggestionsBot = interaction.client  # type: ignore
-    if guild_id not in suggestions.state.guilds_configs:
+    if guild_id not in suggestions.state.guild_configs:
         guild_exists: Optional[GuildConfig] = await suggestions.db.guild_configs.find(
             AQ(EQ("_id", interaction.guild_id))
         )
         if bool(guild_exists):
-            suggestions.state.guilds_configs[guild_id] = guild_exists
+            suggestions.state.guild_configs[guild_id] = guild_exists
 
-    if guild_id not in suggestions.state.guilds_configs:
+    if guild_id not in suggestions.state.guild_configs:
         return None
 
-    return suggestions.state.guilds_configs[guild_id]
+    return suggestions.state.guild_configs[guild_id]
 
 
 def ensure_guild_has_beta():

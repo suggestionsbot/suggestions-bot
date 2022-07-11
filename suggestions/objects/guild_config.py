@@ -44,16 +44,17 @@ class GuildConfig:
         GuildConfig
             The valid guilds config
         """
-        if guild_id in state.guilds_configs:
-            return state.guilds_configs[guild_id]
+        if guild_id in state.guild_configs:
+            return state.guild_configs[guild_id]
 
         guild_config: Optional[GuildConfig] = await state.guild_config_db.find(
             AQ(EQ("_id", guild_id))
         )
         if not guild_config:
             log.info("Created new GuildConfig for %s", guild_id)
-            return GuildConfig(_id=guild_id)
+            guild_config = cls(_id=guild_id)
 
+        state.refresh_guild_config(guild_config)
         return guild_config
 
     def as_dict(self) -> Dict:

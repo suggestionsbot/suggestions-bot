@@ -15,7 +15,7 @@ from alaric.projections import PROJECTION, SHOW
 from bot_base import NonExistentEntry
 from bot_base.caches import TimedCache
 
-from suggestions.objects import GuildConfig
+from suggestions.objects import GuildConfig, UserConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
@@ -35,7 +35,8 @@ class State:
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
         self.existing_suggestion_ids: Set[str] = set()
-        self.guilds_configs: Dict[int, GuildConfig] = {}
+        self.guild_configs: Dict[int, GuildConfig] = {}
+        self.user_configs: Dict[int, UserConfig] = {}
 
         self._background_tasks: list[asyncio.Task] = []
 
@@ -65,6 +66,10 @@ class State:
         return self.database.guild_configs
 
     @property
+    def user_config_db(self) -> Document:
+        return self.database.user_configs
+
+    @property
     def now(self) -> datetime.datetime:
         return datetime.datetime.now()
 
@@ -76,7 +81,10 @@ class State:
         self.is_closing = True
 
     def refresh_guild_config(self, guild_config: GuildConfig) -> None:
-        self.guilds_configs[guild_config.guild_id] = guild_config
+        self.guild_configs[guild_config.guild_id] = guild_config
+
+    def refresh_user_config(self, user_config: UserConfig) -> None:
+        self.user_configs[user_config.user_id] = user_config
 
     async def populate_sid_cache(self, guild_id: int) -> list:
         """Populates a guilds current active suggestion ids"""
@@ -152,7 +160,11 @@ class State:
         # Populate existing guilds
         guilds: List[GuildConfig] = await self.guild_config_db.get_all()
         for guild in guilds:
-            self.guilds_configs[guild.guild_id] = guild
+            self.refresh_guild_config(guild)
+
+        users: List[UserConfig] = await self.user_config_db.get_all()
+        for user in users:
+            self.refresh_user_config(user)
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""
