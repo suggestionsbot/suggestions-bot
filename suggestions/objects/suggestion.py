@@ -13,7 +13,7 @@ from disnake import Embed
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
-from suggestions.objects import UserConfig
+from suggestions.objects import UserConfig, GuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
@@ -364,6 +364,16 @@ class Suggestion:
         if user_config.dm_messages_disabled:
             log.debug(
                 "User %s has dm messages disabled, failed to notify change to suggestion %s",
+                self.suggestion_author_id,
+                self.suggestion_id,
+            )
+            return
+
+        guild_config: GuildConfig = await GuildConfig.from_id(self.guild_id, bot.state)
+        if guild_config.dm_messages_disabled:
+            log.debug(
+                "Guild %s has dm messages disabled, failed to notify user %s regarding changes to suggestion %s",
+                self.guild_id,
                 self.suggestion_author_id,
                 self.suggestion_id,
             )

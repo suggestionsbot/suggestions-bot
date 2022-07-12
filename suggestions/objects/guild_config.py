@@ -16,11 +16,13 @@ class GuildConfig:
     def __init__(
         self,
         _id: int,
+        dm_messages_disabled: bool = False,
         log_channel_id: Optional[int] = None,
         suggestions_channel_id: Optional[int] = None,
         **kwargs,
     ):
         self._id: int = _id
+        self.dm_messages_disabled: bool = dm_messages_disabled
         self.log_channel_id: Optional[int] = log_channel_id
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
 
@@ -61,6 +63,7 @@ class GuildConfig:
         return {
             "_id": self.guild_id,
             "log_channel_id": self.log_channel_id,
+            "dm_messages_disabled": self.dm_messages_disabled,
             "suggestions_channel_id": self.suggestions_channel_id,
         }
 

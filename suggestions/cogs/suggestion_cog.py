@@ -139,7 +139,7 @@ class SuggestionsCog(commands.Cog):
             user_config: UserConfig = await UserConfig.from_id(
                 interaction.author.id, self.bot.state
             )
-            if user_config.dm_messages_disabled:
+            if user_config.dm_messages_disabled or guild_config.dm_messages_disabled:
                 log.warning(12.1)
                 await interaction.send(embed=embed, ephemeral=True)
             else:

@@ -39,7 +39,7 @@ class UserConfigCog(commands.Cog):
         user_config.dm_messages_disabled = False
         await self.bot.db.user_configs.upsert(user_config, user_config)
         await interaction.send("I have enabled DM messages for you.", ephemeral=True)
-        log.debug("Enabled DM messages for %s", interaction.author.id)
+        log.debug("Enabled DM messages for user %s", interaction.author.id)
 
     @dm.sub_command()
     async def disable(self, interaction: disnake.CommandInteraction):
@@ -50,7 +50,7 @@ class UserConfigCog(commands.Cog):
         user_config.dm_messages_disabled = True
         await self.bot.db.user_configs.upsert(user_config, user_config)
         await interaction.send("I have disabled DM messages for you.", ephemeral=True)
-        log.debug("Disabled DM messages for %s", interaction.author.id)
+        log.debug("Disabled DM messages for user %s", interaction.author.id)
 
     @dm.sub_command()
     async def view(self, interaction: disnake.CommandInteraction):

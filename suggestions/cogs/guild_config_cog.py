@@ -90,7 +90,7 @@ class GuildConfigCog(commands.Cog):
         interaction: disnake.GuildCommandInteraction,
         config=commands.Param(
             description="The optional configuration to view",
-            choices=["Log channel", "Suggestions channel"],
+            choices=["Log channel", "Suggestions channel", "Dm responses"],
             default=None,
         ),
     ):
@@ -124,6 +124,12 @@ class GuildConfigCog(commands.Cog):
             )
             embed.description += suggestions_channel
 
+        elif config == "Dm responses":
+            dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
+            embed.description += (
+                f"Dm responses: I {dm_responses} DM users on actions such as suggest"
+            )
+
         else:
             raise InvalidGuildConfigOption
 
@@ -149,10 +155,11 @@ class GuildConfigCog(commands.Cog):
             if guild_config.suggestions_channel_id
             else "Not set"
         )
+        dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
         guild = await self.bot.fetch_guild(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
-            f"Log channel: {log_channel}",
+            f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=guild.icon.url)
@@ -162,6 +169,36 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             interaction.guild_id,
         )
+
+    @config.sub_command_group()
+    async def dm(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @dm.sub_command()
+    async def enable(self, interaction: disnake.GuildCommandInteraction):
+        """Enable DM's responses to actions guild wide."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.dm_messages_disabled = False
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "I have enabled DM messages for this guild.", ephemeral=True
+        )
+        log.debug("Enabled DM messages for guild %s", interaction.guild_id)
+
+    @dm.sub_command()
+    async def disable(self, interaction: disnake.GuildCommandInteraction):
+        """Disable DM's responses to actions guild wide."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.dm_messages_disabled = True
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "I have disabled DM messages for this guild.", ephemeral=True
+        )
+        log.debug("Disabled DM messages for guild %s", interaction.guild_id)
 
 
 def setup(bot):
