@@ -180,7 +180,13 @@ async def run_bot():
         """Activate beta for your guild."""
         await interaction.response.defer(ephemeral=True)
         main_guild = await bot.fetch_guild(bot.main_guild_id)
-        member = await main_guild.fetch_member(interaction.author.id)
+        try:
+            member = await main_guild.fetch_member(interaction.author.id)
+        except disnake.NotFound:
+            return await interaction.send(
+                "Looks like you aren't in our support discord.", ephemeral=True
+            )
+
         role_ids: List[int] = [role.id for role in member.roles]
         if bot.beta_role_id not in role_ids:
             return await interaction.send(
