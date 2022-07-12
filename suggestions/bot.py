@@ -244,8 +244,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
-                    "You do not have permission to run this command.",
-                    error_code=ErrorCode.OWNER_ONLY,
+                    "Failed to find data, are you sure everything is setup correct?",
+                    error_code=ErrorCode.GENERIC_NOT_FOUND,
                 ),
                 ephemeral=True,
             )

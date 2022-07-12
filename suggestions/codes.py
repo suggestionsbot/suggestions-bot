@@ -15,6 +15,7 @@ class ErrorCode(IntEnum):
     COMMAND_ON_COOLDOWN = 9
     GENERIC_FORBIDDEN = 10
     UNHANDLED_ERROR = 11
+    GENERIC_NOT_FOUND = 12
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
