@@ -238,7 +238,11 @@ async def run_bot():
         if bot.is_prod:
             # We need to notify other clusters to shut down
             await bot.db.cluster_shutdown_requests.insert(
-                {"responded_clusters": [bot.cluster_id], "timestamp": bot.state.now}
+                {
+                    "responded_clusters": [bot.cluster_id],
+                    "timestamp": bot.state.now,
+                    "issuer_cluster_id": bot.cluster_id,
+                }
             )
 
         await bot.graceful_shutdown()

@@ -322,14 +322,24 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             await self.wait_until_ready()
 
             while not state.is_closing:
-                entry = await self.db.cluster_shutdown_requests.find(
-                    NEGATE(EQ("responded_clusters", self.cluster_id))
+                cursor = (
+                    self.db.cluster_guild_counts.raw_collection.find({})
+                    .sort("timestamp", -1)
+                    .limit(1)
                 )
-                if not entry:
+                items = await cursor.to_list(1)
+                entry = items[0]
+                if not entry or (
+                    entry and self.cluster_id in entry["responded_clusters"]
+                ):
                     await self.sleep_with_condition(15, self.state.is_closing)
                     continue
 
                 # We need to respond
+                log.info(
+                    "Received request to shutdown from cluster %s",
+                    entry["issuer_cluster_id"],
+                )
                 entry["responded_clusters"].append(self.cluster_id)
                 await self.db.cluster_shutdown_requests.upsert(entry["_id"], entry)
                 break

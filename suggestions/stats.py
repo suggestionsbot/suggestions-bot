@@ -62,6 +62,19 @@ class Stats:
         return total_count
 
     async def load(self):
+        query = EQ("cluster_id", self.bot.cluster_id)
+        cursor = (
+            self.database.cluster_guild_counts.raw_collection.find(query.build())
+            .sort("timestamp", -1)
+            .limit(1)
+        )
+        items = await cursor.to_list(1)
+        entry: Dict[
+            Literal["cluster_id", "_id", "guild_count", "timestamp"],
+            Union[int, ObjectId, datetime.datetime],
+        ] = items[0]
+        self._old_guild_count = entry["guild_count"]
+
         task_1 = asyncio.create_task(self.push_stats())
         self.state.add_background_task(task_1)
 
