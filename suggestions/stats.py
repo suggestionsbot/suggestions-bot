@@ -37,7 +37,7 @@ class Stats:
         raw_collection: AsyncIOMotorCollection = (
             self.database.cluster_guild_counts.raw_collection
         )
-        total_cluster_count = math.ceil(self.bot.total_shards / 10)
+        total_cluster_count = self.bot.total_cluster_count
         for i in range(1, total_cluster_count + 1):
             if i not in self.cluster_guild_cache:
                 query = EQ("cluster_id", i)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+import math
 import os
 from pathlib import Path
 from typing import Type, Optional
@@ -62,6 +63,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         # Sharding info
         self.cluster_id: int = kwargs.get("cluster", 0)
         self.total_shards: int = kwargs.get("shard_count", 0)
+
+    @property
+    def total_cluster_count(self) -> int:
+        return math.ceil(self.total_shards / 10)
 
     def error_embed(
         self,
