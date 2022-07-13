@@ -306,20 +306,22 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         This can take up to a minute.
         """
+        log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")
         await self.close()
 
     async def watch_for_shutdown_request(self):
-        if not self.is_prod:
-            log.info("Not watching for shutdown as not on prod")
-            return
+        # if not self.is_prod:
+        #     log.info("Not watching for shutdown as not on prod")
+        #     return
 
         state: State = self.state
 
         async def process_watch_for_shutdown():
             await self.wait_until_ready()
+            log.debug("Started listening for shutdown requests")
 
             while not state.is_closing:
                 cursor = (
@@ -328,11 +330,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     .limit(1)
                 )
                 items = await cursor.to_list(1)
+                if not items:
+                    await self.sleep_with_condition(15, lambda: self.state.is_closing)
+                    continue
+
                 entry = items[0]
                 if not entry or (
                     entry and self.cluster_id in entry["responded_clusters"]
                 ):
-                    await self.sleep_with_condition(15, self.state.is_closing)
+                    await self.sleep_with_condition(15, lambda: self.state.is_closing)
                     continue
 
                 # We need to respond
@@ -341,14 +347,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     entry["issuer_cluster_id"],
                 )
                 entry["responded_clusters"].append(self.cluster_id)
-                await self.db.cluster_shutdown_requests.upsert(entry["_id"], entry)
+                await self.db.cluster_shutdown_requests.upsert(
+                    {"_id": entry["_id"]}, entry
+                )
+                state.remove_background_task(process_watch_for_shutdown.__task)
                 break
 
             asyncio.create_task(self.graceful_shutdown())
 
         task_1 = asyncio.create_task(process_watch_for_shutdown())
+        process_watch_for_shutdown.__task = task_1
         state.add_background_task(task_1)
-        log.info("Starting watching for shutdown requests")
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""

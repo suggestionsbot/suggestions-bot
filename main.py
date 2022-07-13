@@ -244,6 +244,7 @@ async def run_bot():
                     "issuer_cluster_id": bot.cluster_id,
                 }
             )
+            log.info("Notified other clusters to shutdown")
 
         await bot.graceful_shutdown()
 

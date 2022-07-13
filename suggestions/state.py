@@ -30,7 +30,7 @@ class State:
 
     def __init__(self, database: SuggestionsMongoManager, bot: SuggestionsBot):
         self.bot: SuggestionsBot = bot
-        self.is_closing: bool = False
+        self._is_closing: bool = False
         self.database: SuggestionsMongoManager = database
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
@@ -41,6 +41,14 @@ class State:
         self.user_configs: Dict[int, UserConfig] = {}
 
         self._background_tasks: list[asyncio.Task] = []
+
+    @property
+    def is_closing(self) -> bool:
+        return self._is_closing
+
+    @is_closing.setter
+    def is_closing(self, value):
+        self._is_closing = value
 
     def get_new_suggestion_id(self) -> str:
         """Generate a new SID, ensuring uniqueness."""
@@ -58,6 +66,9 @@ class State:
 
     def add_background_task(self, task: asyncio.Task) -> None:
         self._background_tasks.append(task)
+
+    def remove_background_task(self, task: asyncio.Task) -> None:
+        self._background_tasks.remove(task)
 
     @property
     def suggestions_db(self) -> Document:
