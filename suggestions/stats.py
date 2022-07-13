@@ -84,7 +84,7 @@ class Stats:
     async def push_stats(self):
         while not self.state.is_closing:
             current_count = len(self.bot.guilds)
-            if current_count != self._old_guild_count:
+            if current_count != self._old_guild_count and current_count != 0:
                 # Let's actually change it
                 await self.database.cluster_guild_counts.insert(
                     {
