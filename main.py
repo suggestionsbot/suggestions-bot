@@ -261,6 +261,19 @@ async def run_bot():
     except Exception as e:
         pass  # doesn't work on windows
 
+    # Make sure we don't shutdown due to a previous shutdown request
+    cursor = (
+        bot.db.cluster_shutdown_requests.raw_collection.find({})
+        .sort("timestamp", -1)
+        .limit(1)
+    )
+    items = await cursor.to_list(1)
+    if items:
+        entry = items[0]
+        entry["responded_clusters"].append(bot.cluster_id)
+        await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
+        log.debug("Marked old shutdown request as satisfied")
+
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
     await bot.start(TOKEN)
