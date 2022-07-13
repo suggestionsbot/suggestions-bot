@@ -47,11 +47,28 @@ suggestions_logger.setLevel(logging.DEBUG)
 
 
 async def run_bot():
+    log = logging.getLogger(__name__)
     intents = disnake.Intents.none()
-    # intents.guilds = True  # noqa
-    # intents.members = True  # noqa
-    # intents.messages = True  # noqa
-    # intents.message_content = True  # noqa
+    is_prod: bool = True if os.environ.get("PROD", None) else False
+
+    if is_prod:
+        total_shards = 53
+        offset = int(os.environ["CLUSTER"]) - 1
+        num_shards = 10
+        shard_ids = [
+            i
+            for i in range(offset * num_shards, (offset * num_shards) + num_shards)
+            if i < total_shards
+        ]
+
+        args = {
+            "shard_count": total_shards,
+            "cluster": offset,
+            "shard_ids": shard_ids,
+        }
+        log.info("Cluster %s - Handling shards %s", offset, shard_ids)
+    else:
+        args = {}
 
     bot = SuggestionsBot(
         intents=intents,
@@ -61,6 +78,7 @@ async def run_bot():
         load_builtin_commands=True,
         chunk_guilds_at_startup=False,
         member_cache_flags=disnake.MemberCacheFlags.none(),
+        **args,
     )
     if not bot.is_prod:
         bot._test_guilds = [737166408525283348]
@@ -96,19 +114,20 @@ async def run_bot():
 
     @bot.slash_command()
     @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
-    async def stats(interaction: disnake.ApplicationCommandInteraction):
+    async def stats(interaction: disnake.GuildCommandInteraction):
         """Get bot stats!"""
-        package_version = disnake.__version__
+        shard_id = (interaction.guild_id >> 22) % bot.total_shards
         python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
         embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color, timestamp=bot.state.now
         )
-        embed.add_field(name="Guilds", value=len(bot.guilds))
+        embed.add_field(name="Cluster Guilds", value=len(bot.guilds))
         embed.add_field(name="Shards", value=len(bot.shards))
         embed.add_field(name="Uptime", value=bot.get_uptime())
         embed.add_field(name="Disnake", value="Custom fork")
         embed.add_field(name="Python", value=python_version)
         embed.add_field(name="Version", value=bot.version)
+        embed.set_footer(text=f"Cluster {bot.cluster} - Shard {shard_id}")
 
         await interaction.send(embed=embed, ephemeral=False)
         log.debug("User %s viewed stats", interaction.author.id)

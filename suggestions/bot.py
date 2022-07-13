@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Beta Release 1.0.10"
+        self.version: str = "Beta Release 1.1.0"
         self.main_guild_id: int = 601219766258106399
         self.beta_role_id: int = 995588041991274547
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
@@ -57,12 +57,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             "vote",
         }
         self.converted_prefix_commands: set[str] = {"suggest", "approve", "reject"}
-        super().__init__(
-            *args,
-            **kwargs,
-            leave_db=True,
-            do_command_stats=False,
-        )
+        super().__init__(*args, **kwargs, leave_db=True, do_command_stats=False)
+
+        # Sharding info
+        self.cluster: int = kwargs.get("cluster", 0)
+        self.total_shards: int = kwargs.get("shard_count", 0)
 
     async def on_command_completion(self, ctx: BotContext) -> None:
         if ctx.command.qualified_name == "logout":
