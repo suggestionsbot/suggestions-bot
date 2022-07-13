@@ -112,7 +112,8 @@ async def run_bot():
         embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color, timestamp=bot.state.now
         )
-        embed.add_field(name="Cluster Guilds", value=len(bot.guilds))
+        guilds: int = await bot.stats.fetch_global_guild_count()
+        embed.add_field(name="Guilds", value=guilds)
         embed.add_field(name="Total shards", value=bot.total_shards)
         embed.add_field(name="Uptime", value=bot.get_uptime())
         embed.add_field(name="Disnake", value="Custom fork")
@@ -253,9 +254,11 @@ async def run_bot():
     except Exception as e:
         pass  # doesn't work on windows
 
+    await bot.stats.fetch_global_guild_count()
+
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
-    await bot.start(TOKEN)
+    # await bot.start(TOKEN)
 
 
 asyncio.run(run_bot())

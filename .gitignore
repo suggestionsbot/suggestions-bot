@@ -1,3 +1,4 @@
+*.pyi
 .env
 *.json
 !/tests/raw.json

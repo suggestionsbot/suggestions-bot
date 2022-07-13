@@ -39,8 +39,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
         self.colors: Type[Colors] = Colors
-        self.stats: Stats = Stats(self)
         self.state: State = State(self.db, self)
+        self.stats: Stats = Stats(self)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",

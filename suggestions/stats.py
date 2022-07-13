@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import logging
-from typing import TYPE_CHECKING, Optional
+import math
+from typing import TYPE_CHECKING, Optional, Dict, Literal, Union
 
-from suggestions import State, SuggestionsBot
+from alaric.comparison import EQ
+from alaric.types import ObjectId
+from bot_base.caches import TimedCache
+from motor.motor_asyncio import AsyncIOMotorCollection
+
 
 if TYPE_CHECKING:
+    from suggestions import State, SuggestionsBot
     from suggestions.database import SuggestionsMongoManager
 
 log = logging.getLogger(__name__)
@@ -20,6 +27,39 @@ class Stats:
         self.bot: SuggestionsBot = bot
         self.database: SuggestionsMongoManager = bot.db
         self._old_guild_count: Optional[int] = None
+        self.cluster_guild_cache: TimedCache = TimedCache()
+
+    async def fetch_global_guild_count(self) -> int:
+        if not self.bot.is_prod:
+            return len(self.bot.guilds)
+
+        total_count: int = 0
+        raw_collection: AsyncIOMotorCollection = (
+            self.database.cluster_guild_counts.raw_collection
+        )
+        total_cluster_count = math.ceil(self.bot.total_shards / 10)
+        for i in range(1, total_cluster_count + 1):
+            if i not in self.cluster_guild_cache:
+                query = EQ("cluster_id", i)
+                cursor = (
+                    raw_collection.find(query.build()).sort("timestamp", -1).limit(1)
+                )
+                items = await cursor.to_list(1)  # Known to be one
+                entry: Dict[
+                    Literal["cluster_id", "_id", "guild_count", "timestamp"],
+                    Union[int, ObjectId, datetime.datetime],
+                ] = items[0]
+                self.cluster_guild_cache.add_entry(
+                    i,
+                    entry["guild_count"],
+                    ttl=datetime.timedelta(minutes=5),
+                )
+                total_count += entry["guild_count"]
+                continue
+
+            total_count += self.cluster_guild_cache.get_entry(i)
+
+        return total_count
 
     async def load(self):
         task_1 = asyncio.create_task(self.push_stats())
