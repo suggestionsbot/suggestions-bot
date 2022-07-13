@@ -4,6 +4,7 @@ import datetime
 import io
 import logging
 import os
+import signal
 import sys
 import textwrap
 from traceback import format_exception
@@ -98,17 +99,6 @@ async def run_bot():
         default_member_permissions=disnake.Permissions(administrator=True),
     )
     @commands.is_owner()
-    async def shutdown(interaction: disnake.ApplicationCommandInteraction):
-        """Gracefully shut the bot down."""
-        await interaction.send("Initiating shutdown now.", ephemeral=True)
-        await bot.graceful_shutdown()
-
-    @bot.slash_command(
-        dm_permission=False,
-        guild_ids=[601219766258106399, 737166408525283348],
-        default_member_permissions=disnake.Permissions(administrator=True),
-    )
-    @commands.is_owner()
     async def colors(interaction: disnake.ApplicationCommandInteraction):
         """Shows the bots color palette."""
         await bot.colors.show_colors(interaction)
@@ -128,7 +118,7 @@ async def run_bot():
         embed.add_field(name="Disnake", value="Custom fork")
         embed.add_field(name="Python", value=python_version)
         embed.add_field(name="Version", value=bot.version)
-        embed.set_footer(text=f"Cluster {bot.cluster} - Shard {shard_id}")
+        embed.set_footer(text=f"Cluster {bot.cluster_id} - Shard {shard_id}")
 
         await interaction.send(embed=embed, ephemeral=False)
         log.debug("User %s viewed stats", interaction.author.id)
@@ -236,7 +226,33 @@ async def run_bot():
             interaction.guild_id,
         )
 
-    # await bot.db.guild_configs.insert({"_id": 737166408525283348})
+    if not bot.is_prod:
+        # No point in a clustered environment unless we
+        # get some form of inter cluster chatter going
+        @bot.slash_command(
+            dm_permission=False,
+            guild_ids=[601219766258106399, 737166408525283348],
+            default_member_permissions=disnake.Permissions(administrator=True),
+        )
+        @commands.is_owner()
+        async def shutdown(interaction: disnake.ApplicationCommandInteraction):
+            """Gracefully shut the bot down."""
+            await interaction.send("Initiating shutdown now.", ephemeral=True)
+            await bot.graceful_shutdown()
+
+    async def graceful_shutdown(bot: SuggestionsBot, signame):
+        await bot.graceful_shutdown()
+
+    # https://github.com/gearbot/GearBot/blob/live/GearBot/GearBot.py#L206-L212
+    try:
+        for signame in ("SIGINT", "SIGTERM", "SIGKILL"):
+            asyncio.get_event_loop().add_signal_handler(
+                getattr(signal, signame),
+                lambda: asyncio.ensure_future(graceful_shutdown(bot, signame)),
+            )
+    except Exception as e:
+        pass  # doesn't work on windows
+
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
     await bot.start(TOKEN)

@@ -39,7 +39,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
         )
         self.colors: Type[Colors] = Colors
-        self.stats: Stats = Stats(self.db)
+        self.stats: Stats = Stats(self)
         self.state: State = State(self.db, self)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
@@ -60,15 +60,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         super().__init__(*args, **kwargs, leave_db=True, do_command_stats=False)
 
         # Sharding info
-        self.cluster: int = kwargs.get("cluster", 0)
+        self.cluster_id: int = kwargs.get("cluster", 0)
         self.total_shards: int = kwargs.get("shard_count", 0)
-
-    async def on_command_completion(self, ctx: BotContext) -> None:
-        if ctx.command.qualified_name == "logout":
-            return
-
-        self.stats.register_command_usage(ctx.command.qualified_name)
-        log.debug(f"Command executed: `{ctx.command.qualified_name}`")
 
     def error_embed(
         self,
@@ -293,6 +286,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def load(self):
         await self.state.load()
+        await self.stats.load()
         await self.update_bot_listings()
 
         count = 0

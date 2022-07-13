@@ -20,3 +20,4 @@ class SuggestionsMongoManager(MongoManager):
             self.db, "user_configs", converter=UserConfig
         )
         self.beta_links: Document = Document(self.db, "beta_links")
+        self.cluster_guild_counts: Document = Document(self.db, "cluster_guild_counts")
