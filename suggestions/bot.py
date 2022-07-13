@@ -9,6 +9,8 @@ from typing import Type, Optional
 
 import aiohttp
 import disnake
+from alaric.comparison import EQ
+from alaric.meta import NEGATE
 from cooldowns import CallableOnCooldown
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
@@ -288,6 +290,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
+        await self.watch_for_shutdown_request()
 
         count = 0
         extensions = Path("./suggestions/cogs").rglob("*.py")
@@ -308,6 +311,35 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.info("Shutting down")
         await self.close()
 
+    async def watch_for_shutdown_request(self):
+        if not self.is_prod:
+            log.info("Not watching for shutdown as not on prod")
+            return
+
+        state: State = self.state
+
+        async def process_watch_for_shutdown():
+            await self.wait_until_ready()
+
+            while not state.is_closing:
+                entry = await self.db.cluster_shutdown_requests.find(
+                    NEGATE(EQ("responded_clusters", self.cluster_id))
+                )
+                if not entry:
+                    await self.sleep_with_condition(15, self.state.is_closing)
+                    continue
+
+                # We need to respond
+                entry["responded_clusters"].append(self.cluster_id)
+                await self.db.cluster_shutdown_requests.upsert(entry["_id"], entry)
+                break
+
+            asyncio.create_task(self.graceful_shutdown())
+
+        task_1 = asyncio.create_task(process_watch_for_shutdown())
+        state.add_background_task(task_1)
+        log.info("Starting watching for shutdown requests")
+
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
         if not self.is_prod or 1 == 1:  # Disable for now
@@ -317,7 +349,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         state: State = self.state
         time_between_updates: datetime.timedelta = datetime.timedelta(minutes=30)
 
-        async def process():
+        async def process_update_bot_listings():
             await self.wait_until_ready()
 
             headers = {"Authorization": f'Bearer {os.environ["SUGGESTIONS_API_KEY"]}'}
@@ -343,6 +375,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     if state.is_closing:
                         return
 
-        task_1 = asyncio.create_task(process())
+        task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
         log.info("Setup bot listing updates")

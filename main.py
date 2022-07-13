@@ -226,19 +226,22 @@ async def run_bot():
             interaction.guild_id,
         )
 
-    if not bot.is_prod:
-        # No point in a clustered environment unless we
-        # get some form of inter cluster chatter going
-        @bot.slash_command(
-            dm_permission=False,
-            guild_ids=[601219766258106399, 737166408525283348],
-            default_member_permissions=disnake.Permissions(administrator=True),
-        )
-        @commands.is_owner()
-        async def shutdown(interaction: disnake.ApplicationCommandInteraction):
-            """Gracefully shut the bot down."""
-            await interaction.send("Initiating shutdown now.", ephemeral=True)
-            await bot.graceful_shutdown()
+    @bot.slash_command(
+        dm_permission=False,
+        guild_ids=[601219766258106399, 737166408525283348],
+        default_member_permissions=disnake.Permissions(administrator=True),
+    )
+    @commands.is_owner()
+    async def shutdown(interaction: disnake.ApplicationCommandInteraction):
+        """Gracefully shut the bot down."""
+        await interaction.send("Initiating shutdown now.", ephemeral=True)
+        if bot.is_prod:
+            # We need to notify other clusters to shut down
+            await bot.db.cluster_shutdown_requests.insert(
+                {"responded_clusters": [bot.cluster_id], "timestamp": bot.state.now}
+            )
+
+        await bot.graceful_shutdown()
 
     async def graceful_shutdown(bot: SuggestionsBot, signame):
         await bot.graceful_shutdown()

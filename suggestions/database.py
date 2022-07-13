@@ -21,3 +21,6 @@ class SuggestionsMongoManager(MongoManager):
         )
         self.beta_links: Document = Document(self.db, "beta_links")
         self.cluster_guild_counts: Document = Document(self.db, "cluster_guild_counts")
+        self.cluster_shutdown_requests: Document = Document(
+            self.db, "cluster_shutdown_requests"
+        )
