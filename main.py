@@ -114,7 +114,7 @@ async def run_bot():
         guilds: int = await bot.stats.fetch_global_guild_count()
         embed.add_field(name="Guilds", value=guilds)
         embed.add_field(name="Total shards", value=bot.total_shards)
-        embed.add_field(name="Uptime", value=bot.get_uptime())
+        embed.add_field(name="Cluster Uptime", value=bot.get_uptime())
         embed.add_field(name="Disnake", value="Custom fork")
         embed.add_field(name="Python", value=python_version)
         embed.add_field(name="Version", value=bot.version)
