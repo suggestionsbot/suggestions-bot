@@ -323,7 +323,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
             while not state.is_closing:
                 cursor = (
-                    self.db.cluster_guild_counts.raw_collection.find({})
+                    self.db.cluster_shutdown_requests.raw_collection.find({})
                     .sort("timestamp", -1)
                     .limit(1)
                 )
