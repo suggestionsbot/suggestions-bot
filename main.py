@@ -298,9 +298,10 @@ async def run_bot():
     items = await cursor.to_list(1)
     if items:
         entry = items[0]
-        entry["responded_clusters"].append(bot.cluster_id)
-        await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
-        log.debug("Marked old shutdown request as satisfied")
+        if bot.cluster_id not in entry["responded_clusters"]:
+            entry["responded_clusters"].append(bot.cluster_id)
+            await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
+            log.debug("Marked old shutdown request as satisfied")
 
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
