@@ -61,12 +61,13 @@ async def run_bot():
             if i < total_shards
         ]
 
+        cluster_id = offset + 1
         args = {
             "shard_count": total_shards,
-            "cluster": offset,
+            "cluster": cluster_id,
             "shard_ids": shard_ids,
         }
-        log.info("Cluster %s - Handling shards %s", offset, shard_ids)
+        log.info("Cluster %s - Handling shards %s", cluster_id, shard_ids)
     else:
         args = {}
 
