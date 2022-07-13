@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import datetime
 import io
 import logging
 import os
@@ -254,11 +253,9 @@ async def run_bot():
     except Exception as e:
         pass  # doesn't work on windows
 
-    await bot.stats.fetch_global_guild_count()
-
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
-    # await bot.start(TOKEN)
+    await bot.start(TOKEN)
 
 
 asyncio.run(run_bot())
