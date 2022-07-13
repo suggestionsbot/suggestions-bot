@@ -9,8 +9,6 @@ from typing import Type, Optional
 
 import aiohttp
 import disnake
-from alaric.comparison import EQ
-from alaric.meta import NEGATE
 from cooldowns import CallableOnCooldown
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
@@ -33,7 +31,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Beta Release 1.1.0"
+        self.version: str = "Beta Release 1.1.1"
         self.main_guild_id: int = 601219766258106399
         self.beta_role_id: int = 995588041991274547
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
