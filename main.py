@@ -123,7 +123,7 @@ async def run_bot():
             color=bot.colors.embed_color, timestamp=bot.state.now
         )
         embed.add_field(name="Cluster Guilds", value=len(bot.guilds))
-        embed.add_field(name="Shards", value=len(bot.shards))
+        embed.add_field(name="Total shards", value=bot.total_shards)
         embed.add_field(name="Uptime", value=bot.get_uptime())
         embed.add_field(name="Disnake", value="Custom fork")
         embed.add_field(name="Python", value=python_version)
