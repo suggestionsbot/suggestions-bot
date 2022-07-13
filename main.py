@@ -260,14 +260,21 @@ async def run_bot():
             # so only the one we want shuts down
             responded_clusters = list(range(1, 7))
             responded_clusters.remove(cluster_id)
-
-        else:
-            responded_clusters = [bot.cluster_id]
+            await bot.db.cluster_shutdown_requests.insert(
+                {
+                    "responded_clusters": responded_clusters,
+                    "timestamp": bot.state.now,
+                    "issuer_cluster_id": bot.cluster_id,
+                }
+            )
+            log.info("Asked cluster %s to shut down", cluster_id)
+            return
 
         # We need to notify other clusters to shut down
+        responded_clusters = [bot.cluster_id]
         await bot.db.cluster_shutdown_requests.insert(
             {
-                "responded_clusters": [responded_clusters],
+                "responded_clusters": responded_clusters,
                 "timestamp": bot.state.now,
                 "issuer_cluster_id": bot.cluster_id,
             }
@@ -299,7 +306,9 @@ async def run_bot():
     if items:
         entry = items[0]
         if bot.cluster_id not in entry["responded_clusters"]:
+            log.debug(entry["responded_clusters"])
             entry["responded_clusters"].append(bot.cluster_id)
+            log.debug(entry["responded_clusters"])
             await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
             log.debug("Marked old shutdown request as satisfied")
 
