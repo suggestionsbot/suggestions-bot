@@ -182,8 +182,10 @@ class State:
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""
         while not self.is_closing:
+            old_length = len(self.autocomplete_cache)
             self.autocomplete_cache.force_clean()
-            log.debug("Cleaned autocomplete caches")
+            if len(self.autocomplete_cache) != old_length:
+                log.debug("Cleaned autocomplete caches")
 
             # This allows for immediate task finishing rather
             # than being forced to wait the whole 10 minutes
