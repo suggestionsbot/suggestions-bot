@@ -35,6 +35,25 @@ class StatsEnum(Enum):
     ACTIVATE_BETA = "activate_beta"
     STATS = "stats"
 
+    @classmethod
+    def from_command_name(cls, name: str) -> Optional[StatsEnum]:
+        try:
+            return {
+                "suggest": cls.SUGGEST,
+                "approve": cls.APPROVE,
+                "reject": cls.REJECT,
+                "dm enable": cls.MEMBER_DM_ENABLE,
+                "dm disable": cls.MEMBER_DM_DISABLE,
+                "dm view": cls.MEMBER_DM_VIEW,
+                "stats": cls.STATS,
+                "config get": cls.GUILD_CONFIG_GET,
+                "config channel": cls.GUILD_CONFIG_SUGGEST_CHANNEL,
+                "config logs": cls.GUILD_CONFIG_LOG_CHANNEL,
+                "activate beta": cls.ACTIVATE_BETA,
+            }[name]
+        except KeyError:
+            return None
+
 
 class Stats:
     """Delayed stats processing for services at scale."""

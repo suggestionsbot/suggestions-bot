@@ -6,7 +6,7 @@ import logging
 import math
 import os
 from pathlib import Path
-from typing import Type, Optional
+from typing import Type, Optional, Dict
 
 import aiohttp
 import disnake
@@ -24,7 +24,7 @@ from suggestions.exceptions import (
     SuggestionTooLong,
     InvalidGuildConfigOption,
 )
-from suggestions.stats import Stats
+from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 
 log = logging.getLogger(__name__)
@@ -143,11 +143,25 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         await self.invoke(ctx)
 
+    async def _push_slash_error_stats(
+        self, interaction: disnake.ApplicationCommandInteraction
+    ):
+        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(
+            interaction.application_command.qualified_name
+        )
+        if not stat_type:
+            return
+
+        await self.stats.log_stats(
+            interaction.author.id, interaction.guild_id, stat_type, was_success=False
+        )
+
     async def on_slash_command_error(
         self,
         interaction: disnake.ApplicationCommandInteraction,
         exception: commands.CommandError,
     ) -> None:
+        await self._push_slash_error_stats(interaction)
         exception = getattr(exception, "original", exception)
 
         if isinstance(exception, ErrorHandled):
