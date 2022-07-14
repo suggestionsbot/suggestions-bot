@@ -83,6 +83,10 @@ class State:
         return self.database.user_configs
 
     @property
+    def member_stats_db(self) -> Document:
+        return self.database.member_stats
+
+    @property
     def now(self) -> datetime.datetime:
         return datetime.datetime.now()
 

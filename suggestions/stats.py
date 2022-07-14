@@ -3,20 +3,37 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-import math
-from typing import TYPE_CHECKING, Optional, Dict, Literal, Union
+from enum import Enum
+from typing import TYPE_CHECKING, Optional, Dict, Literal, Union, Type
 
 from alaric.comparison import EQ
 from alaric.types import ObjectId
 from bot_base.caches import TimedCache
 from motor.motor_asyncio import AsyncIOMotorCollection
 
+from suggestions.objects.stats import MemberStats, MemberCommandStats
 
 if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
     from suggestions.database import SuggestionsMongoManager
 
 log = logging.getLogger(__name__)
+
+
+class StatsEnum(Enum):
+    SUGGEST = "suggest"
+    APPROVE = "approve"
+    REJECT = "reject"
+    MEMBER_DM_VIEW = "member_dm_view"
+    MEMBER_DM_ENABLE = "member_dm_enable"
+    MEMBER_DM_DISABLE = "member_dm_disable"
+    GUILD_CONFIG_LOG_CHANNEL = "guild_config_log_channel"
+    GUILD_CONFIG_SUGGEST_CHANNEL = "guild_config_suggest_channel"
+    GUILD_CONFIG_GET = "guild_config_get"
+    GUILD_DM_ENABLE = "guild_dm_enable"
+    GUILD_DM_DISABLE = "guild_dm_disable"
+    ACTIVATE_BETA = "activate_beta"
+    STATS = "stats"
 
 
 class Stats:
@@ -28,6 +45,44 @@ class Stats:
         self.database: SuggestionsMongoManager = bot.db
         self._old_guild_count: Optional[int] = None
         self.cluster_guild_cache: TimedCache = TimedCache()
+        self.member_stats_cache: TimedCache = TimedCache()
+        self.type: Type[StatsEnum] = StatsEnum
+
+    async def log_stats(
+        self,
+        member_id: int,
+        guild_id: int,
+        stat_type: StatsEnum,
+        *,
+        was_success: bool = True,
+    ):
+        member_stats: MemberStats = await MemberStats.from_id(
+            member_id, guild_id, self.state
+        )
+        stats_attr: MemberCommandStats = getattr(member_stats, stat_type.value)
+        if not stats_attr:
+            log.error(
+                "Failed to find attr '%s' on MemberStats(member_id=%s, guild_id=%s)",
+                stat_type.value,
+                member_id,
+                guild_id,
+            )
+            return
+
+        if was_success:
+            stats_attr.completed_at.append(self.state.now)
+        else:
+            stats_attr.failed_at.append(self.state.now)
+
+        await self.state.member_stats_db.upsert(member_stats, member_stats)
+
+    def refresh_member_stats(self, member_stats: MemberStats) -> None:
+        self.member_stats_cache.add_entry(
+            f"{member_stats.member_id}|{member_stats.guild_id}",
+            member_stats,
+            override=True,
+            ttl=datetime.timedelta(minutes=15),
+        )
 
     async def fetch_global_guild_count(self) -> int:
         if not self.bot.is_prod:

@@ -2,6 +2,7 @@ from alaric import Document
 from bot_base.db import MongoManager
 
 from suggestions.objects import Suggestion, GuildConfig, UserConfig
+from suggestions.objects.stats import MemberStats
 
 
 class SuggestionsMongoManager(MongoManager):
@@ -23,4 +24,7 @@ class SuggestionsMongoManager(MongoManager):
         self.cluster_guild_counts: Document = Document(self.db, "cluster_guild_counts")
         self.cluster_shutdown_requests: Document = Document(
             self.db, "cluster_shutdown_requests"
+        )
+        self.member_stats: Document = Document(
+            self.db, "member_stats", converter=MemberStats
         )

@@ -7,7 +7,7 @@ import cooldowns
 import disnake
 from disnake.ext import commands
 
-from suggestions import checks
+from suggestions import checks, Stats
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.objects import GuildConfig
@@ -22,6 +22,7 @@ class GuildConfigCog(commands.Cog):
     def __init__(self, bot):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
+        self.stats: Stats = self.bot.stats
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -59,6 +60,11 @@ class GuildConfigCog(commands.Cog):
             channel.id,
             interaction.guild_id,
         )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_CONFIG_SUGGEST_CHANNEL,
+        )
 
     @config.sub_command()
     async def logs(
@@ -82,6 +88,11 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             channel.id,
             interaction.guild_id,
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_CONFIG_LOG_CHANNEL,
         )
 
     @config.sub_command()
@@ -140,6 +151,11 @@ class GuildConfigCog(commands.Cog):
             config,
             interaction.guild_id,
         )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_CONFIG_GET,
+        )
 
     async def send_full_config(self, interaction: disnake.GuildCommandInteraction):
         guild_config: GuildConfig = await GuildConfig.from_id(
@@ -169,6 +185,11 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             interaction.guild_id,
         )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_CONFIG_GET,
+        )
 
     @config.sub_command_group()
     async def dm(self, interaction: disnake.GuildCommandInteraction):
@@ -186,6 +207,11 @@ class GuildConfigCog(commands.Cog):
             "I have enabled DM messages for this guild.", ephemeral=True
         )
         log.debug("Enabled DM messages for guild %s", interaction.guild_id)
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_DM_ENABLE,
+        )
 
     @dm.sub_command()
     async def disable(self, interaction: disnake.GuildCommandInteraction):
@@ -199,6 +225,11 @@ class GuildConfigCog(commands.Cog):
             "I have disabled DM messages for this guild.", ephemeral=True
         )
         log.debug("Disabled DM messages for guild %s", interaction.guild_id)
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_DM_DISABLE,
+        )
 
 
 def setup(bot):

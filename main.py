@@ -106,7 +106,11 @@ async def run_bot():
     @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
     async def stats(interaction: disnake.GuildCommandInteraction):
         """Get bot stats!"""
-        shard_id = (interaction.guild_id >> 22) % bot.total_shards
+        if bot.is_prod:
+            shard_id = (interaction.guild_id >> 22) % bot.total_shards
+        else:
+            shard_id = 0
+
         python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
         embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color, timestamp=bot.state.now
@@ -122,6 +126,11 @@ async def run_bot():
 
         await interaction.send(embed=embed, ephemeral=False)
         log.debug("User %s viewed stats", interaction.author.id)
+        await bot.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            bot.stats.type.STATS,
+        )
 
     def clean_code(content):
         """Automatically removes code blocks from the code."""
@@ -224,6 +233,11 @@ async def run_bot():
             "Activated beta for %s in guild %s",
             interaction.author.id,
             interaction.guild_id,
+        )
+        await bot.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            bot.stats.type.ACTIVATE_BETA,
         )
 
     @bot.slash_command(
