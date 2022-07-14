@@ -88,7 +88,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif footer_text:
             embed.set_footer(text=footer_text)
         elif error_code:
-            embed.set_footer(text=f"Error code {error_code.value}")
+            embed.set_footer(
+                text=f"Error code {error_code.value} | Cluster {self.cluster_id}"
+            )
 
             log.debug("Encountered %s", error_code.name)
 
