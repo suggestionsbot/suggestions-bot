@@ -6,7 +6,7 @@ import logging
 import math
 import os
 from pathlib import Path
-from typing import Type, Optional, Dict
+from typing import Type, Optional
 
 import aiohttp
 import disnake
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Beta Release 1.1"
+        self.version: str = "Beta Release 1.2"
         self.main_guild_id: int = 601219766258106399
         self.beta_role_id: int = 995588041991274547
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
