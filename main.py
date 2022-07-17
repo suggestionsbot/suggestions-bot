@@ -132,6 +132,29 @@ async def run_bot():
             bot.stats.type.STATS,
         )
 
+    @bot.slash_command()
+    @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
+    async def info(interaction: disnake.CommandInteraction):
+        """View bot information."""
+        base_site = "https://suggestions.gg/"
+        embed: disnake.Embed = disnake.Embed(
+            title=bot.user.name,
+            description="The only suggestions bot you'll ever need. "
+            "Simple usage and management of suggestions for public and staff use.",
+            colour=bot.colors.embed_color,
+            timestamp=bot.state.now,
+        )
+        embed.add_field("Bot Author(s)", "Anthony, Ethan (Skelmis)")
+        embed.add_field("Website", f"[suggestions.gg]({base_site})")
+        embed.add_field("Discord", f"[suggestions.gg/discord]({base_site}/contact)")
+        embed.add_field(
+            "Github", f"[suggestions.gg/github](https://github.com/suggestionsbot)"
+        )
+        embed.add_field("Website", f"[suggestions.gg]({base_site})")
+        embed.add_field("Version", bot.version)
+        embed.set_footer(text="© 2022 Anthony Collier")
+        await interaction.send(embed=embed)
+
     def clean_code(content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
