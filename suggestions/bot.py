@@ -268,6 +268,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             )
 
         elif isinstance(exception, disnake.Forbidden):
+            log.debug("disnake.Forbidden: %s", exception.text)
             return await interaction.send(
                 embed=self.error_embed(
                     exception.text,

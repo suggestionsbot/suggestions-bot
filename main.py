@@ -266,18 +266,26 @@ async def run_bot():
             interaction.guild_id,
             bot.stats.type.ACTIVATE_BETA,
         )
-        roles: List[disnake.Role] = await main_guild.fetch_roles()
-        for role in roles:
-            if role.id != bot.automated_beta_role_id:
-                continue
+        try:
+            roles: List[disnake.Role] = await main_guild.fetch_roles()
+            for role in roles:
+                if role.id != bot.automated_beta_role_id:
+                    continue
 
-            await member.add_roles(role)
+                await member.add_roles(role)
 
-        await interaction.send(
-            "Thanks! I have activated beta for you in this guild. "
-            f"Come talk to us in <#{bot.beta_channel_id}> in our support discord if you need anything.",
-            ephemeral=True,
-        )
+            await interaction.send(
+                "Thanks! I have activated beta for you in this guild. "
+                f"Come talk to us in <#{bot.beta_channel_id}> in our support discord if you need anything.",
+                ephemeral=True,
+            )
+        except disnake.Forbidden as e:
+            await interaction.send(
+                "Thanks! I have activated beta for you in this guild.\n"
+                "Please DM Skelmis#9135 if you wish to receive access to the beta channels.",
+                ephemeral=True,
+            )
+            raise e
 
     @bot.slash_command(
         dm_permission=False,
