@@ -66,7 +66,7 @@ class SuggestionsCog(commands.Cog):
             )
         except disnake.Forbidden as e:
             await self.suggestions_db.delete(suggestion.as_filter())
-            raise
+            raise e
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
