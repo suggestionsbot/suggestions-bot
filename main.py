@@ -150,7 +150,10 @@ async def run_bot():
         embed.add_field(
             "Github", f"[suggestions.gg/github](https://github.com/suggestionsbot)"
         )
-        embed.add_field("Website", f"[suggestions.gg]({base_site})")
+        embed.add_field(
+            "Legal",
+            f"[Privacy Policy]({base_site}/privacy) | [Terms of Service]({base_site})",
+        )
         embed.add_field("Version", bot.version)
         embed.set_footer(text="© 2022 Anthony Collier")
         await interaction.send(embed=embed)
