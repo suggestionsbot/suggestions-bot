@@ -152,7 +152,7 @@ async def run_bot():
         )
         embed.add_field(
             "Legal",
-            f"[Privacy Policy]({base_site}/privacy) | [Terms of Service]({base_site})",
+            f"[Privacy Policy]({base_site}/privacy) | [Terms of Service]({base_site}/terms)",
         )
         embed.add_field("Version", bot.version)
         embed.set_footer(text="© 2022 Anthony Collier")
