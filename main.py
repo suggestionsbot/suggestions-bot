@@ -44,6 +44,8 @@ shard_logger.setLevel(logging.WARNING)
 
 suggestions_logger = logging.getLogger("suggestions")
 suggestions_logger.setLevel(logging.DEBUG)
+member_stats_logger = logging.getLogger("suggestions.objects.stats.member_stats")
+member_stats_logger.setLevel(logging.INFO)
 
 
 async def run_bot():
