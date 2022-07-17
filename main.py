@@ -136,7 +136,7 @@ async def run_bot():
     @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
     async def info(interaction: disnake.CommandInteraction):
         """View bot information."""
-        base_site = "https://suggestions.gg/"
+        base_site = bot.base_website_url
         embed: disnake.Embed = disnake.Embed(
             title=bot.user.name,
             description="The only suggestions bot you'll ever need. "
@@ -229,14 +229,16 @@ async def run_bot():
             member = await main_guild.fetch_member(interaction.author.id)
         except disnake.NotFound:
             return await interaction.send(
-                "Looks like you aren't in our support discord.", ephemeral=True
+                f"Looks like you aren't in our support discord. Join it via {bot.base_website_url}/contact",
+                ephemeral=True,
             )
 
-        role_ids: List[int] = [role.id for role in member.roles]
-        if bot.beta_role_id not in role_ids:
-            return await interaction.send(
-                "You do not have beta access.", ephemeral=True
-            )
+        # Anyone can activate beta now
+        # role_ids: List[int] = [role.id for role in member.roles]
+        # if bot.legacy_beta_role_id not in role_ids:
+        #     return await interaction.send(
+        #         "You do not have beta access.", ephemeral=True
+        #     )
 
         initial_check = await bot.db.beta_links.find(
             AQ(EQ("user_id", interaction.author.id)),
@@ -252,9 +254,6 @@ async def run_bot():
             {"user_id": interaction.author.id, "guild_id": interaction.guild_id}
         )
         await bot.db.guild_configs.insert({"_id": interaction.guild_id})
-        await interaction.send(
-            "Thanks! I have activated beta for you in this guild.", ephemeral=True
-        )
         log.info(
             "Activated beta for %s in guild %s",
             interaction.author.id,
@@ -264,6 +263,18 @@ async def run_bot():
             interaction.author.id,
             interaction.guild_id,
             bot.stats.type.ACTIVATE_BETA,
+        )
+        roles: List[disnake.Role] = await main_guild.fetch_roles()
+        for role in roles:
+            if role.id != bot.automated_beta_role_id:
+                continue
+
+            await member.add_roles(role)
+
+        await interaction.send(
+            "Thanks! I have activated beta for you in this guild. "
+            f"Come talk to us in <#{bot.beta_channel_id}> in our support discord if you need anything.",
+            ephemeral=True,
         )
 
     @bot.slash_command(

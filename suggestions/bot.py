@@ -34,7 +34,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
         self.version: str = "Beta Release 1.2"
         self.main_guild_id: int = 601219766258106399
-        self.beta_role_id: int = 995588041991274547
+        self.legacy_beta_role_id: int = 995588041991274547
+        self.automated_beta_role_id: int = 998173237282361425
+        self.beta_channel_id: int = 995622792294830080
+        self.base_website_url: str = "https://suggestions.gg"
+
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
         self.db: SuggestionsMongoManager = SuggestionsMongoManager(
             os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
