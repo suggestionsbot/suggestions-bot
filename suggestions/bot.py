@@ -62,7 +62,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             "vote",
         }
         self.converted_prefix_commands: set[str] = {"suggest", "approve", "reject"}
-        super().__init__(*args, **kwargs, leave_db=True, do_command_stats=False)
+        super().__init__(
+            *args,
+            **kwargs,
+            leave_db=True,
+            do_command_stats=False,
+            activity=disnake.Activity(
+                name="suggestions",
+                type=disnake.ActivityType.watching,
+            ),
+        )
 
         # Sharding info
         self.cluster_id: int = kwargs.get("cluster", 0)
