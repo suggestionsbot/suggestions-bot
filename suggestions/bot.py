@@ -347,9 +347,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.close()
 
     async def watch_for_shutdown_request(self):
-        # if not self.is_prod:
-        #     log.info("Not watching for shutdown as not on prod")
-        #     return
+        if not self.is_prod:
+            log.info("Not watching for shutdown as not on prod")
+            return
 
         state: State = self.state
 
