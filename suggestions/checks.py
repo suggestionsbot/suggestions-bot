@@ -34,18 +34,6 @@ async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[Guild
     return suggestions.state.guild_configs[guild_id]
 
 
-def ensure_guild_has_beta():
-    async def check(interaction: disnake.Interaction):
-        guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
-
-        if not bool(guild_config):
-            raise BetaOnly(interaction.guild_id)
-
-        return True
-
-    return commands.check(check)  # type: ignore
-
-
 def ensure_guild_has_suggestions_channel():
     async def check(interaction: disnake.Interaction):
         guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)

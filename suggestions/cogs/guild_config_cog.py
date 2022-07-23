@@ -33,7 +33,6 @@ class GuildConfigCog(commands.Cog):
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
-    @checks.ensure_guild_has_beta()
     async def config(self, interaction: disnake.GuildCommandInteraction):
         pass
 
