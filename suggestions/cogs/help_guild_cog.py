@@ -25,7 +25,7 @@ class HelpGuildCog(commands.Cog):
 
     @commands.slash_command(
         dm_permission=False,
-        default_member_permissions=disnake.Permissions(manage_guild=True),
+        default_member_permissions=disnake.Permissions(kick_members=True),
         guild_ids=[601219766258106399, 737166408525283348],
     )
     async def error_code(
