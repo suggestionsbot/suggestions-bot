@@ -390,9 +390,15 @@ class Suggestion:
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
         guild = await bot.fetch_guild(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
+        response = (
+            f"**Staff Response:** {self.resolution_note}\n\n"
+            if self.resolution_note
+            else ""
+        )
+
         embed: Embed = Embed(
             description=f"Hey, {user.mention}. Your suggestion has been "
-            f"{text} by <@{self.resolved_by}>!\n\nYour suggestion ID (sID) for reference "
+            f"{text} by <@{self.resolved_by}>!\n\n{response}Your suggestion ID (sID) for reference "
             f"was **{self.suggestion_id}**.",
             timestamp=bot.state.now,
             color=self.color,
