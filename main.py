@@ -160,6 +160,23 @@ async def run_bot():
         embed.set_footer(text="© 2022 Anthony Collier")
         await interaction.send(embed=embed)
 
+    @bot.slash_command()
+    @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
+    async def ping(interaction: disnake.CommandInteraction):
+        """Pong!"""
+        if bot.is_prod:
+            shard_id = (interaction.guild_id >> 22) % bot.total_shards
+            shard = bot.get_shard(shard_id)
+            latency = shard.latency
+        else:
+            shard_id = 0
+            latency = bot.latency
+
+        await interaction.send(
+            f"Pong!\n**Average cluster latency:** `{round(bot.latency, 2)}ms`\n"
+            f"**Cluster {bot.cluster_id} - Shard {shard_id}:** `{round(latency, 2)}ms`"
+        )
+
     def clean_code(content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
