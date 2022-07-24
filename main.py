@@ -7,20 +7,14 @@ import signal
 import sys
 import textwrap
 from traceback import format_exception
-from typing import List
 
 import cooldowns
 import disnake
-from alaric import AQ
-from alaric.comparison import EQ
-from alaric.projections import PROJECTION, SHOW
-from bot_base.paginators.disnake_paginator import DisnakePaginator
+from dotenv import load_dotenv
 from disnake.ext import commands
+from bot_base.paginators.disnake_paginator import DisnakePaginator
 
 from suggestions import SuggestionsBot
-
-from dotenv import load_dotenv
-
 from suggestions.cooldown_bucket import InteractionBucket
 
 load_dotenv()
