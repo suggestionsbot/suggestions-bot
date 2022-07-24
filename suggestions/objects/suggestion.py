@@ -282,6 +282,14 @@ class Suggestion:
             timestamp=bot.state.now,
         ).set_footer(text=f"sID: {self.suggestion_id}")
 
+        if self.guild_id not in bot.state.guild_cache:
+            guild = await bot.fetch_guild(self.guild_id)
+            bot.state.refresh_guild_cache(guild)
+        else:
+            guild = bot.state.guild_cache.get_entry(self.guild_id)
+
+        embed.set_author(name=guild.name, icon_url=guild.icon.url)
+
         if self.resolution_note:
             embed.description += f"**Response**\n{self.resolution_note}"
 

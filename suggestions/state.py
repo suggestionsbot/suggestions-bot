@@ -8,6 +8,7 @@ import string
 from datetime import timedelta
 from typing import TYPE_CHECKING, List, Dict, Set
 
+import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
@@ -34,7 +35,9 @@ class State:
         self.database: SuggestionsMongoManager = database
         self.autocomplete_cache: TimedCache = TimedCache()
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
+        self.guild_cache_ttl: timedelta = timedelta(minutes=15)
         self.existing_suggestion_ids: Set[str] = set()
+        self.guild_cache: TimedCache[disnake.Guild] = TimedCache()
 
         # TODO Move these to a TTL cache
         self.guild_configs: Dict[int, GuildConfig] = {}
@@ -102,6 +105,11 @@ class State:
 
     def refresh_user_config(self, user_config: UserConfig) -> None:
         self.user_configs[user_config.user_id] = user_config
+
+    def refresh_guild_cache(self, guild: disnake.Guild) -> None:
+        self.guild_cache.add_entry(
+            guild.id, guild, ttl=self.guild_cache_ttl, override=True
+        )
 
     async def populate_sid_cache(self, guild_id: int) -> list:
         """Populates a guilds current active suggestion ids"""
