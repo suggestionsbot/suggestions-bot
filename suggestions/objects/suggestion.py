@@ -288,7 +288,10 @@ class Suggestion:
         else:
             guild = bot.state.guild_cache.get_entry(self.guild_id)
 
-        embed.set_author(name=guild.name, icon_url=guild.icon.url)
+        try:
+            embed.set_author(name=guild.name, icon_url=guild.icon.url)
+        except AttributeError:
+            embed.set_author(name=guild.name)
 
         if self.resolution_note:
             embed.description += f"**Response**\n{self.resolution_note}"
