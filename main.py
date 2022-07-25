@@ -109,7 +109,9 @@ async def run_bot():
 
         python_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
         embed: disnake.Embed = disnake.Embed(
-            color=bot.colors.embed_color, timestamp=bot.state.now
+            color=bot.colors.embed_color,
+            timestamp=bot.state.now,
+            description="For more stats, click [here](https://stats.suggestions.gg/)",
         )
         guilds: int = await bot.stats.fetch_global_guild_count()
         embed.add_field(name="Guilds", value=guilds)
