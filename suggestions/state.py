@@ -33,16 +33,22 @@ class State:
         self.bot: SuggestionsBot = bot
         self._is_closing: bool = False
         self.database: SuggestionsMongoManager = database
-        self.autocomplete_cache: TimedCache = TimedCache()
+
+        # Timed caches
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
+        self.autocomplete_cache: TimedCache = TimedCache(
+            global_ttl=self.autocomplete_cache_ttl
+        )
         self.guild_cache_ttl: timedelta = timedelta(minutes=15)
-        self.existing_suggestion_ids: Set[str] = set()
-        self.guild_cache: TimedCache[disnake.Guild] = TimedCache()
+        self.guild_cache: TimedCache[disnake.Guild] = TimedCache(
+            global_ttl=self.guild_cache_ttl
+        )
 
         # TODO Move these to a TTL cache
         self.guild_configs: Dict[int, GuildConfig] = {}
         self.user_configs: Dict[int, UserConfig] = {}
 
+        self.existing_suggestion_ids: Set[str] = set()
         self._background_tasks: list[asyncio.Task] = []
 
     @property
@@ -107,9 +113,7 @@ class State:
         self.user_configs[user_config.user_id] = user_config
 
     def refresh_guild_cache(self, guild: disnake.Guild) -> None:
-        self.guild_cache.add_entry(
-            guild.id, guild, ttl=self.guild_cache_ttl, override=True
-        )
+        self.guild_cache.add_entry(guild.id, guild, override=True)
 
     async def populate_sid_cache(self, guild_id: int) -> list:
         """Populates a guilds current active suggestion ids"""
@@ -120,9 +124,7 @@ class State:
             try_convert=False,
         )
         data: List[str] = [d["_id"] for d in data]
-        self.autocomplete_cache.add_entry(
-            guild_id, data, ttl=self.autocomplete_cache_ttl
-        )
+        self.autocomplete_cache.add_entry(guild_id, data)
         log.debug("Populated sid cache for guild %s", guild_id)
         return data
 
@@ -139,9 +141,7 @@ class State:
         else:
             current_values.append(suggestion_id)
         finally:
-            self.autocomplete_cache.add_entry(
-                guild_id, current_values, override=True, ttl=self.autocomplete_cache_ttl
-            )
+            self.autocomplete_cache.add_entry(guild_id, current_values, override=True)
 
         log.debug("Added sid %s to cache for guild %s", suggestion_id, guild_id)
 
@@ -161,7 +161,6 @@ class State:
                     guild_id,
                     current_values,
                     override=True,
-                    ttl=self.autocomplete_cache_ttl,
                 )
                 log.debug(
                     "Removed sid %s from the cache for guild %s",
