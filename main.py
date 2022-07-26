@@ -132,8 +132,24 @@ async def run_bot():
 
     @bot.slash_command()
     @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
-    async def info(interaction: disnake.CommandInteraction):
+    async def info(
+        interaction: disnake.CommandInteraction,
+        support: bool = commands.Param(
+            default=False,
+            description="Set this to receive info relevant to receiving official support.",
+        ),
+    ):
         """View bot information."""
+        if support and bot.is_prod and interaction.guild_id:
+            shard_id = bot.get_shard_id(interaction.guild_id)
+            shard = bot.get_shard(shard_id)
+            latency = shard.latency
+            return await interaction.send(
+                f"**Guild ID:** {interaction.guild_id}\n"
+                f"**Average cluster latency:** `{round(bot.latency, 2)}ms`\n"
+                f"**Cluster {bot.cluster_id} - Shard {shard_id}:** `{round(latency, 2)}ms`"
+            )
+
         base_site = bot.base_website_url
         embed: disnake.Embed = disnake.Embed(
             title=bot.user.name,
@@ -161,11 +177,7 @@ async def run_bot():
     async def ping(interaction: disnake.CommandInteraction):
         """Pong!"""
         if bot.is_prod:
-            if interaction.guild_id:
-                shard_id = (interaction.guild_id >> 22) % bot.total_shards
-            else:
-                # DM's go to shard 0
-                shard_id = 0
+            shard_id = bot.get_shard_id(interaction.guild_id)
             shard = bot.get_shard(shard_id)
             latency = shard.latency
         else:
