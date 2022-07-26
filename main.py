@@ -145,7 +145,7 @@ async def run_bot():
             shard = bot.get_shard(shard_id)
             latency = shard.latency
             return await interaction.send(
-                f"**Guild ID:** {interaction.guild_id}\n"
+                f"**Guild ID:** `{interaction.guild_id}`\n"
                 f"**Average cluster latency:** `{round(bot.latency, 2)}ms`\n"
                 f"**Cluster {bot.cluster_id} - Shard {shard_id}:** `{round(latency, 2)}ms`"
             )
