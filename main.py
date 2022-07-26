@@ -161,7 +161,11 @@ async def run_bot():
     async def ping(interaction: disnake.CommandInteraction):
         """Pong!"""
         if bot.is_prod:
-            shard_id = (interaction.guild_id >> 22) % bot.total_shards
+            if interaction.guild_id:
+                shard_id = (interaction.guild_id >> 22) % bot.total_shards
+            else:
+                # DM's go to shard 0
+                shard_id = 0
             shard = bot.get_shard(shard_id)
             latency = shard.latency
         else:
