@@ -1,0 +1,16 @@
+version: "2"
+
+services:
+  suggestions_bot_cluster_1:
+    container_name: "suggestions_bot_cluster_1"
+    image: docker.pkg.github.com/suggestionsbot/suggestions-bot-rewrite/suggestions-bot-rewrite:latest
+    build:
+      dockerfile: Dockerfile
+      context: .
+    environment:
+      PROD: 1
+      CLUSTER: 1
+      TOKEN: ...
+      MONGO_URL: ...
+      SUGGESTIONS_API_KEY: ...
+      SUGGESTIONS_STATS_API_URL: ....
