@@ -309,9 +309,7 @@ async def run_bot():
     if items:
         entry = items[0]
         if bot.cluster_id not in entry["responded_clusters"]:
-            log.debug(entry["responded_clusters"])
             entry["responded_clusters"].append(bot.cluster_id)
-            log.debug(entry["responded_clusters"])
             await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
             log.debug("Marked old shutdown request as satisfied")
 
