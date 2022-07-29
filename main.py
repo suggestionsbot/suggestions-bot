@@ -49,15 +49,18 @@ async def run_bot():
 
     if is_prod:
         total_shards = 53
-        offset = int(os.environ["CLUSTER"]) - 1
-        num_shards = 10
+        cluster_id = int(os.environ["CLUSTER"])
+        offset = cluster_id - 1
+        number_of_shards_per_cluster = 10
         shard_ids = [
             i
-            for i in range(offset * num_shards, (offset * num_shards) + num_shards)
+            for i in range(
+                offset * number_of_shards_per_cluster,
+                (offset * number_of_shards_per_cluster) + number_of_shards_per_cluster,
+            )
             if i < total_shards
         ]
 
-        cluster_id = offset + 1
         cluster_kwargs = {
             "shard_count": total_shards,
             "cluster": cluster_id,
