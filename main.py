@@ -58,14 +58,14 @@ async def run_bot():
         ]
 
         cluster_id = offset + 1
-        args = {
+        cluster_kwargs = {
             "shard_count": total_shards,
             "cluster": cluster_id,
             "shard_ids": shard_ids,
         }
         log.info("Cluster %s - Handling shards %s", cluster_id, shard_ids)
     else:
-        args = {}
+        cluster_kwargs = {}
 
     bot = SuggestionsBot(
         intents=intents,
@@ -75,7 +75,7 @@ async def run_bot():
         load_builtin_commands=True,
         chunk_guilds_at_startup=False,
         member_cache_flags=disnake.MemberCacheFlags.none(),
-        **args,
+        **cluster_kwargs,
     )
     if not bot.is_prod:
         bot._test_guilds = [737166408525283348]
