@@ -431,3 +431,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
         log.info("Setup bot listing updates")
+
+    def get_shard_id(self, guild_id: Optional[int]) -> int:
+        # DM's go to shard 0
+        shard_id = 0
+        if self.is_prod and guild_id:
+            shard_id = (guild_id >> 22) % self.total_shards
+
+        return shard_id
