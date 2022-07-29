@@ -14,3 +14,33 @@ services:
       MONGO_URL: ...
       SUGGESTIONS_API_KEY: ...
       SUGGESTIONS_STATS_API_URL: ....
+  suggestions_bot_cluster_2:
+    container_name: "suggestions_bot_cluster_2"
+    environment:
+      CLUSTER: 2
+    extends:
+      service: suggestions_bot_cluster_1
+  suggestions_bot_cluster_3:
+    container_name: "suggestions_bot_cluster_3"
+    environment:
+      CLUSTER: 3
+    extends:
+      service: suggestions_bot_cluster_1
+  suggestions_bot_cluster_4:
+    container_name: "suggestions_bot_cluster_4"
+    environment:
+      CLUSTER: 4
+    extends:
+      service: suggestions_bot_cluster_1
+  suggestions_bot_cluster_5:
+    container_name: "suggestions_bot_cluster_5"
+    environment:
+      CLUSTER: 5
+    extends:
+      service: suggestions_bot_cluster_1
+  suggestions_bot_cluster_6:
+    container_name: "suggestions_bot_cluster_6"
+    environment:
+      CLUSTER: 6
+    extends:
+      service: suggestions_bot_cluster_1
