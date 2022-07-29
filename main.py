@@ -331,6 +331,8 @@ async def run_bot():
 
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
+
+    log.info("About to start SuggestionsBot | %s", bot.version)
     await bot.start(TOKEN)
 
 
