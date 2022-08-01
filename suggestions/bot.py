@@ -308,11 +308,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 return
 
         if interaction.deferred_without_send:
+            gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(
                 embed=self.error_embed(
                     "Something went wrong",
-                    "Please contact support.",
+                    f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.UNHANDLED_ERROR,
                 ),
                 ephemeral=True,
