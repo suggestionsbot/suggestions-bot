@@ -24,6 +24,7 @@ class StatsEnum(Enum):
     SUGGEST = "suggest"
     APPROVE = "approve"
     REJECT = "reject"
+    CLEAR = "clear"
     MEMBER_DM_VIEW = "member_dm_view"
     MEMBER_DM_ENABLE = "member_dm_enable"
     MEMBER_DM_DISABLE = "member_dm_disable"
@@ -42,6 +43,7 @@ class StatsEnum(Enum):
                 "suggest": cls.SUGGEST,
                 "approve": cls.APPROVE,
                 "reject": cls.REJECT,
+                "clear": cls.CLEAR,
                 "dm enable": cls.MEMBER_DM_ENABLE,
                 "dm disable": cls.MEMBER_DM_DISABLE,
                 "dm view": cls.MEMBER_DM_VIEW,
@@ -78,15 +80,21 @@ class Stats:
         member_stats: MemberStats = await MemberStats.from_id(
             member_id, guild_id, self.state
         )
-        stats_attr: MemberCommandStats = getattr(member_stats, stat_type.value)
+
+        stat_type_str = str(stat_type.value)
+        stats_attr: MemberCommandStats = getattr(member_stats, stat_type_str)
         if not stats_attr:
-            log.error(
-                "Failed to find attr '%s' on MemberStats(member_id=%s, guild_id=%s)",
-                stat_type.value,
-                member_id,
-                guild_id,
-            )
-            return
+            if stat_type_str not in member_stats.valid_fields:
+                log.error(
+                    "Failed to find attr '%s' on MemberStats(member_id=%s, guild_id=%s)",
+                    stat_type.value,
+                    member_id,
+                    guild_id,
+                )
+                return
+
+            stats_attr: MemberCommandStats = MemberCommandStats(stat_type_str)
+            setattr(member_stats, stat_type_str, stats_attr)
 
         if was_success:
             stats_attr.completed_at.append(self.state.now)

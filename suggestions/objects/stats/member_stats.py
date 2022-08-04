@@ -31,6 +31,7 @@ class MemberStats:
             "suggest",
             "approve",
             "reject",
+            "clear",
             "member_dm_view",
             "member_dm_enable",
             "member_dm_disable",
@@ -63,6 +64,10 @@ class MemberStats:
             self.guild_dm_disable: MemberCommandStats = ...
             self.activate_beta: MemberCommandStats = ...
             self.stats: MemberCommandStats = ...
+
+    @property
+    def valid_fields(self) -> List[str]:
+        return self._fields
 
     def _build_default_commands_dict(self) -> None:
         for command_name in self._fields:

@@ -301,6 +301,11 @@ class SuggestionsCog(commands.Cog):
             suggestion_id,
             interaction.guild_id,
         )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.CLEAR,
+        )
 
     @clear.autocomplete("suggestion_id")
     async def clear_suggestion_id_autocomplete(self, inter, user_input):
