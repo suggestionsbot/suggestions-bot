@@ -159,7 +159,7 @@ class Suggestion:
 
         Raises
         ------
-        ValueError
+        SuggestionNotFound
             No suggestion found with that id
         """
         suggestion: Optional[Suggestion] = await state.suggestions_db.find(

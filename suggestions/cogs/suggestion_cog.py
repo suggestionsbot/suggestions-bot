@@ -214,7 +214,7 @@ class SuggestionsCog(commands.Cog):
     async def reject(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion_id: str = commands.Param(description="The sID you wish to approve"),
+        suggestion_id: str = commands.Param(description="The sID you wish to reject"),
         response: Optional[str] = commands.Param(
             description="An optional response to add to the suggestion", default=None
         ),
@@ -262,6 +262,49 @@ class SuggestionsCog(commands.Cog):
     async def reject_suggestion_id_autocomplete(self, inter, user_input):
         return await self.get_sid_for(inter, user_input)
 
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(manage_guild=True),
+    )
+    @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
+    async def clear(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        suggestion_id: str = commands.Param(description="The sID you wish to clear"),
+    ):
+        """Remove a suggestion and any associated messages."""
+        await interaction.response.defer(ephemeral=True)
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, interaction.guild_id, self.state
+        )
+        if suggestion.channel_id and suggestion.message_id:
+            try:
+                channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+                    suggestion.channel_id
+                )
+                message: disnake.Message = await channel.fetch_message(
+                    suggestion.message_id
+                )
+            except disnake.HTTPException:
+                pass
+            else:
+                await message.delete()
+
+        await self.suggestions_db.delete(suggestion)
+        await interaction.send(
+            f"I have cleared `{suggestion_id}` for you.", ephemeral=True
+        )
+        log.debug(
+            "User %s cleared suggestion %s in guild %s",
+            interaction.user.id,
+            suggestion_id,
+            interaction.guild_id,
+        )
+
+    @clear.autocomplete("suggestion_id")
+    async def clear_suggestion_id_autocomplete(self, inter, user_input):
+        return await self.get_sid_for(inter, user_input)
+
     async def get_sid_for(
         self,
         interaction: disnake.ApplicationCommandInteraction,
@@ -277,7 +320,10 @@ class SuggestionsCog(commands.Cog):
             )
         else:
             if not values:
-                log.debug("Values was found, but empty thus populating")
+                log.debug(
+                    "Values was found, but empty in guild %s thus populating",
+                    interaction.guild_id,
+                )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id
                 )
