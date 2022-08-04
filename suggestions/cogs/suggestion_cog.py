@@ -259,7 +259,7 @@ class SuggestionsCog(commands.Cog):
         )
 
     @reject.autocomplete("suggestion_id")
-    async def approve_suggestion_id_autocomplete(self, inter, user_input):
+    async def reject_suggestion_id_autocomplete(self, inter, user_input):
         return await self.get_sid_for(inter, user_input)
 
     async def get_sid_for(
