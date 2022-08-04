@@ -290,6 +290,7 @@ class SuggestionsCog(commands.Cog):
             else:
                 await message.delete()
 
+        self.state.remove_sid_from_cache(interaction.guild_id, suggestion_id)
         await self.suggestions_db.delete(suggestion)
         await interaction.send(
             f"I have cleared `{suggestion_id}` for you.", ephemeral=True
