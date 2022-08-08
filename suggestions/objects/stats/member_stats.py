@@ -105,7 +105,9 @@ class MemberStats:
         data = {"member_id": self.member_id, "guild_id": self.guild_id}
         commands = {}
         for field in self._fields:
-            instance: MemberCommandStats = getattr(self, field)
+            instance: MemberCommandStats = getattr(
+                self, field, MemberCommandStats(field)
+            )
             commands[field] = instance.as_data_dict()
 
         data["commands"] = commands
