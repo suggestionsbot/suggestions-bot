@@ -35,7 +35,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
   - On suggestions with un-cached guilds, if they have a thread it can result in an error as the existence check for `self.guild` will be truthy even with a `disnake.Object` instance, despite requiring `disnake.Guild` as subsequent usage after existence checks call `disnake.Guild.get_thread`
   - Implementation details:
     - Modify `disnake.Message.thread` to the following
-      - https://paste.disnake.dev/?id=1660196640886432
+      - https://paste.disnake.dev/?id=1660197950019675
 
 ## Notes
 
