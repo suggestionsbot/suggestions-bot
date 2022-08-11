@@ -31,7 +31,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
     - Prematurely return from `disnake.abc._fill_overwrites` before it hits `everyone_id = self.guild.id`
       - https://paste.disnake.dev/?id=1660197346583275
   - *Note, the fix detailed here and the fix applied to `disnake` itself are different. We don't care for overwrites at this time, and we have not rebased against upstream since the relevant patches were applied.*
-- `AttributeError`'s on `NoneType` objects due to `Intents.none()`
+- `AttributeError`'s on `discord.Object` objects due to `Intents.none()`
   - On suggestions with un-cached guilds, if they have a thread it can result in an error as the existence check for `self.guild` will be truthy even with a `disnake.Object` instance, despite requiring `disnake.Guild` as subsequent usage after existence checks call `disnake.Guild.get_thread`
   - Implementation details:
     - Modify `disnake.Message.thread` to the following
