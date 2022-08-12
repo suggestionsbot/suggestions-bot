@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
+from disnake import Guild
 from disnake.ext import commands
 
 from suggestions import checks, Stats
@@ -111,12 +112,13 @@ class GuildConfigCog(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        guild = await self.bot.fetch_guild(interaction.guild_id)
+        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\n",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
-        ).set_author(name=guild.name, icon_url=guild.icon.url)
+        ).set_author(name=guild.name, icon_url=icon_url)
 
         if config == "Log channel":
             log_channel = (
@@ -171,13 +173,14 @@ class GuildConfigCog(commands.Cog):
             else "Not set"
         )
         dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
-        guild = await self.bot.fetch_guild(interaction.guild_id)
+        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
-        ).set_author(name=guild.name, icon_url=guild.icon.url)
+        ).set_author(name=guild.name, icon_url=icon_url)
         await interaction.send(embed=embed, ephemeral=True)
         log.debug(
             "User %s viewed the global config in guild %s",

@@ -7,6 +7,7 @@ import cooldowns
 import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
+from disnake import Guild
 from disnake.ext import commands
 
 from suggestions import checks, Stats
@@ -46,7 +47,8 @@ class SuggestionsCog(commands.Cog):
             raise SuggestionTooLong
 
         await interaction.response.defer(ephemeral=True)
-        guild: disnake.Guild = await self.bot.fetch_guild(interaction.guild_id)
+        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        guild = self.state.guild_cache.get_entry(interaction.guild_id)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
             guild_id=interaction.guild_id,
@@ -107,13 +109,10 @@ class SuggestionsCog(commands.Cog):
                 timestamp=self.state.now,
                 color=self.bot.colors.embed_color,
             )
-            try:
-                embed.set_author(
-                    name=guild.name,
-                    icon_url=guild.icon.url,
-                )
-            except AttributeError:
-                pass
+            embed.set_author(
+                name=guild.name,
+                icon_url=icon_url,
+            )
             embed.set_footer(
                 text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
             )

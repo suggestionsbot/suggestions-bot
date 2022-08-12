@@ -9,7 +9,7 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from bot_base.wraps import WrappedChannel
-from disnake import Embed
+from disnake import Embed, Guild
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
@@ -282,16 +282,10 @@ class Suggestion:
             timestamp=bot.state.now,
         ).set_footer(text=f"sID: {self.suggestion_id}")
 
-        if self.guild_id not in bot.state.guild_cache:
-            guild = await bot.fetch_guild(self.guild_id)
-            bot.state.refresh_guild_cache(guild)
-        else:
-            guild = bot.state.guild_cache.get_entry(self.guild_id)
+        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        guild = bot.state.guild_cache.get_entry(self.guild_id)
 
-        try:
-            embed.set_author(name=guild.name, icon_url=guild.icon.url)
-        except AttributeError:
-            embed.set_author(name=guild.name)
+        embed.set_author(name=guild.name, icon_url=icon_url)
 
         if self.resolution_note:
             embed.description += f"**Response**\n{self.resolution_note}"
@@ -391,7 +385,8 @@ class Suggestion:
             return
 
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
-        guild = await bot.fetch_guild(self.guild_id)
+        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        guild = bot.state.guild_cache.get_entry(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
         response = (
             f"**Staff Response:** {self.resolution_note}\n\n"
@@ -399,17 +394,17 @@ class Suggestion:
             else ""
         )
 
-        embed: Embed = Embed(
-            description=f"Hey, {user.mention}. Your suggestion has been "
-            f"{text} by <@{self.resolved_by}>!\n\n{response}Your suggestion ID (sID) for reference "
-            f"was **{self.suggestion_id}**.",
-            timestamp=bot.state.now,
-            color=self.color,
-        ).set_footer(text=f"Guild ID: {self.guild_id} | sID: {self.suggestion_id}")
-        try:
-            embed.set_author(name=guild.name, icon_url=guild.icon.url)
-        except AttributeError:
-            pass
+        embed: Embed = (
+            Embed(
+                description=f"Hey, {user.mention}. Your suggestion has been "
+                f"{text} by <@{self.resolved_by}>!\n\n{response}Your suggestion ID (sID) for reference "
+                f"was **{self.suggestion_id}**.",
+                timestamp=bot.state.now,
+                color=self.color,
+            )
+            .set_footer(text=f"Guild ID: {self.guild_id} | sID: {self.suggestion_id}")
+            .set_author(name=guild.name, icon_url=icon_url)
+        )
 
         try:
             await user.send(embed=embed)
