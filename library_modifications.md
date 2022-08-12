@@ -20,6 +20,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
       - https://paste.disnake.dev/?id=1660196180710978
 - `disnake.Guild.icon.url` erroring when `icon` is `None`
   - Due to the lack of guild intents, using `disnake.Guild.icon.url` requires guarding to ensure we can actually use the icon. Given we need this is a decent number of places I plan on implementing a method for this which will ensure we either get the icon url or `None` rather than an error and removing the need to program in a defensive manner. A similar port will also likely be applied to `disnake.User`
+  - Fixed by adding a new method `disnake.Guild.try_fetch_icon_url`
   - *I consider this one a feature due to the nature of the fix.*
   - Related issues: https://github.com/suggestionsbot/suggestions-bot-rewrite/issues/3
 

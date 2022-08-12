@@ -1,4 +1,4 @@
-git+https://github.com/Skelmis/disnake@suggestions-stable
+git+https://github.com/suggestionsbot/disnake@bot
 aiodns==3.0.0
 aiohttp==3.8.1
 aiosignal==1.2.0
