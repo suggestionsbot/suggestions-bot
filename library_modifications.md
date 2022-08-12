@@ -10,7 +10,9 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
   - Hooks into the `Interaction` object to see if a given interaction has been differed without a follow-up send occurring. We do this as we need to clean up after the bot in the case an error occurs otherwise our users will simply get "Interaction failed to respond" which is not ideal
   - Implementation details:
     - New variable on `Interaction` -> `self.has_been_followed_up: bool = False`
-      - Set to `True` in `Interaction.send` __if__ we enter `sender = self.followup.send`
+      - Set to `True` in `Interaction.send` after message is sent
+    - New variable on `InteractionResponse` -> `self.has_been_deferred: bool = False`
+      - Set to `True` in `InteractionResponse.defer`
     - New property
       - https://paste.disnake.dev/?id=1660196042475314
 - Show gateway session on initial startup
