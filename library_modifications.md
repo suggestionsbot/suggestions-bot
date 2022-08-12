@@ -38,6 +38,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
     - Modify `disnake.Message.thread` to the following
       - https://paste.disnake.dev/?id=1660197950019675
   - Related issues: https://github.com/DisnakeDev/disnake/issues/699
+- Removed the `MessageContentPrefixWarning` as it would trip due to inheritance of the bot base
 
 ## Notes
 
