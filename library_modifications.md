@@ -48,7 +48,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
   - Related issue: https://github.com/DisnakeDev/disnake/issues/712
 ## Notes
 
-On startup even with `Intents.none()` we still receive partial guilds, noted as unavailable (or something like that). This allows for partial cache hits and explains the inconsistencies of bug reproduction as require a guild who invited the bot during runtime as the first reproduction step.
+On startup even with `Intents.none()` we still receive partial guilds, noted as unavailable (or something like that). This allows for partial cache hits and explains the inconsistencies of bug reproduction as we require a guild who invited the bot during runtime as the first reproduction step.
 
 Versions are bumped to overcome some CI caching issues.
 
