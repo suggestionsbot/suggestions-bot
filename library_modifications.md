@@ -41,7 +41,11 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
       - https://paste.disnake.dev/?id=1660197950019675
   - Related issues: https://github.com/DisnakeDev/disnake/issues/699
 - Removed the `MessageContentPrefixWarning` as it would trip due to inheritance of the bot base
-
+- `AttributeError`'s on `discord.Object` where `discord.Guild` was expected.
+  - This is the same as "`AttributeError`'s on `discord.Object` objects due to `Intents.none()`"
+  - Implementation details
+    - Fixed by https://paste.disnake.dev/?id=1660730340161476
+  - Related issue: https://github.com/DisnakeDev/disnake/issues/712
 ## Notes
 
 On startup even with `Intents.none()` we still receive partial guilds, noted as unavailable (or something like that). This allows for partial cache hits and explains the inconsistencies of bug reproduction as require a guild who invited the bot during runtime as the first reproduction step.
