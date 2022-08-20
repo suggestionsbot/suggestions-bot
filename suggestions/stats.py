@@ -82,7 +82,7 @@ class Stats:
         )
 
         stat_type_str = str(stat_type.value)
-        stats_attr: MemberCommandStats = getattr(member_stats, stat_type_str)
+        stats_attr: MemberCommandStats = getattr(member_stats, stat_type_str, False)
         if not stats_attr:
             if stat_type_str not in member_stats.valid_fields:
                 log.error(
