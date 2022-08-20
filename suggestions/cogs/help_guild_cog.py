@@ -79,7 +79,7 @@ class HelpGuildCog(commands.Cog):
         )
 
         await interaction.send(
-            f"Guild {guild_id} should be in cluster {cluster_id} with the specific shard {shard_id}",
+            f"Guild `{guild_id}` should be in cluster `{cluster_id}` with the specific shard `{shard_id}`",
             ephemeral=True,
         )
 
