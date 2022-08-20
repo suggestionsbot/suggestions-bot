@@ -49,6 +49,39 @@ class HelpGuildCog(commands.Cog):
             f"Error code `{code.value}` corresponds to {code.name}", ephemeral=True
         )
 
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(kick_members=True),
+        guild_ids=[601219766258106399, 737166408525283348],
+    )
+    async def instance_info(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        guild_id: int = commands.Param(
+            description="The ID of the guild you want info on."
+        ),
+    ):
+        """Retrieve information about what instance a given guild sees."""
+        shard_id = self.bot.get_shard_id(guild_id)
+        cluster_id = (
+            1
+            if shard_id < 10
+            else 2
+            if shard_id < 20
+            else 3
+            if shard_id < 30
+            else 4
+            if shard_id < 40
+            else 5
+            if shard_id < 50
+            else 6
+        )
+
+        await interaction.send(
+            f"Guild {guild_id} should be in cluster {cluster_id} with the specific shard {shard_id}",
+            ephemeral=True,
+        )
+
 
 def setup(bot):
     bot.add_cog(HelpGuildCog(bot))
