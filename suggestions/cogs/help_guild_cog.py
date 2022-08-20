@@ -57,11 +57,12 @@ class HelpGuildCog(commands.Cog):
     async def instance_info(
         self,
         interaction: disnake.GuildCommandInteraction,
-        guild_id: int = commands.Param(
+        guild_id: str = commands.Param(
             description="The ID of the guild you want info on."
         ),
     ):
         """Retrieve information about what instance a given guild sees."""
+        guild_id = int(guild_id)
         shard_id = self.bot.get_shard_id(guild_id)
         cluster_id = (
             1
