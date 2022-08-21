@@ -124,7 +124,7 @@ class State:
             try_convert=False,
         )
         data: List[str] = [d["_id"] for d in data]
-        self.autocomplete_cache.add_entry(guild_id, data)
+        self.autocomplete_cache.add_entry(guild_id, data, override=True)
         log.debug("Populated sid cache for guild %s", guild_id)
         return data
 
