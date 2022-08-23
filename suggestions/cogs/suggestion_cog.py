@@ -66,8 +66,12 @@ class SuggestionsCog(commands.Cog):
                 embed=await suggestion.as_embed(self.bot)
             )
         except disnake.Forbidden as e:
+            self.state.remove_sid_from_cache(
+                interaction.guild_id, suggestion.suggestion_id
+            )
             await self.suggestions_db.delete(suggestion.as_filter())
             raise e
+
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
@@ -80,6 +84,9 @@ class SuggestionsCog(commands.Cog):
                 await self.bot.suggestion_emojis.default_down_vote()
             )
         except disnake.Forbidden as e:
+            self.state.remove_sid_from_cache(
+                interaction.guild_id, suggestion.suggestion_id
+            )
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()
@@ -90,6 +97,9 @@ class SuggestionsCog(commands.Cog):
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
         except disnake.HTTPException as e:
             log.error("disnake.HTTPException: %s | Code %s", e.text, e.code)
+            self.state.remove_sid_from_cache(
+                interaction.guild_id, suggestion.suggestion_id
+            )
             await self.suggestions_db.delete(suggestion.as_filter())
             try:
                 await message.delete()
