@@ -25,6 +25,7 @@ class SuggestionState(Enum):
     pending = 0
     approved = 1
     rejected = 2
+    cleared = 3
 
     @staticmethod
     def from_str(value: str) -> SuggestionState:
@@ -32,6 +33,7 @@ class SuggestionState(Enum):
             "pending": SuggestionState.pending,
             "approved": SuggestionState.approved,
             "rejected": SuggestionState.rejected,
+            "cleared": SuggestionState.cleared,
         }
         return mappings[value.lower()]
 
@@ -41,6 +43,9 @@ class SuggestionState(Enum):
 
         elif self is SuggestionState.approved:
             return "approved"
+
+        elif self is SuggestionState.cleared:
+            return "cleared"
 
         return "pending"
 
@@ -293,7 +298,10 @@ class Suggestion:
         return embed
 
     async def mark_approved_by(
-        self, state: State, resolved_by: int, resolution_note: Optional[str] = None
+        self,
+        state: State,
+        resolved_by: int,
+        resolution_note: Optional[str] = None,
     ):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.approved
@@ -307,7 +315,10 @@ class Suggestion:
         await self.try_notify_user_of_decision(state.bot)
 
     async def mark_rejected_by(
-        self, state: State, resolved_by: int, resolution_note: Optional[str] = None
+        self,
+        state: State,
+        resolved_by: int,
+        resolution_note: Optional[str] = None,
     ):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.rejected
@@ -319,6 +330,14 @@ class Suggestion:
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
         await self.try_notify_user_of_decision(state.bot)
+
+    async def mark_cleared_by(self, state: State, resolved_by: int):
+        assert state.suggestions_db.collection_name == "suggestions"
+        self.state = SuggestionState.cleared
+        self.resolved_at = state.now
+        self.resolved_by = resolved_by
+        state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
+        await state.suggestions_db.update(self, self)
 
     async def try_delete(
         self,
