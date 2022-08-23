@@ -331,11 +331,21 @@ class Suggestion:
         await state.suggestions_db.update(self, self)
         await self.try_notify_user_of_decision(state.bot)
 
-    async def mark_cleared_by(self, state: State, resolved_by: int):
+    async def mark_cleared_by(
+        self,
+        state: State,
+        resolved_by: int,
+        resolution_note: Optional[str] = None,
+    ):
         assert state.suggestions_db.collection_name == "suggestions"
         self.state = SuggestionState.cleared
         self.resolved_at = state.now
         self.resolved_by = resolved_by
+        self.channel_id = None
+        self.message_id = None
+        if resolution_note:
+            self.resolution_note = resolution_note
+
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
 

@@ -270,6 +270,10 @@ class SuggestionsCog(commands.Cog):
         self,
         interaction: disnake.GuildCommandInteraction,
         suggestion_id: str = commands.Param(description="The sID you wish to clear"),
+        response: Optional[str] = commands.Param(
+            description="An optional response as to why this suggestion was cleared",
+            default=None,
+        ),
     ):
         """Remove a suggestion and any associated messages."""
         await interaction.response.defer(ephemeral=True)
@@ -289,7 +293,7 @@ class SuggestionsCog(commands.Cog):
             else:
                 await message.delete()
 
-        await suggestion.mark_cleared_by(self.state, interaction.user.id)
+        await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         await interaction.send(
             f"I have cleared `{suggestion_id}` for you.", ephemeral=True
         )
