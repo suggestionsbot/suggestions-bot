@@ -47,6 +47,7 @@ class GuildConfig:
             The valid guilds config
         """
         if guild_id in state.guild_configs:
+            log.debug("Found cached GuildConfig for guild %s", guild_id)
             return state.guild_configs[guild_id]
 
         guild_config: Optional[GuildConfig] = await state.guild_config_db.find(
@@ -55,6 +56,12 @@ class GuildConfig:
         if not guild_config:
             log.info("Created new GuildConfig for %s", guild_id)
             guild_config = cls(_id=guild_id)
+        else:
+            log.debug(
+                "Fetched GuildConfig %s from database for guild %s",
+                guild_config,
+                guild_id,
+            )
 
         state.refresh_guild_config(guild_config)
         return guild_config
@@ -69,3 +76,6 @@ class GuildConfig:
 
     def as_filter(self) -> Dict:
         return {"_id": self.guild_id}
+
+    def __repr__(self):
+        return f"GuildConfig({self.as_dict()})"

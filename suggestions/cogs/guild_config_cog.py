@@ -49,6 +49,11 @@ class GuildConfigCog(commands.Cog):
         )
         guild_config.suggestions_channel_id = channel.id
         self.state.refresh_guild_config(guild_config)
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
             f"I have set this guilds suggestion channel to {channel.mention}",
@@ -78,6 +83,11 @@ class GuildConfigCog(commands.Cog):
         )
         guild_config.log_channel_id = channel.id
         self.state.refresh_guild_config(guild_config)
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
             f"I have set this guilds log channel to {channel.mention}",
@@ -204,6 +214,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id, self.state
         )
         guild_config.dm_messages_disabled = False
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
         await self.bot.db.guild_configs.upsert(guild_config, guild_config)
         await interaction.send(
             "I have enabled DM messages for this guild.", ephemeral=True
@@ -222,6 +237,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id, self.state
         )
         guild_config.dm_messages_disabled = True
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
         await self.bot.db.guild_configs.upsert(guild_config, guild_config)
         await interaction.send(
             "I have disabled DM messages for this guild.", ephemeral=True
