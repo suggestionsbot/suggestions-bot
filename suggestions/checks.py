@@ -26,7 +26,7 @@ async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[Guild
             AQ(EQ("_id", interaction.guild_id))
         )
         if bool(guild_exists):
-            suggestions.state.guild_configs[guild_id] = guild_exists
+            suggestions.state.refresh_guild_config(guild_exists)
 
     if guild_id not in suggestions.state.guild_configs:
         return None
