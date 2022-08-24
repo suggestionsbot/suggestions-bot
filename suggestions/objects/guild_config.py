@@ -22,8 +22,8 @@ class GuildConfig:
         **kwargs,
     ):
         self._id: int = _id
-        self.dm_messages_disabled: bool = dm_messages_disabled
         self.log_channel_id: Optional[int] = log_channel_id
+        self.dm_messages_disabled: bool = dm_messages_disabled
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
 
     @property

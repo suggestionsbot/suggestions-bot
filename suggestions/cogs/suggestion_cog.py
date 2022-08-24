@@ -96,11 +96,20 @@ class SuggestionsCog(commands.Cog):
                 )
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
         except disnake.HTTPException as e:
-            log.error("disnake.HTTPException: %s | Code %s", e.text, e.code)
+            log.error(
+                "disnake.HTTPException: %s | Code %s | Guild %s",
+                e.text,
+                e.code,
+                interaction.guild_id,
+            )
             self.state.remove_sid_from_cache(
                 interaction.guild_id, suggestion.suggestion_id
             )
             await self.suggestions_db.delete(suggestion.as_filter())
+
+            if e.code == 10008:
+                raise e
+
             try:
                 await message.delete()
             except disnake.Forbidden:
