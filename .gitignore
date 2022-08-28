@@ -1,6 +1,7 @@
 *.pyi
 .env
 *.json
+!suggestions/locales/*
 !/tests/raw.json
 !/testing/tracker_tests.json
 examples/dev.py
