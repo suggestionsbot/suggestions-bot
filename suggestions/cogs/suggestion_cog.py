@@ -41,6 +41,9 @@ class SuggestionsCog(commands.Cog):
         self,
         interaction: disnake.GuildCommandInteraction,
         suggestion: str = commands.Param(description="Your suggestion"),
+        image: disnake.Attachment = commands.Param(
+            default=None, description="An image to add to your suggestion."
+        ),
     ):
         """Create a new suggestion."""
         if len(suggestion) > 1000:
@@ -49,11 +52,13 @@ class SuggestionsCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
+        image_url = image.url if isinstance(image, disnake.Attachment) else None
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
             guild_id=interaction.guild_id,
             state=self.state,
             author_id=interaction.author.id,
+            image_url=image_url,
         )
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state

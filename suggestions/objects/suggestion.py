@@ -69,6 +69,7 @@ class Suggestion:
         resolved_by: Optional[int] = None,
         resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
+        image_url: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -105,6 +106,8 @@ class Suggestion:
             How many up votes this had when closed
         total_down_votes: Optional[int]
             How many down votes this had when closed
+        image_url: Optional[str]
+            An optional url for an image attached to the suggestion
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -124,6 +127,7 @@ class Suggestion:
         self.resolution_note: Optional[str] = resolution_note
         self.total_up_votes: Optional[int] = total_up_votes
         self.total_down_votes: Optional[int] = total_down_votes
+        self.image_url: Optional[str] = image_url
 
     @property
     def suggestion_id(self) -> str:
@@ -192,6 +196,8 @@ class Suggestion:
         guild_id: int,
         author_id: int,
         state: State,
+        *,
+        image_url: Optional[str] = None,
     ) -> Suggestion:
         """Create and return a new valid suggestion.
 
@@ -206,6 +212,11 @@ class Suggestion:
         state: State
             A back-ref to insert into the database
 
+        Other Parameters
+        ----------------
+        image_url: Optional[str]
+            An image to attach to this suggestion.
+
         Returns
         -------
         Suggestion
@@ -219,6 +230,7 @@ class Suggestion:
             _id=suggestion_id,
             suggestion_author_id=author_id,
             created_at=state.now,
+            image_url=image_url,
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
@@ -252,6 +264,9 @@ class Suggestion:
             data["total_up_votes"] = self.total_up_votes
             data["total_down_votes"] = self.total_down_votes
 
+        if self.image_url is not None:
+            data["image_url"] = self.image_url
+
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
@@ -259,7 +274,7 @@ class Suggestion:
             return await self._as_resolved_embed(bot)
 
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
-        return (
+        embed: Embed = (
             Embed(
                 description=f"**Submitter**\n{user.display_name}\n\n"
                 f"**Suggestion**\n{self.suggestion}",
@@ -271,6 +286,11 @@ class Suggestion:
                 text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
             )
         )
+
+        if self.image_url:
+            embed.set_image(self.image_url)
+
+        return embed
 
     async def _as_resolved_embed(self, bot: SuggestionsBot) -> Embed:
         results = (
@@ -294,6 +314,9 @@ class Suggestion:
 
         if self.resolution_note:
             embed.description += f"**Response**\n{self.resolution_note}"
+
+        if self.image_url:
+            embed.set_image(self.image_url)
 
         return embed
 
