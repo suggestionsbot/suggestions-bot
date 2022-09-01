@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -80,6 +81,7 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await asyncio.sleep(5)
 
         try:
             await message.add_reaction(
@@ -100,6 +102,20 @@ class SuggestionsCog(commands.Cog):
                     missing_permissions=["Add Reactions", "Manage Messages"]
                 )
             raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
+        except disnake.NotFound as e:
+            # We get here if the message was deleted in between
+            log.error(
+                "disnake.NotFound: %s | Code %s | Guild %s",
+                e.text,
+                e.code,
+                interaction.guild_id,
+            )
+            await suggestion.mark_cleared_by(
+                self.state,
+                474051954998509571,
+                "Resolved by the bot automatically due to the message being deleted mid command.",
+            )
+            raise e
         except disnake.HTTPException as e:
             log.error(
                 "disnake.HTTPException: %s | Code %s | Guild %s",
@@ -111,9 +127,6 @@ class SuggestionsCog(commands.Cog):
                 interaction.guild_id, suggestion.suggestion_id
             )
             await self.suggestions_db.delete(suggestion.as_filter())
-
-            if e.code == 10008:
-                raise e
 
             try:
                 await message.delete()

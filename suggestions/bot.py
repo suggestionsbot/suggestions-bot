@@ -267,14 +267,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
-            return await interaction.send(
+            gid = interaction.guild_id if interaction.guild_id else None
+            await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
-                    "Failed to find data, are you sure everything is setup correct?",
+                    "I've failed to find something, please retry whatever you were doing.\n"
+                    f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
                     error_code=ErrorCode.GENERIC_NOT_FOUND,
                 ),
                 ephemeral=True,
             )
+            raise exception
 
         elif isinstance(exception, disnake.Forbidden):
             log.debug("disnake.Forbidden: %s", exception.text)
