@@ -85,7 +85,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self._has_dispatched_initial_ready = True
         log.info("Suggestions main: Ready")
-        log.info(self.get_uptime())
+        log.info("Startup took: %s", self.get_uptime())
         await self.suggestion_emojis.populate_emojis()
 
     @property
