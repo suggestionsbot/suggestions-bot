@@ -77,6 +77,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.cluster_id: int = kwargs.get("cluster", 0)
         self.total_shards: int = kwargs.get("shard_count", 0)
 
+        self._has_dispatched_initial_ready: bool = False
+
+    async def dispatch_initial_ready(self):
+        if self._has_dispatched_initial_ready:
+            return
+
+        self._has_dispatched_initial_ready = True
+        log.info("Suggestions main: Ready")
+        log.info(self.get_uptime())
+        await self.suggestion_emojis.populate_emojis()
+
     @property
     def total_cluster_count(self) -> int:
         return math.ceil(self.total_shards / 10)
@@ -400,7 +411,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
         if not self.is_prod or 1 == 1:  # Disable for now
-            log.warning("Cancelling bot listing updates as we aren't in production.")
+            # log.warning("Cancelling bot listing updates as we aren't in production.")
             return
 
         state: State = self.state

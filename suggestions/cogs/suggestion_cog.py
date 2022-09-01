@@ -31,10 +31,6 @@ class SuggestionsCog(commands.Cog):
         self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.info(f"{self.__class__.__name__}: Ready")
-
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_suggestions_channel()

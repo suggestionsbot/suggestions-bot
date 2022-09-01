@@ -19,10 +19,6 @@ class HelpGuildCog(commands.Cog):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.info(f"{self.__class__.__name__}: Ready")
-
     @commands.slash_command(
         dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),

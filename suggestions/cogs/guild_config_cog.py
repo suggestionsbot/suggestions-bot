@@ -25,10 +25,6 @@ class GuildConfigCog(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.info(f"{self.__class__.__name__}: Ready")
-
     @commands.slash_command(
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
