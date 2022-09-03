@@ -33,6 +33,8 @@ class StatsEnum(Enum):
     GUILD_CONFIG_GET = "guild_config_get"
     GUILD_DM_ENABLE = "guild_dm_enable"
     GUILD_DM_DISABLE = "guild_dm_disable"
+    GUILD_THREAD_ENABLE = "guild_thread_enable"
+    GUILD_THREAD_DISABLE = "guild_thread_disable"
     ACTIVATE_BETA = "activate_beta"
     STATS = "stats"
 
@@ -52,6 +54,10 @@ class StatsEnum(Enum):
                 "config channel": cls.GUILD_CONFIG_SUGGEST_CHANNEL,
                 "config logs": cls.GUILD_CONFIG_LOG_CHANNEL,
                 "activate beta": cls.ACTIVATE_BETA,
+                "config dm enable": cls.GUILD_DM_ENABLE,
+                "config dm disable": cls.GUILD_DM_DISABLE,
+                "config thread enable": cls.GUILD_THREAD_ENABLE,
+                "config thread disable": cls.GUILD_THREAD_DISABLE,
             }[name]
         except KeyError:
             return None

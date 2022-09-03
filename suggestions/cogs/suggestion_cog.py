@@ -163,6 +163,18 @@ class SuggestionsCog(commands.Cog):
                 interaction.author.id,
             )
 
+        if guild_config.threads_for_suggestions:
+            try:
+                await suggestion.create_thread(message)
+            except Exception as e:
+                log.debug(
+                    "Failed to create a thread on suggestion %s with error %s",
+                    suggestion.suggestion_id,
+                    str(e),
+                )
+            else:
+                log.debug("Created a thread on suggestion %s", suggestion.suggestion_id)
+
         log.debug(
             "User %s created new suggestion %s in guild %s",
             interaction.author.id,

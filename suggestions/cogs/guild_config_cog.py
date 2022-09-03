@@ -107,7 +107,12 @@ class GuildConfigCog(commands.Cog):
         interaction: disnake.GuildCommandInteraction,
         config=commands.Param(
             description="The optional configuration to view",
-            choices=["Log channel", "Suggestions channel", "Dm responses"],
+            choices=[
+                "Log channel",
+                "Suggestions channel",
+                "Dm responses",
+                "Threads for suggestions",
+            ],
             default=None,
         ),
     ):
@@ -148,6 +153,10 @@ class GuildConfigCog(commands.Cog):
                 f"Dm responses: I {dm_responses} DM users on actions such as suggest"
             )
 
+        elif config == "Threads for suggestions":
+            plural = "will" if guild_config.threads_for_suggestions else "will not"
+            embed.description += f"I {plural} create threads for new suggestions"
+
         else:
             raise InvalidGuildConfigOption
 
@@ -179,11 +188,14 @@ class GuildConfigCog(commands.Cog):
             else "Not set"
         )
         dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
+        plural = "will" if guild_config.threads_for_suggestions else "will not"
+        threads = f"I {plural} create threads for new suggestions"
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
-            f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest",
+            f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
+            f"{threads}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -247,6 +259,62 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             interaction.guild_id,
             self.stats.type.GUILD_DM_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def thread(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @thread.sub_command(name="enable")
+    async def thread_enable(self, interaction: disnake.GuildCommandInteraction):
+        """Enable thread creation on new suggestions."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.threads_for_suggestions = True
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "I have enabled threads on new suggestions for this guild.", ephemeral=True
+        )
+        log.debug(
+            "Enabled threads on new suggestions for guild %s", interaction.guild_id
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_THREAD_ENABLE,
+        )
+
+    @thread.sub_command(name="disable")
+    async def thread_disable(self, interaction: disnake.GuildCommandInteraction):
+        """Disable thread creation on new suggestions."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.threads_for_suggestions = False
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "I have disabled thread creation on new suggestions for this guild.",
+            ephemeral=True,
+        )
+        log.debug(
+            "Disabled thread creation on new suggestions for guild %s",
+            interaction.guild_id,
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_THREAD_DISABLE,
         )
 
 

@@ -462,3 +462,12 @@ class Suggestion:
             await user.send(embed=embed)
         except disnake.HTTPException:
             log.debug("Failed to dm %s to tell them about their suggestion", user.id)
+
+    async def create_thread(self, message: disnake.Message):
+        """Create a thread for this suggestion"""
+        if self.state != SuggestionState.pending:
+            raise ValueError(
+                "Cannot create a thread for suggestions which aren't pending."
+            )
+
+        await message.create_thread(name=f"Thread for suggestion {self.suggestion_id}")
