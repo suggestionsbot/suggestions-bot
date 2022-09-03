@@ -12,6 +12,7 @@ from suggestions import checks, Stats
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.objects import GuildConfig
+from suggestions.stats import StatsEnum
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
@@ -234,46 +235,24 @@ class GuildConfigCog(commands.Cog):
     @dm.sub_command()
     async def enable(self, interaction: disnake.GuildCommandInteraction):
         """Enable DM's responses to actions guild wide."""
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        guild_config.dm_messages_disabled = False
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
-        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
-        await interaction.send(
-            "I have enabled DM messages for this guild.", ephemeral=True
-        )
-        log.debug("Enabled DM messages for guild %s", interaction.guild_id)
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
+        await self.modify_guild_config(
+            interaction,
+            "dm_messages_disabled",
+            True,
+            "I have enabled DM messages for this guild.",
+            "Enabled DM messages for guild %s",
             self.stats.type.GUILD_DM_ENABLE,
         )
 
     @dm.sub_command()
     async def disable(self, interaction: disnake.GuildCommandInteraction):
         """Disable DM's responses to actions guild wide."""
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        guild_config.dm_messages_disabled = True
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
-        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
-        await interaction.send(
-            "I have disabled DM messages for this guild.", ephemeral=True
-        )
-        log.debug("Disabled DM messages for guild %s", interaction.guild_id)
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
+        await self.modify_guild_config(
+            interaction,
+            "dm_messages_disabled",
+            False,
+            "I have disabled DM messages for this guild.",
+            "Disabled DM messages for guild %s",
             self.stats.type.GUILD_DM_DISABLE,
         )
 
@@ -284,52 +263,24 @@ class GuildConfigCog(commands.Cog):
     @thread.sub_command(name="enable")
     async def thread_enable(self, interaction: disnake.GuildCommandInteraction):
         """Enable thread creation on new suggestions."""
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        guild_config.threads_for_suggestions = True
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
-        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
-        await interaction.send(
-            "I have enabled threads on new suggestions for this guild.", ephemeral=True
-        )
-        log.debug(
-            "Enabled threads on new suggestions for guild %s", interaction.guild_id
-        )
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
+        await self.modify_guild_config(
+            interaction,
+            "threads_for_suggestions",
+            False,
+            "I have enabled threads on new suggestions for this guild.",
+            "Enabled threads on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_ENABLE,
         )
 
     @thread.sub_command(name="disable")
     async def thread_disable(self, interaction: disnake.GuildCommandInteraction):
         """Disable thread creation on new suggestions."""
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        guild_config.threads_for_suggestions = False
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
-        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
-        await interaction.send(
+        await self.modify_guild_config(
+            interaction,
+            "threads_for_suggestions",
+            False,
             "I have disabled thread creation on new suggestions for this guild.",
-            ephemeral=True,
-        )
-        log.debug(
             "Disabled thread creation on new suggestions for guild %s",
-            interaction.guild_id,
-        )
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
             self.stats.type.GUILD_THREAD_DISABLE,
         )
 
@@ -340,34 +291,40 @@ class GuildConfigCog(commands.Cog):
     @keeplogs.sub_command(name="enable")
     async def keeplogs_enable(self, interaction: disnake.GuildCommandInteraction):
         """Keep suggestions in the suggestions channel instead of moving them to logs channel."""
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        guild_config.keep_logs = True
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
-        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
-        await interaction.send(
+        await self.modify_guild_config(
+            interaction,
+            "keep_logs",
+            True,
             "Suggestions will now stay in your suggestions channel instead of going to logs.",
-            ephemeral=True,
-        )
-        log.debug("Enabled keep logs on suggestions for guild %s", interaction.guild_id)
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
+            "Enabled keep logs on suggestions for guild %s",
             self.stats.type.GUILD_KEEPLOGS_ENABLE,
         )
 
     @keeplogs.sub_command(name="disable")
     async def keeplogs_disable(self, interaction: disnake.GuildCommandInteraction):
         """Move suggestions in the suggestions channel to logs channel when done."""
+        await self.modify_guild_config(
+            interaction,
+            "keep_logs",
+            False,
+            "Suggestions will now be moved to your logs channel when finished.",
+            "Disabled keep logs on suggestions for guild %s",
+            self.stats.type.GUILD_KEEPLOGS_DISABLE,
+        )
+
+    async def modify_guild_config(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        field: str,
+        new_value: bool,
+        user_message: str,
+        log_message: str,
+        stat_type: StatsEnum,
+    ):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        guild_config.keep_logs = False
+        setattr(guild_config, field, new_value)
         log.debug(
             "Updating GuildConfig %s in database for guild %s",
             guild_config,
@@ -375,17 +332,17 @@ class GuildConfigCog(commands.Cog):
         )
         await self.bot.db.guild_configs.upsert(guild_config, guild_config)
         await interaction.send(
-            "Suggestions will now be moved to your logs channel when finished.",
+            user_message,
             ephemeral=True,
         )
         log.debug(
-            "Disabled keep logs on suggestions for guild %s",
+            log_message,
             interaction.guild_id,
         )
         await self.stats.log_stats(
             interaction.author.id,
             interaction.guild_id,
-            self.stats.type.GUILD_KEEPLOGS_DISABLE,
+            stat_type,
         )
 
 
