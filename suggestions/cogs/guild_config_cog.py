@@ -266,7 +266,7 @@ class GuildConfigCog(commands.Cog):
         await self.modify_guild_config(
             interaction,
             "threads_for_suggestions",
-            False,
+            True,
             "I have enabled threads on new suggestions for this guild.",
             "Enabled threads on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_ENABLE,
