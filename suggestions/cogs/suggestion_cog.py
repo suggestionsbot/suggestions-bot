@@ -192,7 +192,7 @@ class SuggestionsCog(commands.Cog):
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
-    @checks.ensure_guild_has_logs_channel()
+    @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def approve(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -284,7 +284,7 @@ class SuggestionsCog(commands.Cog):
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
-    @checks.ensure_guild_has_logs_channel()
+    @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def reject(
         self,
         interaction: disnake.GuildCommandInteraction,

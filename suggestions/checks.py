@@ -49,14 +49,14 @@ def ensure_guild_has_suggestions_channel():
     return commands.check(check)  # type: ignore
 
 
-def ensure_guild_has_logs_channel():
+def ensure_guild_has_logs_channel_or_keep_logs():
     async def check(interaction: disnake.Interaction):
         guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
 
         if not bool(guild_config):
             raise MissingLogsChannel
 
-        if not guild_config.log_channel_id:
+        if not guild_config.log_channel_id and not guild_config.keep_logs:
             raise MissingLogsChannel
 
         return True
