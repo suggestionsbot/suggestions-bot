@@ -112,6 +112,7 @@ class GuildConfigCog(commands.Cog):
                 "Suggestions channel",
                 "Dm responses",
                 "Threads for suggestions",
+                "Keep logs",
             ],
             default=None,
         ),
@@ -157,6 +158,16 @@ class GuildConfigCog(commands.Cog):
             plural = "will" if guild_config.threads_for_suggestions else "will not"
             embed.description += f"I {plural} create threads for new suggestions"
 
+        elif config == "Keep logs":
+            if guild_config.keep_logs:
+                embed.description += (
+                    "Suggestion logs will be kept in your suggestions channel."
+                )
+            else:
+                embed.description += (
+                    "Suggestion logs will be kept in your logs channel."
+                )
+
         else:
             raise InvalidGuildConfigOption
 
@@ -190,12 +201,17 @@ class GuildConfigCog(commands.Cog):
         dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
         plural = "will" if guild_config.threads_for_suggestions else "will not"
         threads = f"I {plural} create threads for new suggestions"
+        if guild_config.keep_logs:
+            keep_logs = "Suggestion logs will be kept in your suggestions channel."
+        else:
+            keep_logs = "Suggestion logs will be kept in your logs channel."
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
-            f"{threads}",
+            f"{threads}\n{keep_logs}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -315,6 +331,61 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             interaction.guild_id,
             self.stats.type.GUILD_THREAD_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def keeplogs(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @keeplogs.sub_command(name="enable")
+    async def keeplogs_enable(self, interaction: disnake.GuildCommandInteraction):
+        """Keep suggestions in the suggestions channel instead of moving them to logs channel."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.keep_logs = True
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "Suggestions will now stay in your suggestions channel instead of going to logs.",
+            ephemeral=True,
+        )
+        log.debug("Enabled keep logs on suggestions for guild %s", interaction.guild_id)
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_KEEPLOGS_ENABLE,
+        )
+
+    @keeplogs.sub_command(name="disable")
+    async def keeplogs_disable(self, interaction: disnake.GuildCommandInteraction):
+        """Move suggestions in the suggestions channel to logs channel when done."""
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        guild_config.keep_logs = False
+        log.debug(
+            "Updating GuildConfig %s in database for guild %s",
+            guild_config,
+            interaction.guild_id,
+        )
+        await self.bot.db.guild_configs.upsert(guild_config, guild_config)
+        await interaction.send(
+            "Suggestions will now be moved to your logs channel when finished.",
+            ephemeral=True,
+        )
+        log.debug(
+            "Disabled keep logs on suggestions for guild %s",
+            interaction.guild_id,
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.GUILD_KEEPLOGS_DISABLE,
         )
 
 

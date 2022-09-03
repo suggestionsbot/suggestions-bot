@@ -35,6 +35,8 @@ class StatsEnum(Enum):
     GUILD_DM_DISABLE = "guild_dm_disable"
     GUILD_THREAD_ENABLE = "guild_thread_enable"
     GUILD_THREAD_DISABLE = "guild_thread_disable"
+    GUILD_KEEPLOGS_ENABLE = "guild_keeplogs_enable"
+    GUILD_KEEPLOGS_DISABLE = "guild_keeplogs_disable"
     ACTIVATE_BETA = "activate_beta"
     STATS = "stats"
 
@@ -58,6 +60,8 @@ class StatsEnum(Enum):
                 "config dm disable": cls.GUILD_DM_DISABLE,
                 "config thread enable": cls.GUILD_THREAD_ENABLE,
                 "config thread disable": cls.GUILD_THREAD_DISABLE,
+                "config keeplogs enable": cls.GUILD_KEEPLOGS_ENABLE,
+                "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
             }[name]
         except KeyError:
             return None

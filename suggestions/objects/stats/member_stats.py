@@ -42,6 +42,8 @@ class MemberStats:
             "guild_dm_disable",
             "guild_thread_enable",
             "guild_thread_disable",
+            "guild_keeplogs_enable",
+            "guild_keeplogs_disable",
             "activate_beta",
             "stats",
         ]

@@ -16,6 +16,7 @@ class GuildConfig:
     def __init__(
         self,
         _id: int,
+        keep_logs: bool = False,
         dm_messages_disabled: bool = False,
         log_channel_id: Optional[int] = None,
         threads_for_suggestions: bool = True,
@@ -23,6 +24,7 @@ class GuildConfig:
         **kwargs,
     ):
         self._id: int = _id
+        self.keep_logs: bool = keep_logs
         self.log_channel_id: Optional[int] = log_channel_id
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.threads_for_suggestions: bool = threads_for_suggestions
@@ -71,6 +73,7 @@ class GuildConfig:
     def as_dict(self) -> Dict:
         return {
             "_id": self.guild_id,
+            "keep_logs": self.keep_logs,
             "log_channel_id": self.log_channel_id,
             "dm_messages_disabled": self.dm_messages_disabled,
             "threads_for_suggestions": self.threads_for_suggestions,
