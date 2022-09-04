@@ -438,27 +438,45 @@ class Suggestion:
             )
             raise ErrorHandled
 
-        if not self.resolved_by:
-            # We need to store results
-            # -1 As the bot shouldn't count
-            default_up_vote = await bot.suggestion_emojis.default_up_vote()
-            default_down_vote = await bot.suggestion_emojis.default_down_vote()
-            for reaction in message.reactions:
-                if str(reaction.emoji) == str(default_up_vote):
-                    self.total_up_votes = reaction.count - 1
-
-                elif str(reaction.emoji) == str(default_down_vote):
-                    self.total_down_votes = reaction.count - 1
-
-            if self.total_up_votes is None or self.total_down_votes is None:
-                log.error(
-                    "Failed to find our emojis on suggestion %s", self.suggestion_id
-                )
-
         await message.delete()
 
         self.message_id = None
         self.channel_id = None
+        await bot.db.suggestions.update(self, self)
+
+    async def save_reaction_results(
+        self,
+        bot: SuggestionsBot,
+        interaction: disnake.GuildCommandInteraction,
+    ):
+        try:
+            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.HTTPException:
+            await interaction.send(
+                embed=bot.error_embed(
+                    "Command failed",
+                    "Looks like this suggestion was deleted.",
+                    footer_text=f"Error code {ErrorCode.SUGGESTION_MESSAGE_DELETED.value}",
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
+        # We need to store results
+        # -1 As the bot shouldn't count
+        default_up_vote = await bot.suggestion_emojis.default_up_vote()
+        default_down_vote = await bot.suggestion_emojis.default_down_vote()
+        for reaction in message.reactions:
+            if str(reaction.emoji) == str(default_up_vote):
+                self.total_up_votes = reaction.count - 1
+
+            elif str(reaction.emoji) == str(default_down_vote):
+                self.total_down_votes = reaction.count - 1
+
+        if self.total_up_votes is None or self.total_down_votes is None:
+            log.error("Failed to find our emojis on suggestion %s", self.suggestion_id)
+
         await bot.db.suggestions.update(self, self)
 
     async def try_notify_user_of_decision(self, bot: SuggestionsBot):
