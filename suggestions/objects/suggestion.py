@@ -75,6 +75,7 @@ class Suggestion:
         resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
         image_url: Optional[str] = None,
+        uses_views_for_votes: bool = False,
         **kwargs,
     ):
         """
@@ -129,6 +130,11 @@ class Suggestion:
             This is based off the new button system
         image_url: Optional[str]
             An optional url for an image attached to the suggestion
+        uses_views_for_votes: bool
+            A simple flag to make backwards compatibility easier.
+
+            Defaults to `False` as all old suggestions will use this
+            value since they don't have the field in the database
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -140,6 +146,7 @@ class Suggestion:
             if not isinstance(state, SuggestionState)
             else state
         )
+        self.uses_views_for_votes: bool = uses_views_for_votes
 
         self.channel_id: Optional[int] = channel_id
         self.message_id: Optional[int] = message_id
@@ -157,20 +164,20 @@ class Suggestion:
         if self._total_up_votes:
             return self._total_up_votes
 
-        elif self.up_voted_by:
-            return len(self.up_voted_by)
+        if not self.uses_views_for_votes:
+            return None
 
-        return None
+        return len(self.up_voted_by)
 
     @property
     def total_down_votes(self) -> Optional[int]:
         if self._total_down_votes:
             return self._total_down_votes
 
-        elif self.down_voted_by:
-            return len(self.down_voted_by)
+        if not self.uses_views_for_votes:
+            return None
 
-        return None
+        return len(self.down_voted_by)
 
     @property
     def suggestion_id(self) -> str:
@@ -274,6 +281,7 @@ class Suggestion:
             suggestion_author_id=author_id,
             created_at=state.now,
             image_url=image_url,
+            uses_views_for_votes=True,
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
@@ -290,6 +298,7 @@ class Suggestion:
             "_id": self.suggestion_id,
             "suggestion_author_id": self.suggestion_author_id,
             "created_at": self.created_at,
+            "uses_views_for_votes": self.uses_views_for_votes,
         }
 
         if self.resolved_by:
@@ -303,11 +312,11 @@ class Suggestion:
             data["message_id"] = self.message_id
             data["channel_id"] = self.channel_id
 
-        if self._total_up_votes is not None:
+        if not self.uses_views_for_votes:
             data["total_up_votes"] = self._total_up_votes
             data["total_down_votes"] = self._total_down_votes
 
-        if self.up_voted_by:
+        if self.uses_views_for_votes:
             data["up_voted_by"] = list(self.up_voted_by)
             data["down_voted_by"] = list(self.down_voted_by)
 
@@ -337,7 +346,7 @@ class Suggestion:
         if self.image_url:
             embed.set_image(self.image_url)
 
-        if self.up_voted_by or self.down_voted_by:
+        if self.uses_views_for_votes:
             results = (
                 f"**Results so far**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
                 f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"

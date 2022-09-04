@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 import cooldowns
 import disnake
@@ -37,6 +37,7 @@ class SuggestionsCog(commands.Cog):
         inter: disnake.MessageInteraction,
         *,
         suggestion_id: str,
+        is_up: bool,
     ):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
@@ -128,8 +129,23 @@ class SuggestionsCog(commands.Cog):
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
+            channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
-                embed=await suggestion.as_embed(self.bot)
+                embed=await suggestion.as_embed(self.bot),
+                components=[
+                    disnake.ui.Button(
+                        emoji=await self.bot.suggestion_emojis.default_up_vote(),
+                        custom_id=await self.suggestion_up_vote.build_custom_id(
+                            suggestion_id=suggestion.suggestion_id, is_up=True
+                        ),
+                    ),
+                    disnake.ui.Button(
+                        emoji=await self.bot.suggestion_emojis.default_down_vote(),
+                        custom_id=await self.suggestion_down_vote.build_custom_id(
+                            suggestion_id=suggestion.suggestion_id
+                        ),
+                    ),
+                ],
             )
         except disnake.Forbidden as e:
             self.state.remove_sid_from_cache(
