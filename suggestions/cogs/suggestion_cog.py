@@ -211,6 +211,7 @@ class SuggestionsCog(commands.Cog):
         )
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
         if guild_config.keep_logs:
+            await suggestion.save_reaction_results(self.bot, interaction)
             # In place suggestion edit
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 suggestion.channel_id
@@ -239,6 +240,7 @@ class SuggestionsCog(commands.Cog):
 
         else:
             # Move the suggestion to the logs channel
+            await suggestion.save_reaction_results(self.bot, interaction)
             await suggestion.try_delete(self.bot, interaction)
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 guild_config.log_channel_id
@@ -303,6 +305,7 @@ class SuggestionsCog(commands.Cog):
         )
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
         if guild_config.keep_logs:
+            await suggestion.save_reaction_results(self.bot, interaction)
             # In place suggestion edit
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 suggestion.channel_id
@@ -331,6 +334,7 @@ class SuggestionsCog(commands.Cog):
 
         else:
             # Move the suggestion to the logs channel
+            await suggestion.save_reaction_results(self.bot, interaction)
             await suggestion.try_delete(self.bot, interaction)
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 guild_config.log_channel_id
