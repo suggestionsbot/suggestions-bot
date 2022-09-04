@@ -43,7 +43,7 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, inter.guild_id, self.state
         )
         member_id = inter.author.id
-        if member_id in suggestion.up_voted_by:  # noqa
+        if member_id in suggestion.up_voted_by:
             return await inter.send(
                 "You have already up voted this suggestion.", ephemeral=True
             )
@@ -75,7 +75,7 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, inter.guild_id, self.state
         )
         member_id = inter.author.id
-        if member_id in suggestion.down_voted_by:  # noqa
+        if member_id in suggestion.down_voted_by:
             return await inter.send(
                 "You have already down voted this suggestion.", ephemeral=True
             )
