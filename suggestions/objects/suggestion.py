@@ -466,7 +466,7 @@ class Suggestion:
         interaction: disnake.GuildCommandInteraction,
     ) -> None:
         if self.uses_views_for_votes:
-            # Saves modifying the external codebase
+            # Saves modifying the existing codebase.
             # This means we can simply return and
             # move onto the next thing no worries
             return None

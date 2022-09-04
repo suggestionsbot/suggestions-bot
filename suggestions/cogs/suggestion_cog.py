@@ -57,12 +57,18 @@ class SuggestionsCog(commands.Cog):
                 "I have changed your vote from a down vote to an up vote for this suggestion.",
                 ephemeral=True,
             )
+            log.debug(
+                "Member %s modified their vote on %s to an up vote",
+                member_id,
+                suggestion_id,
+            )
             return
 
         suggestion.up_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await suggestion.update_vote_count(self.bot, inter)
         await inter.send("Thanks!\nI have registered your up vote.", ephemeral=True)
+        log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
 
     @components.button_listener()
     async def suggestion_down_vote(
@@ -89,12 +95,18 @@ class SuggestionsCog(commands.Cog):
                 "I have changed your vote from an up vote to a down vote for this suggestion.",
                 ephemeral=True,
             )
+            log.debug(
+                "Member %s modified their vote on %s to a down vote",
+                member_id,
+                suggestion_id,
+            )
             return
 
         suggestion.down_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await suggestion.update_vote_count(self.bot, inter)
         await inter.send("Thanks!\nI have registered your down vote.", ephemeral=True)
+        log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
