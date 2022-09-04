@@ -148,8 +148,8 @@ class Suggestion:
         self.resolution_note: Optional[str] = resolution_note
         self._total_up_votes: Optional[int] = total_up_votes
         self._total_down_votes: Optional[int] = total_down_votes
-        self._up_voted_by: set[int] = set(up_voted_by) if up_voted_by else set()
-        self._down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
+        self.up_voted_by: set[int] = set(up_voted_by) if up_voted_by else set()
+        self.down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
         self.image_url: Optional[str] = image_url
 
     @property
@@ -157,8 +157,8 @@ class Suggestion:
         if self._total_up_votes:
             return self._total_up_votes
 
-        elif self._up_voted_by:
-            return len(self._up_voted_by)
+        elif self.up_voted_by:
+            return len(self.up_voted_by)
 
         return None
 
@@ -167,8 +167,8 @@ class Suggestion:
         if self._total_down_votes:
             return self._total_down_votes
 
-        elif self._down_voted_by:
-            return len(self._down_voted_by)
+        elif self.down_voted_by:
+            return len(self.down_voted_by)
 
         return None
 
@@ -307,9 +307,9 @@ class Suggestion:
             data["total_up_votes"] = self._total_up_votes
             data["total_down_votes"] = self._total_down_votes
 
-        if self._up_voted_by:
-            data["up_voted_by"] = list(self._up_voted_by)
-            data["down_voted_by"] = list(self._down_voted_by)
+        if self.up_voted_by:
+            data["up_voted_by"] = list(self.up_voted_by)
+            data["down_voted_by"] = list(self.down_voted_by)
 
         if self.image_url is not None:
             data["image_url"] = self.image_url
@@ -336,6 +336,13 @@ class Suggestion:
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.up_voted_by or self.down_voted_by:
+            results = (
+                f"**Results so far**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+                f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
+            )
+            embed.description += f"\n\n{results}"
 
         return embed
 
@@ -448,7 +455,13 @@ class Suggestion:
         self,
         bot: SuggestionsBot,
         interaction: disnake.GuildCommandInteraction,
-    ):
+    ) -> None:
+        if self.up_voted_by or self.down_voted_by:
+            # Saves modifying the external codebase
+            # This means we can simply return and
+            # move onto the next thing no worries
+            return None
+
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
@@ -469,10 +482,10 @@ class Suggestion:
         default_down_vote = await bot.suggestion_emojis.default_down_vote()
         for reaction in message.reactions:
             if str(reaction.emoji) == str(default_up_vote):
-                self.total_up_votes = reaction.count - 1
+                self._total_up_votes = reaction.count - 1
 
             elif str(reaction.emoji) == str(default_down_vote):
-                self.total_down_votes = reaction.count - 1
+                self._total_down_votes = reaction.count - 1
 
         if self.total_up_votes is None or self.total_down_votes is None:
             log.error("Failed to find our emojis on suggestion %s", self.suggestion_id)
@@ -536,3 +549,24 @@ class Suggestion:
             )
 
         await message.create_thread(name=f"Thread for suggestion {self.suggestion_id}")
+
+    async def update_vote_count(
+        self,
+        bot: SuggestionsBot,
+        interaction: disnake.Interaction,
+    ):
+        try:
+            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.HTTPException:
+            await interaction.send(
+                embed=bot.error_embed(
+                    "Command failed",
+                    "Looks like this suggestion was deleted.",
+                    footer_text=f"Error code {ErrorCode.SUGGESTION_MESSAGE_DELETED.value}",
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
+        await message.edit(embed=await self.as_embed(bot))
