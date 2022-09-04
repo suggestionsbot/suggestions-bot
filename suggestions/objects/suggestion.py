@@ -312,13 +312,13 @@ class Suggestion:
             data["message_id"] = self.message_id
             data["channel_id"] = self.channel_id
 
-        if not self.uses_views_for_votes:
-            data["total_up_votes"] = self._total_up_votes
-            data["total_down_votes"] = self._total_down_votes
-
         if self.uses_views_for_votes:
             data["up_voted_by"] = list(self.up_voted_by)
             data["down_voted_by"] = list(self.down_voted_by)
+
+        else:
+            data["total_up_votes"] = self._total_up_votes
+            data["total_down_votes"] = self._total_down_votes
 
         if self.image_url is not None:
             data["image_url"] = self.image_url
@@ -465,7 +465,7 @@ class Suggestion:
         bot: SuggestionsBot,
         interaction: disnake.GuildCommandInteraction,
     ) -> None:
-        if self.up_voted_by or self.down_voted_by:
+        if self.uses_views_for_votes:
             # Saves modifying the external codebase
             # This means we can simply return and
             # move onto the next thing no worries
