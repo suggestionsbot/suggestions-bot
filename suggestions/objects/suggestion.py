@@ -60,10 +60,15 @@ class Suggestion:
         suggestion: str,
         suggestion_author_id: int,
         created_at: datetime.datetime,
-        state: Union[Literal["open", "approved", "rejected"], SuggestionState],
+        state: Union[
+            Literal["open", "approved", "rejected", "cleared"],
+            SuggestionState,
+        ],
         *,
         total_up_votes: Optional[int] = None,
         total_down_votes: Optional[int] = None,
+        up_voted_by: Optional[list[int]] = None,
+        down_voted_by: Optional[list[int]] = None,
         channel_id: Optional[int] = None,
         message_id: Optional[int] = None,
         resolved_by: Optional[int] = None,
@@ -104,8 +109,24 @@ class Suggestion:
             or the log channel message.
         total_up_votes: Optional[int]
             How many up votes this had when closed
+
+            This is based off the old reaction system.
         total_down_votes: Optional[int]
             How many down votes this had when closed
+
+            This is based off the old reaction system.
+        up_voted_by: Optional[list[int]]
+            A list of people who up voted this suggestion
+
+            This is based off the new button system
+        up_voted_by: Optional[list[int]]
+            A list of people who up voted this suggestion
+
+            This is based off the new button system
+        down_voted_by: Optional[list[int]]
+            A list of people who down voted this suggestion
+
+            This is based off the new button system
         image_url: Optional[str]
             An optional url for an image attached to the suggestion
         """
@@ -125,9 +146,31 @@ class Suggestion:
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
         self.resolution_note: Optional[str] = resolution_note
-        self.total_up_votes: Optional[int] = total_up_votes
-        self.total_down_votes: Optional[int] = total_down_votes
+        self._total_up_votes: Optional[int] = total_up_votes
+        self._total_down_votes: Optional[int] = total_down_votes
+        self._up_voted_by: set[int] = set(up_voted_by) if up_voted_by else set()
+        self._down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
         self.image_url: Optional[str] = image_url
+
+    @property
+    def total_up_votes(self) -> Optional[int]:
+        if self._total_up_votes:
+            return self._total_up_votes
+
+        elif self._up_voted_by:
+            return len(self._up_voted_by)
+
+        return None
+
+    @property
+    def total_down_votes(self) -> Optional[int]:
+        if self._total_down_votes:
+            return self._total_down_votes
+
+        elif self._down_voted_by:
+            return len(self._down_voted_by)
+
+        return None
 
     @property
     def suggestion_id(self) -> str:
@@ -260,9 +303,13 @@ class Suggestion:
             data["message_id"] = self.message_id
             data["channel_id"] = self.channel_id
 
-        if self.total_up_votes is not None:
-            data["total_up_votes"] = self.total_up_votes
-            data["total_down_votes"] = self.total_down_votes
+        if self._total_up_votes is not None:
+            data["total_up_votes"] = self._total_up_votes
+            data["total_down_votes"] = self._total_down_votes
+
+        if self._up_voted_by:
+            data["up_voted_by"] = list(self._up_voted_by)
+            data["down_voted_by"] = list(self._down_voted_by)
 
         if self.image_url is not None:
             data["image_url"] = self.image_url

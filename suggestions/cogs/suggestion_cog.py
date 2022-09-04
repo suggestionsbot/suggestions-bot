@@ -9,7 +9,7 @@ import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
 from disnake import Guild
-from disnake.ext import commands
+from disnake.ext import commands, components
 
 from suggestions import checks, Stats
 from suggestions.cooldown_bucket import InteractionBucket
@@ -30,6 +30,19 @@ class SuggestionsCog(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
+
+    @components.button_listener()
+    async def suggestion_upvote(
+        self,
+        inter: disnake.MessageInteraction,
+        *,
+        suggestion_id: str,
+    ):
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, inter.guild_id, self.state
+        )
+        member_id = inter.author.id
+        await inter.send("Thanks!\nI have registered your upvote.", ephemeral=True)
 
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
