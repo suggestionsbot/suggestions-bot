@@ -269,7 +269,9 @@ class SuggestionsCog(commands.Cog):
             )
 
             try:
-                await message.edit(embed=await suggestion.as_embed(self.bot))
+                await message.edit(
+                    embed=await suggestion.as_embed(self.bot), components=None
+                )
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
@@ -363,7 +365,9 @@ class SuggestionsCog(commands.Cog):
             )
 
             try:
-                await message.edit(embed=await suggestion.as_embed(self.bot))
+                await message.edit(
+                    embed=await suggestion.as_embed(self.bot), components=None
+                )
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
