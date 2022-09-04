@@ -77,7 +77,6 @@ class SuggestionsCog(commands.Cog):
         suggestion.message_id = message.id
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
-        await asyncio.sleep(5)
 
         try:
             await message.add_reaction(
