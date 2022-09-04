@@ -16,6 +16,7 @@ from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong
 from suggestions.objects import Suggestion, GuildConfig, UserConfig
 from suggestions.objects.stats import MemberStats
+from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -42,6 +43,11 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
+        if suggestion.state != SuggestionState.pending:
+            return await inter.send(
+                "You can no longer cast votes on this suggestion.", ephemeral=True
+            )
+
         member_id = inter.author.id
         if member_id in suggestion.up_voted_by:
             return await inter.send(
@@ -80,6 +86,11 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
+        if suggestion.state != SuggestionState.pending:
+            return await inter.send(
+                "You can no longer cast votes on this suggestion.", ephemeral=True
+            )
+
         member_id = inter.author.id
         if member_id in suggestion.down_voted_by:
             return await inter.send(
