@@ -60,16 +60,22 @@ class Suggestion:
         suggestion: str,
         suggestion_author_id: int,
         created_at: datetime.datetime,
-        state: Union[Literal["open", "approved", "rejected"], SuggestionState],
+        state: Union[
+            Literal["open", "approved", "rejected", "cleared"],
+            SuggestionState,
+        ],
         *,
         total_up_votes: Optional[int] = None,
         total_down_votes: Optional[int] = None,
+        up_voted_by: Optional[list[int]] = None,
+        down_voted_by: Optional[list[int]] = None,
         channel_id: Optional[int] = None,
         message_id: Optional[int] = None,
         resolved_by: Optional[int] = None,
         resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
         image_url: Optional[str] = None,
+        uses_views_for_votes: bool = False,
         **kwargs,
     ):
         """
@@ -104,10 +110,31 @@ class Suggestion:
             or the log channel message.
         total_up_votes: Optional[int]
             How many up votes this had when closed
+
+            This is based off the old reaction system.
         total_down_votes: Optional[int]
             How many down votes this had when closed
+
+            This is based off the old reaction system.
+        up_voted_by: Optional[list[int]]
+            A list of people who up voted this suggestion
+
+            This is based off the new button system
+        up_voted_by: Optional[list[int]]
+            A list of people who up voted this suggestion
+
+            This is based off the new button system
+        down_voted_by: Optional[list[int]]
+            A list of people who down voted this suggestion
+
+            This is based off the new button system
         image_url: Optional[str]
             An optional url for an image attached to the suggestion
+        uses_views_for_votes: bool
+            A simple flag to make backwards compatibility easier.
+
+            Defaults to `False` as all old suggestions will use this
+            value since they don't have the field in the database
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -119,15 +146,38 @@ class Suggestion:
             if not isinstance(state, SuggestionState)
             else state
         )
+        self.uses_views_for_votes: bool = uses_views_for_votes
 
         self.channel_id: Optional[int] = channel_id
         self.message_id: Optional[int] = message_id
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
         self.resolution_note: Optional[str] = resolution_note
-        self.total_up_votes: Optional[int] = total_up_votes
-        self.total_down_votes: Optional[int] = total_down_votes
+        self._total_up_votes: Optional[int] = total_up_votes
+        self._total_down_votes: Optional[int] = total_down_votes
+        self.up_voted_by: set[int] = set(up_voted_by) if up_voted_by else set()
+        self.down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
         self.image_url: Optional[str] = image_url
+
+    @property
+    def total_up_votes(self) -> Optional[int]:
+        if self._total_up_votes:
+            return self._total_up_votes
+
+        if not self.uses_views_for_votes:
+            return None
+
+        return len(self.up_voted_by)
+
+    @property
+    def total_down_votes(self) -> Optional[int]:
+        if self._total_down_votes:
+            return self._total_down_votes
+
+        if not self.uses_views_for_votes:
+            return None
+
+        return len(self.down_voted_by)
 
     @property
     def suggestion_id(self) -> str:
@@ -231,6 +281,7 @@ class Suggestion:
             suggestion_author_id=author_id,
             created_at=state.now,
             image_url=image_url,
+            uses_views_for_votes=True,
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
@@ -247,6 +298,7 @@ class Suggestion:
             "_id": self.suggestion_id,
             "suggestion_author_id": self.suggestion_author_id,
             "created_at": self.created_at,
+            "uses_views_for_votes": self.uses_views_for_votes,
         }
 
         if self.resolved_by:
@@ -260,9 +312,13 @@ class Suggestion:
             data["message_id"] = self.message_id
             data["channel_id"] = self.channel_id
 
-        if self.total_up_votes is not None:
-            data["total_up_votes"] = self.total_up_votes
-            data["total_down_votes"] = self.total_down_votes
+        if self.uses_views_for_votes:
+            data["up_voted_by"] = list(self.up_voted_by)
+            data["down_voted_by"] = list(self.down_voted_by)
+
+        else:
+            data["total_up_votes"] = self._total_up_votes
+            data["total_down_votes"] = self._total_down_votes
 
         if self.image_url is not None:
             data["image_url"] = self.image_url
@@ -289,6 +345,13 @@ class Suggestion:
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.uses_views_for_votes:
+            results = (
+                f"**Results so far**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+                f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
+            )
+            embed.description += f"\n\n{results}"
 
         return embed
 
@@ -401,7 +464,13 @@ class Suggestion:
         self,
         bot: SuggestionsBot,
         interaction: disnake.GuildCommandInteraction,
-    ):
+    ) -> None:
+        if self.uses_views_for_votes:
+            # Saves modifying the existing codebase.
+            # This means we can simply return and
+            # move onto the next thing no worries
+            return None
+
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
@@ -422,10 +491,10 @@ class Suggestion:
         default_down_vote = await bot.suggestion_emojis.default_down_vote()
         for reaction in message.reactions:
             if str(reaction.emoji) == str(default_up_vote):
-                self.total_up_votes = reaction.count - 1
+                self._total_up_votes = reaction.count - 1
 
             elif str(reaction.emoji) == str(default_down_vote):
-                self.total_down_votes = reaction.count - 1
+                self._total_down_votes = reaction.count - 1
 
         if self.total_up_votes is None or self.total_down_votes is None:
             log.error("Failed to find our emojis on suggestion %s", self.suggestion_id)
@@ -489,3 +558,24 @@ class Suggestion:
             )
 
         await message.create_thread(name=f"Thread for suggestion {self.suggestion_id}")
+
+    async def update_vote_count(
+        self,
+        bot: SuggestionsBot,
+        interaction: disnake.Interaction,
+    ):
+        try:
+            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.HTTPException:
+            await interaction.send(
+                embed=bot.error_embed(
+                    "Command failed",
+                    "Looks like this suggestion was deleted.",
+                    footer_text=f"Error code {ErrorCode.SUGGESTION_MESSAGE_DELETED.value}",
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
+        await message.edit(embed=await self.as_embed(bot))

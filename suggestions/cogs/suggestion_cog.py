@@ -2,20 +2,21 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 import cooldowns
 import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
 from disnake import Guild
-from disnake.ext import commands
+from disnake.ext import commands, components
 
 from suggestions import checks, Stats
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong
 from suggestions.objects import Suggestion, GuildConfig, UserConfig
 from suggestions.objects.stats import MemberStats
+from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -30,6 +31,89 @@ class SuggestionsCog(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
+
+    @components.button_listener()
+    async def suggestion_up_vote(
+        self, inter: disnake.MessageInteraction, *, suggestion_id: str
+    ):
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, inter.guild_id, self.state
+        )
+        if suggestion.state != SuggestionState.pending:
+            return await inter.send(
+                "You can no longer cast votes on this suggestion.", ephemeral=True
+            )
+
+        member_id = inter.author.id
+        if member_id in suggestion.up_voted_by:
+            return await inter.send(
+                "You have already up voted this suggestion.", ephemeral=True
+            )
+
+        if member_id in suggestion.down_voted_by:
+            suggestion.down_voted_by.discard(member_id)
+            suggestion.up_voted_by.add(member_id)
+            await self.state.suggestions_db.upsert(suggestion, suggestion)
+            await suggestion.update_vote_count(self.bot, inter)
+            await inter.send(
+                "I have changed your vote from a down vote to an up vote for this suggestion.",
+                ephemeral=True,
+            )
+            log.debug(
+                "Member %s modified their vote on %s to an up vote",
+                member_id,
+                suggestion_id,
+            )
+            return
+
+        suggestion.up_voted_by.add(member_id)
+        await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await suggestion.update_vote_count(self.bot, inter)
+        await inter.send("Thanks!\nI have registered your up vote.", ephemeral=True)
+        log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
+
+    @components.button_listener()
+    async def suggestion_down_vote(
+        self,
+        inter: disnake.MessageInteraction,
+        *,
+        suggestion_id: str,
+    ):
+        suggestion: Suggestion = await Suggestion.from_id(
+            suggestion_id, inter.guild_id, self.state
+        )
+        if suggestion.state != SuggestionState.pending:
+            return await inter.send(
+                "You can no longer cast votes on this suggestion.", ephemeral=True
+            )
+
+        member_id = inter.author.id
+        if member_id in suggestion.down_voted_by:
+            return await inter.send(
+                "You have already down voted this suggestion.", ephemeral=True
+            )
+
+        if member_id in suggestion.up_voted_by:
+            suggestion.up_voted_by.discard(member_id)
+            suggestion.down_voted_by.add(member_id)
+            await self.state.suggestions_db.upsert(suggestion, suggestion)
+            await suggestion.update_vote_count(self.bot, inter)
+            await inter.send(
+                "I have changed your vote from an up vote to a down vote for this suggestion.",
+                ephemeral=True,
+            )
+            log.debug(
+                "Member %s modified their vote on %s to a down vote",
+                member_id,
+                suggestion_id,
+            )
+            return
+
+        suggestion.down_voted_by.add(member_id)
+        await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await suggestion.update_vote_count(self.bot, inter)
+        await inter.send("Thanks!\nI have registered your down vote.", ephemeral=True)
+        log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
@@ -64,8 +148,23 @@ class SuggestionsCog(commands.Cog):
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
+            channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
-                embed=await suggestion.as_embed(self.bot)
+                embed=await suggestion.as_embed(self.bot),
+                components=[
+                    disnake.ui.Button(
+                        emoji=await self.bot.suggestion_emojis.default_up_vote(),
+                        custom_id=await self.suggestion_up_vote.build_custom_id(
+                            suggestion_id=suggestion.suggestion_id
+                        ),
+                    ),
+                    disnake.ui.Button(
+                        emoji=await self.bot.suggestion_emojis.default_down_vote(),
+                        custom_id=await self.suggestion_down_vote.build_custom_id(
+                            suggestion_id=suggestion.suggestion_id
+                        ),
+                    ),
+                ],
             )
         except disnake.Forbidden as e:
             self.state.remove_sid_from_cache(
@@ -78,60 +177,6 @@ class SuggestionsCog(commands.Cog):
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
 
-        try:
-            await message.add_reaction(
-                await self.bot.suggestion_emojis.default_up_vote()
-            )
-            await message.add_reaction(
-                await self.bot.suggestion_emojis.default_down_vote()
-            )
-        except disnake.Forbidden as e:
-            self.state.remove_sid_from_cache(
-                interaction.guild_id, suggestion.suggestion_id
-            )
-            await self.suggestions_db.delete(suggestion.as_filter())
-            try:
-                await message.delete()
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=["Add Reactions", "Manage Messages"]
-                )
-            raise commands.MissingPermissions(missing_permissions=["Add Reactions"])
-        except disnake.NotFound as e:
-            # We get here if the message was deleted in between
-            log.error(
-                "disnake.NotFound: %s | Code %s | Guild %s",
-                e.text,
-                e.code,
-                interaction.guild_id,
-            )
-            await suggestion.mark_cleared_by(
-                self.state,
-                474051954998509571,
-                "Resolved by the bot automatically due to the message being deleted mid command.",
-            )
-            raise e
-        except disnake.HTTPException as e:
-            log.error(
-                "disnake.HTTPException: %s | Code %s | Guild %s",
-                e.text,
-                e.code,
-                interaction.guild_id,
-            )
-            self.state.remove_sid_from_cache(
-                interaction.guild_id, suggestion.suggestion_id
-            )
-            await self.suggestions_db.delete(suggestion.as_filter())
-
-            try:
-                await message.delete()
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=["Use External Emojis", "Manage Messages"]
-                )
-            raise commands.MissingPermissions(
-                missing_permissions=["Use External Emojis"]
-            )
         try:
             embed: disnake.Embed = disnake.Embed(
                 description=f"Hey, {interaction.author.mention}. Your suggestion has been sent "
@@ -220,7 +265,9 @@ class SuggestionsCog(commands.Cog):
             )
 
             try:
-                await message.edit(embed=await suggestion.as_embed(self.bot))
+                await message.edit(
+                    embed=await suggestion.as_embed(self.bot), components=None
+                )
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
@@ -314,7 +361,9 @@ class SuggestionsCog(commands.Cog):
             )
 
             try:
-                await message.edit(embed=await suggestion.as_embed(self.bot))
+                await message.edit(
+                    embed=await suggestion.as_embed(self.bot), components=None
+                )
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
