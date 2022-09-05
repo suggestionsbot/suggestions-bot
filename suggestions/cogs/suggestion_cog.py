@@ -34,11 +34,7 @@ class SuggestionsCog(commands.Cog):
 
     @components.button_listener()
     async def suggestion_up_vote(
-        self,
-        inter: disnake.MessageInteraction,
-        *,
-        suggestion_id: str,
-        is_up: bool,
+        self, inter: disnake.MessageInteraction, *, suggestion_id: str
     ):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
@@ -159,7 +155,7 @@ class SuggestionsCog(commands.Cog):
                     disnake.ui.Button(
                         emoji=await self.bot.suggestion_emojis.default_up_vote(),
                         custom_id=await self.suggestion_up_vote.build_custom_id(
-                            suggestion_id=suggestion.suggestion_id, is_up=True
+                            suggestion_id=suggestion.suggestion_id
                         ),
                     ),
                     disnake.ui.Button(

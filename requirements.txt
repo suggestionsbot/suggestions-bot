@@ -1,5 +1,5 @@
 git+https://github.com/suggestionsbot/disnake@bot
-https://github.com/suggestionsbot/disnake-ext-components.git
+git+https://github.com/suggestionsbot/disnake-ext-components.git
 aiodns==3.0.0
 aiohttp==3.8.1
 aiosignal==1.2.0
