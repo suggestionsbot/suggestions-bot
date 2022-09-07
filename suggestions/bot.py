@@ -23,7 +23,9 @@ from suggestions.exceptions import (
     SuggestionNotFound,
     SuggestionTooLong,
     InvalidGuildConfigOption,
+    ConfiguredChannelNoLongerExists,
 )
+from suggestions.objects import GuildConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 
@@ -78,6 +80,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.total_shards: int = kwargs.get("shard_count", 0)
 
         self._has_dispatched_initial_ready: bool = False
+
+    async def get_or_fetch_channel(self, channel_id: int):
+        try:
+            return await super().get_or_fetch_channel(channel_id)
+        except disnake.NotFound as e:
+            raise ConfiguredChannelNoLongerExists from e
 
     async def dispatch_initial_ready(self):
         if self._has_dispatched_initial_ready:
@@ -272,6 +280,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command on Cooldown",
                     f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, ConfiguredChannelNoLongerExists):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Configuration Error",
+                    "I cannot find your configured channel for this command.\n"
+                    "Please ask an administrator to reconfigure one.",
+                    error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
                 ),
                 ephemeral=True,
             )

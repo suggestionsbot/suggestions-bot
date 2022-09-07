@@ -16,6 +16,7 @@ class ErrorCode(IntEnum):
     GENERIC_FORBIDDEN = 10
     UNHANDLED_ERROR = 11
     GENERIC_NOT_FOUND = 12
+    CONFIGURED_CHANNEL_NO_LONGER_EXISTS = 13
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

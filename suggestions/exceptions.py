@@ -33,3 +33,7 @@ class SuggestionTooLong(disnake.DiscordException):
 
 class InvalidGuildConfigOption(disnake.DiscordException):
     """The provided guild config choice doesn't exist."""
+
+
+class ConfiguredChannelNoLongerExists(disnake.NotFound):
+    """The configured channel can no longer be found."""
