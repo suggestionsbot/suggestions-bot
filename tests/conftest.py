@@ -1,3 +1,4 @@
+import os
 from unittest.mock import AsyncMock
 
 import disnake
@@ -10,7 +11,9 @@ import suggestions
 
 @pytest.fixture
 async def causar(monkeypatch) -> Causar:
-    monkeypatch.chdir("..")
+    if "suggestions" not in [x[0] for x in os.walk(".")]:
+        monkeypatch.chdir("..")
+
     monkeypatch.setenv("IS_TEST_CASE", "1")
 
     # Mock these to avoid Task's complaining after tests end
