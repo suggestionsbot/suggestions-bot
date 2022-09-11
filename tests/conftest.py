@@ -11,7 +11,7 @@ import suggestions
 
 @pytest.fixture
 async def causar(monkeypatch) -> Causar:
-    if "suggestions" not in [x[0] for x in os.walk(".")]:
+    if "./suggestions" not in [x[0] for x in os.walk(".")]:
         monkeypatch.chdir("..")
 
     monkeypatch.setenv("IS_TEST_CASE", "1")
