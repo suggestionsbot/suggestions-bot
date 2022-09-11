@@ -25,6 +25,9 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
   - Fixed by adding a new method `disnake.Guild.try_fetch_icon_url`
   - *I consider this one a feature due to the nature of the fix.*
   - Related issues: https://github.com/suggestionsbot/suggestions-bot-rewrite/issues/3
+- Added `__eq__` to `disnake.Embed` 
+  - This is used primarily within tests
+  - This includes `__eq__` on `EmbedProxy` otherwise they compare as False
 
 ## Fixes
 

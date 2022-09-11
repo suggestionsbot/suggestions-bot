@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 from typing import Type, Optional
+from unittest.mock import Mock
 
 import aiohttp
 import disnake
@@ -42,9 +43,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.base_website_url: str = "https://suggestions.gg"
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
-        self.db: SuggestionsMongoManager = SuggestionsMongoManager(
-            os.environ["PROD_MONGO_URL"] if self.is_prod else os.environ["MONGO_URL"]
-        )
+
+        if os.environ.get("IS_TEST_CASE", False):
+            # TODO Make this better
+            self.db = Mock()
+        else:
+            self.db: SuggestionsMongoManager = SuggestionsMongoManager(
+                os.environ["PROD_MONGO_URL"]
+                if self.is_prod
+                else os.environ["MONGO_URL"]
+            )
+
         self.colors: Type[Colors] = Colors
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
@@ -354,12 +363,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         raise exception
 
-    async def load(self):
-        await self.state.load()
-        await self.stats.load()
-        await self.update_bot_listings()
-        await self.watch_for_shutdown_request()
-
+    async def load_cogs(self):
         count = 0
         extensions = Path("./suggestions/cogs").rglob("*.py")
         for ext in extensions:
@@ -368,6 +372,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             count += 1
 
         log.debug("Loaded %s cogs", count)
+
+    async def load(self):
+        await self.state.load()
+        await self.stats.load()
+        await self.update_bot_listings()
+        await self.watch_for_shutdown_request()
+        await self.load_cogs()
 
     async def graceful_shutdown(self) -> None:
         """Gracefully shutdown the bot.
