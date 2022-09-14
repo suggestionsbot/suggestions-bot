@@ -238,7 +238,7 @@ class GuildConfigCog(commands.Cog):
         await self.modify_guild_config(
             interaction,
             "dm_messages_disabled",
-            True,
+            False,
             "I have enabled DM messages for this guild.",
             "Enabled DM messages for guild %s",
             self.stats.type.GUILD_DM_ENABLE,
@@ -250,7 +250,7 @@ class GuildConfigCog(commands.Cog):
         await self.modify_guild_config(
             interaction,
             "dm_messages_disabled",
-            False,
+            True,
             "I have disabled DM messages for this guild.",
             "Disabled DM messages for guild %s",
             self.stats.type.GUILD_DM_DISABLE,
