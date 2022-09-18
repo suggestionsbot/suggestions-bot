@@ -36,6 +36,7 @@ class SuggestionsCog(commands.Cog):
     async def suggestion_up_vote(
         self, inter: disnake.MessageInteraction, *, suggestion_id: str
     ):
+        await inter.response.defer(ephemeral=True, with_message=True)
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
@@ -79,6 +80,7 @@ class SuggestionsCog(commands.Cog):
         *,
         suggestion_id: str,
     ):
+        await inter.response.defer(ephemeral=True, with_message=True)
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
