@@ -35,5 +35,5 @@ class InvalidGuildConfigOption(disnake.DiscordException):
     """The provided guild config choice doesn't exist."""
 
 
-class ConfiguredChannelNoLongerExists(disnake.NotFound):
+class ConfiguredChannelNoLongerExists(disnake.DiscordException):
     """The configured channel can no longer be found."""
