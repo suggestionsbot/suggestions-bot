@@ -125,3 +125,28 @@ async def test_dm_view_without_user_config(
         field="member_dm_view",
         success_count=1,
     )
+
+
+"""
+InvokableSlashCommand.invoke appears to bypass checks.
+async def test_dm_parent_cooldown(
+    causar: Causar, injection_metadata: InjectionMetadata
+):
+    await check_dm_view_output(causar, injection_metadata, "will")
+
+    guild = causar.faker.generate_guild(guild_id=881118111967883295)
+    member = causar.faker.generate_member(default_member=True, guild=guild)
+
+    injection: Injection = await causar.generate_injection("dm view")
+    injection.set_author(member)
+    injection.metadata = injection_metadata
+
+    await causar.run_command(injection)
+    assert len(injection.transactions) == 1
+    transaction: t.InteractionResponseSent = injection.transactions[0]
+    assert transaction.type is TransactionTypes.INTERACTION_RESPONSE_SENT
+    assert transaction.ephemeral is True
+
+    assert transaction.embed is not None
+    assert transaction.embed.title == "Command on Cooldown"
+"""
