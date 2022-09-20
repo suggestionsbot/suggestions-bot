@@ -118,3 +118,6 @@ class MemberStats:
 
         data["commands"] = commands
         return data
+
+    def __repr__(self):
+        return f"MemberStats(member_id={self.member_id}, guild_id={self.guild_id})"
