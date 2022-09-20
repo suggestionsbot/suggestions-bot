@@ -17,7 +17,7 @@ from suggestions import SuggestionsBot
 from suggestions.cooldown_bucket import InteractionBucket
 
 
-async def create_bot() -> SuggestionsBot:
+async def create_bot(database_wrapper=None) -> SuggestionsBot:
     log = logging.getLogger(__name__)
     intents = disnake.Intents.none()
     is_prod: bool = True if os.environ.get("PROD", None) else False
@@ -52,6 +52,7 @@ async def create_bot() -> SuggestionsBot:
         strip_after_prefix=True,
         load_builtin_commands=True,
         chunk_guilds_at_startup=False,
+        database_wrapper=database_wrapper,
         member_cache_flags=disnake.MemberCacheFlags.none(),
         **cluster_kwargs,
     )

@@ -44,9 +44,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
 
-        if os.environ.get("IS_TEST_CASE", False):
-            # TODO Make this better
-            self.db = Mock()
+        if kwargs.get("database_wrapper"):
+            self.db = kwargs.pop("database_wrapper")
         else:
             self.db: SuggestionsMongoManager = SuggestionsMongoManager(
                 os.environ["PROD_MONGO_URL"]

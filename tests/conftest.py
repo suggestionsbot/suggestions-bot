@@ -4,17 +4,21 @@ from unittest.mock import AsyncMock
 import disnake
 import pytest
 
-from causar import Causar
+from causar import Causar, InjectionMetadata
 
 import suggestions
+from tests.mocks import MockedSuggestionsMongoManager
 
 
 @pytest.fixture
-async def causar(monkeypatch) -> Causar:
+async def mocked_database() -> MockedSuggestionsMongoManager:
+    return MockedSuggestionsMongoManager()
+
+
+@pytest.fixture
+async def causar(monkeypatch, mocked_database) -> Causar:
     if "./suggestions" not in [x[0] for x in os.walk(".")]:
         monkeypatch.chdir("..")
-
-    monkeypatch.setenv("IS_TEST_CASE", "1")
 
     # Mock these to avoid Task's complaining after tests end
     monkeypatch.setattr(
@@ -26,6 +30,13 @@ async def causar(monkeypatch) -> Causar:
         AsyncMock(),
     )
 
-    bot = await suggestions.create_bot()
+    bot = await suggestions.create_bot(mocked_database)
     await bot.load_cogs()
     return Causar(bot)  # type: ignore
+
+
+@pytest.fixture
+async def injection_metadata(causar: Causar) -> InjectionMetadata:
+    return InjectionMetadata(
+        guild_id=881118111967883295, channel_id=causar.faker.generate_snowflake()
+    )
