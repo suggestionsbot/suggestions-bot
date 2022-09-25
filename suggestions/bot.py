@@ -12,6 +12,7 @@ from typing import Type, Optional
 import aiohttp
 import disnake
 from cooldowns import CallableOnCooldown
+from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
@@ -395,6 +396,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.debug("Loaded %s cogs", count)
 
     async def load(self):
+        self.i18n.load(Path("suggestions/locales"))
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
@@ -505,3 +507,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             shard_id = (guild_id >> 22) % self.total_shards
 
         return shard_id
+
+    def get_locale(self, key: str, locale: Optional[Locale]) -> str:
+        values = self.i18n.get(key)
+        if not values:
+            raise LocalizationKeyError(key)
+
+        try:
+            return values[str(locale)]
+        except KeyError:
+            # Default to known translations if not set
+            return values["en-GB"]

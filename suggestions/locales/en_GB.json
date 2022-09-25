@@ -28,5 +28,13 @@
   "INFO_ARG_SUPPORT_NAME": "support",
   "INFO_ARG_SUPPORT_DESCRIPTION": "Set this to receive info relevant to receiving official support.",
   "PING_NAME": "ping",
-  "PING_DESCRIPTION": "Pong!"
+  "PING_DESCRIPTION": "Pong!",
+  "SUGGESTION_UP_VOTE_INNER_NO_MORE_CASTING": "You can no longer cast votes on this suggestion.",
+  "SUGGESTION_UP_VOTE_INNER_ALREADY_VOTED": "You have already up voted this suggestion.",
+  "SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE": "I have changed your vote from a down vote to an up vote for this suggestion.",
+  "SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE": "Thanks!\nI have registered your up vote.",
+  "SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING": "You can no longer cast votes on this suggestion.",
+  "SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED": "You have already down voted this suggestion.",
+  "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE": "I have changed your vote from an up vote to a down vote for this suggestion.",
+  "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE": "Thanks!\nI have registered your down vote."
 }

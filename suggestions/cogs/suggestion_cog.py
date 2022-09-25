@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -40,15 +39,23 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
-        if suggestion.state != SuggestionState.pending:
+        if suggestion.state != SuggestionState.pending or 1 == 1:
             return await inter.send(
-                "You can no longer cast votes on this suggestion.", ephemeral=True
+                self.bot.get_locale(
+                    "SUGGESTION_UP_VOTE_INNER_NO_MORE_CASTING",
+                    inter.locale,
+                ),
+                ephemeral=True,
             )
 
         member_id = inter.author.id
         if member_id in suggestion.up_voted_by:
             return await inter.send(
-                "You have already up voted this suggestion.", ephemeral=True
+                self.bot.get_locale(
+                    "SUGGESTION_UP_VOTE_INNER_ALREADY_VOTED",
+                    inter.locale,
+                ),
+                ephemeral=True,
             )
 
         if member_id in suggestion.down_voted_by:
@@ -57,7 +64,10 @@ class SuggestionsCog(commands.Cog):
             await self.state.suggestions_db.upsert(suggestion, suggestion)
             await suggestion.update_vote_count(self.bot, inter)
             await inter.send(
-                "I have changed your vote from a down vote to an up vote for this suggestion.",
+                self.bot.get_locale(
+                    "SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE",
+                    inter.locale,
+                ),
                 ephemeral=True,
             )
             log.debug(
@@ -70,7 +80,13 @@ class SuggestionsCog(commands.Cog):
         suggestion.up_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await suggestion.update_vote_count(self.bot, inter)
-        await inter.send("Thanks!\nI have registered your up vote.", ephemeral=True)
+        await inter.send(
+            self.bot.get_locale(
+                "SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE",
+                inter.locale,
+            ),
+            ephemeral=True,
+        )
         log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
 
     @components.button_listener()
@@ -86,13 +102,21 @@ class SuggestionsCog(commands.Cog):
         )
         if suggestion.state != SuggestionState.pending:
             return await inter.send(
-                "You can no longer cast votes on this suggestion.", ephemeral=True
+                self.bot.get_locale(
+                    "SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING",
+                    inter.locale,
+                ),
+                ephemeral=True,
             )
 
         member_id = inter.author.id
         if member_id in suggestion.down_voted_by:
             return await inter.send(
-                "You have already down voted this suggestion.", ephemeral=True
+                self.bot.get_locale(
+                    "SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED",
+                    inter.locale,
+                ),
+                ephemeral=True,
             )
 
         if member_id in suggestion.up_voted_by:
@@ -101,7 +125,10 @@ class SuggestionsCog(commands.Cog):
             await self.state.suggestions_db.upsert(suggestion, suggestion)
             await suggestion.update_vote_count(self.bot, inter)
             await inter.send(
-                "I have changed your vote from an up vote to a down vote for this suggestion.",
+                self.bot.get_locale(
+                    "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE",
+                    inter.locale,
+                ),
                 ephemeral=True,
             )
             log.debug(
@@ -114,7 +141,13 @@ class SuggestionsCog(commands.Cog):
         suggestion.down_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
         await suggestion.update_vote_count(self.bot, inter)
-        await inter.send("Thanks!\nI have registered your down vote.", ephemeral=True)
+        await inter.send(
+            self.bot.get_locale(
+                "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE",
+                inter.locale,
+            ),
+            ephemeral=True,
+        )
         log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(dm_permission=False)
