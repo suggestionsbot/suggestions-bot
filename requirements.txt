@@ -11,7 +11,7 @@ cchardet==2.1.7
 cffi==1.15.0
 charset-normalizer==2.0.12
 disnake @ git+https://github.com/suggestionsbot/disnake@e3749ce33ae579ade0fd5ebfe6a6055eb0b73a96
-disnake-ext-components @ git+https://github.com/suggestionsbot/disnake-ext-components.git@c17a76c507c966e97655a7dd7e1ccc082888bfa8
+disnake-ext-components @ git+https://github.com/suggestionsbot/disnake-ext-components.git@91689ed74ffee73f631453a39e548af9b824826d
 dnspython==2.2.1
 frozenlist==1.3.0
 function-cooldowns==1.3.1

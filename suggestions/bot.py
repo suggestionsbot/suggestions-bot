@@ -326,6 +326,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        elif isinstance(exception, LocalizationKeyError):
+            gid = interaction.guild_id if interaction.guild_id else None
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Something went wrong",
+                    f"Please contact support.\n\nGuild ID: {gid}",
+                    error_code=ErrorCode.MISSING_TRANSLATION,
+                ),
+                ephemeral=True,
+            )
+
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
             gid = interaction.guild_id if interaction.guild_id else None
@@ -379,6 +390,24 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.UNHANDLED_ERROR,
+                ),
+                ephemeral=True,
+            )
+
+        raise exception
+
+    async def on_button_error(
+        self,
+        interaction: disnake.MessageInteraction,
+        exception: Exception,
+    ):
+        if isinstance(exception, LocalizationKeyError):
+            gid = interaction.guild_id if interaction.guild_id else None
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Something went wrong",
+                    f"Please contact support.\n\nGuild ID: {gid}",
+                    error_code=ErrorCode.MISSING_TRANSLATION,
                 ),
                 ephemeral=True,
             )
@@ -508,7 +537,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         return shard_id
 
-    def get_locale(self, key: str, locale: Optional[Locale]) -> str:
+    def get_locale(self, key: str, locale: Locale) -> str:
         values = self.i18n.get(key)
         if not values:
             raise LocalizationKeyError(key)
