@@ -39,7 +39,7 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, inter.guild_id, self.state
         )
-        if suggestion.state != SuggestionState.pending or 1 == 1:
+        if suggestion.state != SuggestionState.pending:
             return await inter.send(
                 self.bot.get_locale(
                     "SUGGESTION_UP_VOTE_INNER_NO_MORE_CASTING",
