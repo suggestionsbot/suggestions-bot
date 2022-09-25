@@ -17,6 +17,8 @@ class ErrorCode(IntEnum):
     UNHANDLED_ERROR = 11
     GENERIC_NOT_FOUND = 12
     CONFIGURED_CHANNEL_NO_LONGER_EXISTS = 13
+    MISSING_PERMISSIONS_IN_SUGGESTIONS_CHANNEL = 14
+    MISSING_PERMISSIONS_IN_LOGS_CHANNEL = 14
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

@@ -5,6 +5,7 @@ import datetime
 import logging
 import math
 import os
+import traceback
 from pathlib import Path
 from typing import Type, Optional
 
@@ -25,6 +26,7 @@ from suggestions.exceptions import (
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
 )
+from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import GuildConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
@@ -206,7 +208,28 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         if isinstance(exception, ErrorHandled):
             return
 
-        elif isinstance(exception, BetaOnly):
+        attempt_code: Optional[ErrorCode] = try_parse_http_error(traceback.format_exc())
+        if attempt_code == ErrorCode.MISSING_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Configuration Error",
+                    "I do not have permission to use your guilds configured suggestions channel.",
+                    error_code=attempt_code,
+                ),
+                ephemeral=True,
+            )
+
+        elif attempt_code == ErrorCode.MISSING_PERMISSIONS_IN_LOGS_CHANNEL:
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Configuration Error",
+                    "I do not have permission to use your guilds configured logs channel.",
+                    error_code=attempt_code,
+                ),
+                ephemeral=True,
+            )
+
+        if isinstance(exception, BetaOnly):
             embed: disnake.Embed = disnake.Embed(
                 title="Beta restrictions",
                 description="This command is restricted to beta guilds only, "
