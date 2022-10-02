@@ -565,16 +565,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.warning("Cancelling status updates as we aren't in production")
             return
 
-        log.info("Starting push_status")
-
         async def inner():
             patch = os.environ["UPTIME_PATCH"]
             while not self.state.is_closing:
-                log.info(1)
                 appears_down = False
-                log.info(2)
                 for shard_id, shard_info in self.shards.items():
-                    log.info(3)
                     if shard_info.is_closed():
                         # We consider this as 'down' as sometimes
                         # they fail to reconnect and we don't handle
@@ -585,9 +580,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                             self.cluster_id,
                         )
                         appears_down = True
-                    log.info(4)
-
-                log.info("appears_down %s", appears_down)
 
                 if not appears_down:
                     async with aiohttp.ClientSession() as session:
@@ -597,9 +589,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                             pass
 
                 await self.sleep_with_condition(60, lambda: self.state.is_closing)
-                log.info("Finished the sleep")
-
-            log.info("Not sure why here")
 
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)
