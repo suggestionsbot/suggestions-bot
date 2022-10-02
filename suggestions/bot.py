@@ -28,7 +28,6 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
 )
 from suggestions.http_error_parser import try_parse_http_error
-from suggestions.objects import GuildConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 
@@ -426,6 +425,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def load(self):
         self.i18n.load(Path("suggestions/locales"))
+        task_1 = asyncio.create_task(self.push_status())
+        self.state.add_background_task(task_1)
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
@@ -559,3 +560,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             }
         )
         await self.process_application_commands(interaction)
+
+    async def push_status(self):
+        if not self.is_prod:
+            return
+
+        patch = os.environ["UPTIME_PATCH"]
+        while not self.state.is_closing:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
+                ):
+                    pass
+
+            await self.sleep_with_condition(30, lambda: self.state.is_closing)
