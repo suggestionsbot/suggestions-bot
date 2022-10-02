@@ -425,11 +425,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def load(self):
         self.i18n.load(Path("suggestions/locales"))
-        task_1 = asyncio.create_task(self.push_status())
-        self.state.add_background_task(task_1)
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
+        await self.push_status()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
 
@@ -568,28 +567,33 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         log.info("Starting push_status")
 
-        patch = os.environ["UPTIME_PATCH"]
-        while not self.state.is_closing:
-            appears_down = False
-            for shard_id, shard_info in self.shards:
-                if shard_info.is_closed():
-                    # We consider this as 'down' as sometimes
-                    # they fail to reconnect and we don't handle
-                    # that edge case as of current
-                    log.critical(
-                        "Shard %s in cluster %s is reporting as closed",
-                        shard_id,
-                        self.cluster_id,
-                    )
-                    appears_down = True
+        async def inner():
+            patch = os.environ["UPTIME_PATCH"]
+            while not self.state.is_closing:
+                appears_down = False
+                for shard_id, shard_info in self.shards:
+                    if shard_info.is_closed():
+                        # We consider this as 'down' as sometimes
+                        # they fail to reconnect and we don't handle
+                        # that edge case as of current
+                        log.critical(
+                            "Shard %s in cluster %s is reporting as closed",
+                            shard_id,
+                            self.cluster_id,
+                        )
+                        appears_down = True
 
-            log.info("appears_down %s", appears_down)
+                log.info("appears_down %s", appears_down)
 
-            if not appears_down:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(
-                        url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
-                    ) as r:
-                        log.info(r)
+                if not appears_down:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(
+                            url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
+                        ) as r:
+                            log.info(r)
 
-            await self.sleep_with_condition(2.5 * 60, lambda: self.state.is_closing)
+                await self.sleep_with_condition(2.5 * 60, lambda: self.state.is_closing)
+
+        task_1 = asyncio.create_task(inner())
+        self.state.add_background_task(task_1)
+        log.info("Setup status notifcations")
