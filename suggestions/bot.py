@@ -589,11 +589,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     async with aiohttp.ClientSession() as session:
                         async with session.get(
                             url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
-                        ) as r:
-                            log.info(r)
+                        ):
+                            pass
 
-                await self.sleep_with_condition(2.5 * 60, lambda: self.state.is_closing)
+                await self.sleep_with_condition(60, lambda: self.state.is_closing)
+                log.info("Finished the sleep")
+
+            log.info("Not sure why here")
 
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)
-        log.info("Setup status notifcations")
+        log.info("Setup status notifications")
