@@ -570,8 +570,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         async def inner():
             patch = os.environ["UPTIME_PATCH"]
             while not self.state.is_closing:
+                log.info(1)
                 appears_down = False
+                log.info(2)
                 for shard_id, shard_info in self.shards:
+                    log.info(3)
                     if shard_info.is_closed():
                         # We consider this as 'down' as sometimes
                         # they fail to reconnect and we don't handle
@@ -582,6 +585,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                             self.cluster_id,
                         )
                         appears_down = True
+                    log.info(4)
 
                 log.info("appears_down %s", appears_down)
 
