@@ -567,10 +567,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         patch = os.environ["UPTIME_PATCH"]
         while not self.state.is_closing:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
-                ):
-                    pass
+            appears_down = False
+            for shard_info in self.shards.values():
+                if shard_info.is_closed():
+                    appears_down = True
+
+            if not appears_down:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
+                    ):
+                        pass
 
             await self.sleep_with_condition(30, lambda: self.state.is_closing)
