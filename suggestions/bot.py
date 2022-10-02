@@ -547,3 +547,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         except KeyError:
             # Default to known translations if not set
             return values["en-GB"]
+
+    async def on_application_command(
+        self, interaction: disnake.ApplicationCommandInteraction
+    ):
+        await self.db.locale_tracking.insert(
+            {
+                "locale": str(interaction.locale),
+                "user_id": interaction.user.id,
+                "guild_id": interaction.guild_id,
+            }
+        )
+        await self.process_application_commands(interaction)

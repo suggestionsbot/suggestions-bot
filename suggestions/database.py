@@ -28,3 +28,4 @@ class SuggestionsMongoManager(MongoManager):
         self.member_stats: Document = Document(
             self.db, "member_stats", converter=MemberStats
         )
+        self.locale_tracking: Document = Document(self.db, "locale_tracking")
