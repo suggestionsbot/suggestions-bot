@@ -565,6 +565,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.warning("Cancelling status updates as we aren't in production")
             return
 
+        await self.wait_until_ready()
+
         async def inner():
             patch = os.environ["UPTIME_PATCH"]
             while not self.state.is_closing:
