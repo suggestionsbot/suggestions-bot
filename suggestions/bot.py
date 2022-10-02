@@ -568,8 +568,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         patch = os.environ["UPTIME_PATCH"]
         while not self.state.is_closing:
             appears_down = False
-            for shard_info in self.shards.values():
+            for shard_id, shard_info in self.shards:
                 if shard_info.is_closed():
+                    # We consider this as 'down' as sometimes
+                    # they fail to reconnect and we don't handle
+                    # that edge case as of current
+                    log.critical(
+                        "Shard %s in cluster %s is reporting as closed",
+                        shard_id,
+                        self.cluster_id,
+                    )
                     appears_down = True
 
             if not appears_down:
