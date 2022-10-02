@@ -566,6 +566,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.warning("Cancelling status updates as we aren't in production")
             return
 
+        log.info("Starting push_status")
+
         patch = os.environ["UPTIME_PATCH"]
         while not self.state.is_closing:
             appears_down = False
@@ -581,11 +583,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     )
                     appears_down = True
 
+            log.info("appears_down %s", appears_down)
+
             if not appears_down:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
                         url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
                     ) as r:
-                        print(r)
+                        log.info(r)
 
             await self.sleep_with_condition(2.5 * 60, lambda: self.state.is_closing)
