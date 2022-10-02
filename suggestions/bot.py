@@ -573,7 +573,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 log.info(1)
                 appears_down = False
                 log.info(2)
-                for shard_id, shard_info in self.shards:
+                for shard_id, shard_info in self.shards.items():
                     log.info(3)
                     if shard_info.is_closed():
                         # We consider this as 'down' as sometimes
