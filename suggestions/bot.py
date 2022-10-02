@@ -587,4 +587,4 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     ):
                         pass
 
-            await self.sleep_with_condition(30, lambda: self.state.is_closing)
+            await self.sleep_with_condition(2.5 * 60, lambda: self.state.is_closing)
