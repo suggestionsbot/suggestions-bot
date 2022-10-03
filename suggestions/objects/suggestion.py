@@ -564,6 +564,7 @@ class Suggestion:
         bot: SuggestionsBot,
         interaction: disnake.Interaction,
     ):
+        log.debug("Starting to update vote counts")
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
@@ -579,3 +580,4 @@ class Suggestion:
             raise ErrorHandled
 
         await message.edit(embed=await self.as_embed(bot))
+        log.debug("Finished updating vote counts")
