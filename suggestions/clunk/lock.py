@@ -57,7 +57,7 @@ class ClunkLock:
         while self.has_requests:
             await asyncio.sleep(0)
 
-    async def kill(self) -> None:
+    def kill(self) -> None:
         """Kill any current requests inline with a graceful shutdown."""
         self.__killed = True
         if not self._event.is_set():

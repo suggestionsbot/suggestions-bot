@@ -6,7 +6,8 @@ class ClunkCache(TimedCache):
         try:
             entry = self.cache[item]
             if not entry.value.has_requests:
-                self.delete_entry(item)
+                entry.value.kill()
+                self.cache.pop(item)
                 return False
         except KeyError:
             return False
@@ -14,4 +15,11 @@ class ClunkCache(TimedCache):
             return True
 
     def force_clean(self) -> None:
-        self.cache = {k: v for k, v in self.cache.items() if v.value.has_requests}
+        items = {}
+        for k, v in self.cache.items():
+            if v.value.has_requests:
+                items[k] = v
+            else:
+                v.value.kill()
+
+        self.cache = items

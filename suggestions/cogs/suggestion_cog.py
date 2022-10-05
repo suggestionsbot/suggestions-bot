@@ -123,7 +123,7 @@ class SuggestionsCog(commands.Cog):
                 ephemeral=True,
             )
 
-        lock: ClunkLock = self.bot.clunk.acquire(suggestion_id, is_up_vote=False)
+        lock: ClunkLock = self.bot.clunk.acquire(suggestion_id)
         await lock.run()
 
         if member_id in suggestion.up_voted_by:
