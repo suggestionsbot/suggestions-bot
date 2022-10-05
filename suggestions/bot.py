@@ -17,6 +17,7 @@ from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
 from suggestions import State, Colors, Emojis, ErrorCode
+from suggestions.clunk import Clunk
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
@@ -57,6 +58,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.colors: Type[Colors] = Colors
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
+        self.clunk: Clunk = Clunk(self.state)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",
@@ -439,6 +441,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         """
         log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
+        await self.clunk.kill_all()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")
         await self.close()
