@@ -13,6 +13,7 @@ from disnake import Embed, Guild
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
+from suggestions.low_level import MessageEditing
 from suggestions.objects import UserConfig, GuildConfig
 
 if TYPE_CHECKING:
@@ -566,8 +567,9 @@ class Suggestion:
     ):
         log.debug("Starting to update vote counts")
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
-            message: disnake.Message = await channel.fetch_message(self.message_id)
+            await MessageEditing(
+                bot, channel_id=self.channel_id, message_id=self.message_id
+            ).edit(embed=await self.as_embed(bot))
         except disnake.HTTPException:
             await interaction.send(
                 embed=bot.error_embed(
@@ -579,5 +581,4 @@ class Suggestion:
             )
             raise ErrorHandled
 
-        await message.edit(embed=await self.as_embed(bot))
         log.debug("Finished updating vote counts")

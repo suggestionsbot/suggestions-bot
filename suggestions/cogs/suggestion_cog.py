@@ -66,6 +66,7 @@ class SuggestionsCog(commands.Cog):
             suggestion.down_voted_by.discard(member_id)
             suggestion.up_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
+            # await suggestion.update_vote_count(self.bot, inter)
             lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await inter.send(
                 self.bot.get_locale(
@@ -83,6 +84,7 @@ class SuggestionsCog(commands.Cog):
 
         suggestion.up_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        # await suggestion.update_vote_count(self.bot, inter)
         lock.enqueue(suggestion.update_vote_count(self.bot, inter))
         await inter.send(
             self.bot.get_locale(
@@ -130,6 +132,7 @@ class SuggestionsCog(commands.Cog):
             suggestion.up_voted_by.discard(member_id)
             suggestion.down_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
+            # await suggestion.update_vote_count(self.bot, inter)
             lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await inter.send(
                 self.bot.get_locale(
@@ -147,6 +150,7 @@ class SuggestionsCog(commands.Cog):
 
         suggestion.down_voted_by.add(member_id)
         await self.state.suggestions_db.upsert(suggestion, suggestion)
+        # await suggestion.update_vote_count(self.bot, inter)
         lock.enqueue(suggestion.update_vote_count(self.bot, inter))
         await inter.send(
             self.bot.get_locale(
