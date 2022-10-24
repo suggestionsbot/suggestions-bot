@@ -8,7 +8,7 @@ import disnake
 from disnake import Guild
 from disnake.ext import commands
 
-from suggestions import checks, Stats
+from suggestions import Stats
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.objects import GuildConfig
@@ -32,6 +32,7 @@ class GuildConfigCog(commands.Cog):
     )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     async def config(self, interaction: disnake.GuildCommandInteraction):
+        """Configure the bot for your guild."""
         pass
 
     @config.sub_command()
