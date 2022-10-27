@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal, Union, Optional
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
+from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
 from disnake import Embed, Guild
 
@@ -195,6 +196,48 @@ class Suggestion:
             return Colors.approved_suggestion
 
         return Colors.pending_suggestion
+
+    @classmethod
+    async def from_message_id(
+        cls, message_id: int, channel_id: int, state: State
+    ) -> Suggestion:
+        """Return a suggestion from its sent message.
+
+        Useful for message commands.
+
+        Parameters
+        ----------
+        message_id : int
+            The message id
+        channel_id : int
+            The channel id
+        state : State
+            Our internal state
+
+        Returns
+        -------
+        Suggestion
+            The found suggestion
+
+        Raises
+        ------
+        SuggestionNotFound
+            No suggestion exists for this data
+        """
+        suggestion: Suggestion | None = await state.suggestions_db.find(
+            AQ(
+                AND(
+                    EQ("message_id", message_id),
+                    EQ("channel_id", channel_id),
+                )
+            )
+        )
+        if not suggestion:
+            raise SuggestionNotFound(
+                f"This message does not look like a suggestions message."
+            )
+
+        return suggestion
 
     @classmethod
     async def from_id(
