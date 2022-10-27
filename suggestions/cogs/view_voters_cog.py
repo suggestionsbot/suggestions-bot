@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 import cooldowns
 import disnake
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 
-from suggestions import Stats
+from suggestions import Stats, Colors
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.objects import Suggestion
 
@@ -20,7 +20,14 @@ log = logging.getLogger(__name__)
 
 
 class VoterPaginator(DisnakePaginator):
-    def __init__(self, data, suggestion_id: str, title_prefix: str):
+    def __init__(
+        self,
+        data,
+        suggestion_id: str,
+        title_prefix: str,
+        colors: Type[Colors],
+    ):
+        self.colors: Type[Colors] = colors
         self.title_prefix: str = title_prefix.lstrip()
         self.suggestion_id: str = suggestion_id
         super().__init__(
@@ -31,6 +38,7 @@ class VoterPaginator(DisnakePaginator):
         embed = disnake.Embed(
             title=f"{self.title_prefix} for suggestion `{self.suggestion_id}`",
             description="\n".join(page_items),
+            colour=self.colors.embed_color,
         )
         embed.set_footer(text=f"Page {page_number} of {self.total_pages}")
         return embed
@@ -45,8 +53,8 @@ class ViewVotersCog(commands.Cog):
         self.state: State = self.bot.state
         self.suggestions_db: Document = self.bot.db.suggestions
 
-    @staticmethod
     async def display_data(
+        self,
         interaction: disnake.GuildCommandInteraction,
         *,
         data,
@@ -67,7 +75,10 @@ class ViewVotersCog(commands.Cog):
             )
 
         vp: VoterPaginator = VoterPaginator(
-            data, suggestion.suggestion_id, title_prefix=title_prefix
+            data,
+            suggestion.suggestion_id,
+            title_prefix=title_prefix,
+            colors=self.bot.colors,
         )
         await vp.start(interaction=interaction)
 
