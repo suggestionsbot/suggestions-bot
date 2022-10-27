@@ -43,7 +43,6 @@ class ViewVotersCog(commands.Cog):
     def __init__(self, bot: SuggestionsBot):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
-        self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
 
     @staticmethod
