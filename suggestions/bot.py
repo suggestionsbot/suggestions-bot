@@ -91,6 +91,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.total_shards: int = kwargs.get("shard_count", 0)
 
         self._has_dispatched_initial_ready: bool = False
+        self._initial_ready_future: asyncio.Future = asyncio.Future()
 
     async def get_or_fetch_channel(self, channel_id: int):
         try:
@@ -103,6 +104,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return
 
         self._has_dispatched_initial_ready = True
+        self._initial_ready_future.set_result(None)
         log.info("Suggestions main: Ready")
         log.info("Startup took: %s", self.get_uptime())
         await self.suggestion_emojis.populate_emojis()
@@ -575,7 +577,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return
 
         async def inner():
-            await self.wait_until_ready()
+            await self._initial_ready_future
             patch = os.environ["UPTIME_PATCH"]
             while not self.state.is_closing:
                 appears_down = False
