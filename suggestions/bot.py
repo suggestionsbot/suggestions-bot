@@ -199,6 +199,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             interaction.author.id, interaction.guild_id, stat_type, was_success=False
         )
 
+    async def on_user_command_error(self, interaction, exception) -> None:
+        return await self.on_slash_command_error(interaction, exception)
+
+    async def on_message_command_error(self, interaction, exception) -> None:
+        return await self.on_slash_command_error(interaction, exception)
+
     async def on_slash_command_error(
         self,
         interaction: disnake.ApplicationCommandInteraction,
@@ -280,7 +286,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
-                    "No suggestion exists with this id.",
+                    str(exception),
                     error_code=ErrorCode.SUGGESTION_NOT_FOUND,
                 ),
                 ephemeral=True,

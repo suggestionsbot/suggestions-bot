@@ -36,5 +36,12 @@
   "SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING": "You can no longer cast votes on this suggestion.",
   "SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED": "You have already down voted this suggestion.",
   "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE": "I have changed your vote from an up vote to a down vote for this suggestion.",
-  "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE": "Thanks!\nI have registered your down vote."
+  "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE": "Thanks!\nI have registered your down vote.",
+  "VIEW_VOTERS_INNER_TITLE_PREFIX": "Voters",
+  "VIEW_UP_VOTERS_INNER_TITLE_PREFIX": "Up voters",
+  "VIEW_DOWN_VOTERS_INNER_TITLE_PREFIX": "Down voters",
+  "DISPLAY_DATA_INNER_OLD_SUGGESTION_TYPE": "Suggestions using reactions are not supported by this command.",
+  "DISPLAY_DATA_INNER_NO_VOTERS": "There are no voters to show you for this.",
+  "VOTER_PAGINATOR_INNER_EMBED_TITLE": "{} for suggestion `{}`",
+  "VOTER_PAGINATOR_INNER_EMBED_FOOTER": "Page {} of {}"
 }

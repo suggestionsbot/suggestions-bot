@@ -22,8 +22,14 @@ class Emojis:
     def __init__(self, bot: SuggestionsBot):
         self.bot: SuggestionsBot = bot
 
+        if not self.bot.is_prod:
+            # Use the emojis from the test guild
+            self._tick = 756633653668479117
+            self._cross = 756633653286797443
+
     async def populate_emojis(self):
-        guild = await self.bot.fetch_guild(self.bot.main_guild_id)
+        guild_id = self.bot.main_guild_id if self.bot.is_prod else 737166408525283348
+        guild = await self.bot.fetch_guild(guild_id)
         self.tick = await guild.fetch_emoji(self._tick)
         self.cross = await guild.fetch_emoji(self._cross)
         log.info("Populated default emojis")

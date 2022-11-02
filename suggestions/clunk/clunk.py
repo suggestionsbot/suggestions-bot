@@ -19,7 +19,6 @@ class Clunk:
         try:
             return self._cache.get_entry(key)
         except NonExistentEntry:
-            log.debug("Acquired new ClunkLock for (%s)", suggestion_id)
             lock = ClunkLock(self._state)
             self._cache.add_entry(key, lock)
             return lock
