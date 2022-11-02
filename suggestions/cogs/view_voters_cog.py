@@ -26,7 +26,11 @@ class VoterPaginator(DisnakePaginator):
         suggestion_id: str,
         title_prefix: str,
         colors: Type[Colors],
+        bot: SuggestionsBot,
+        locale: disnake.Locale,
     ):
+        self.bot: SuggestionsBot = bot
+        self.locale: disnake.Locale = locale
         self.colors: Type[Colors] = colors
         self.title_prefix: str = title_prefix.lstrip()
         self.suggestion_id: str = suggestion_id
@@ -36,11 +40,17 @@ class VoterPaginator(DisnakePaginator):
 
     async def format_page(self, page_items: list, page_number: int) -> disnake.Embed:
         embed = disnake.Embed(
-            title=f"{self.title_prefix} for suggestion `{self.suggestion_id}`",
+            title=self.bot.get_locale(
+                "VOTER_PAGINATOR_INNER_EMBED_TITLE", self.locale
+            ).format(self.title_prefix, self.suggestion_id),
             description="\n".join(page_items),
             colour=self.colors.embed_color,
         )
-        embed.set_footer(text=f"Page {page_number} of {self.total_pages}")
+        embed.set_footer(
+            text=self.bot.get_locale(
+                "VOTER_PAGINATOR_INNER_EMBED_FOOTER", self.locale
+            ).format(page_number, self.total_pages)
+        )
         return embed
 
 
@@ -64,13 +74,15 @@ class ViewVotersCog(commands.Cog):
         """Display the paginated data to an end user."""
         if not suggestion.uses_views_for_votes:
             return await interaction.send(
-                "Suggestions using reactions are not supported by this command.",
+                self.bot.get_locale(
+                    "DISPLAY_DATA_INNER_OLD_SUGGESTION_TYPE", interaction.locale
+                ),
                 ephemeral=True,
             )
 
         if not data:
             return await interaction.send(
-                "There are no voters to show you for this.",
+                self.bot.get_locale("DISPLAY_DATA_INNER_NO_VOTERS", interaction.locale),
                 ephemeral=True,
             )
 
@@ -79,6 +91,8 @@ class ViewVotersCog(commands.Cog):
             suggestion.suggestion_id,
             title_prefix=title_prefix,
             colors=self.bot.colors,
+            bot=self.bot,
+            locale=interaction.locale,
         )
         await vp.start(interaction=interaction)
 
@@ -108,7 +122,9 @@ class ViewVotersCog(commands.Cog):
             interaction,
             data=data,
             suggestion=suggestion,
-            title_prefix="Voters",
+            title_prefix=self.bot.get_locale(
+                "VIEW_VOTERS_INNER_TITLE_PREFIX", interaction.locale
+            ),
         )
 
     @commands.message_command(name="View up voters")
@@ -131,7 +147,9 @@ class ViewVotersCog(commands.Cog):
             interaction,
             data=data,
             suggestion=suggestion,
-            title_prefix="Up voters",
+            title_prefix=self.bot.get_locale(
+                "VIEW_UP_VOTERS_INNER_TITLE_PREFIX", interaction.locale
+            ),
         )
 
     @commands.message_command(name="View down voters")
@@ -154,7 +172,9 @@ class ViewVotersCog(commands.Cog):
             interaction,
             data=data,
             suggestion=suggestion,
-            title_prefix="Down voters",
+            title_prefix=self.bot.get_locale(
+                "VIEW_DOWN_VOTERS_INNER_TITLE_PREFIX", interaction.locale
+            ),
         )
 
 
