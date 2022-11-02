@@ -213,7 +213,7 @@ class GuildConfigCog(commands.Cog):
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
-            f"{threads}\n{keep_logs}",
+            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
