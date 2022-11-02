@@ -613,7 +613,7 @@ class Suggestion:
             await MessageEditing(
                 bot, channel_id=self.channel_id, message_id=self.message_id
             ).edit(embed=await self.as_embed(bot))
-        except disnake.HTTPException:
+        except (disnake.HTTPException, disnake.NotFound):
             await interaction.send(
                 embed=bot.error_embed(
                     "Command failed",

@@ -94,11 +94,15 @@ class ViewVotersCog(commands.Cog):
             channel_id=interaction.channel_id,
             state=self.state,
         )
+
+        up_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_up_vote()
+        down_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_down_vote()
         data = []
         for voter in suggestion.up_voted_by:
-            data.append(f"<@{voter}> - Up vote")
+            data.append(f"{up_vote} <@{voter}>")
+        data.append("")
         for voter in suggestion.down_voted_by:
-            data.append(f"<@{voter}> - Down vote")
+            data.append(f"{down_vote} <@{voter}>")
 
         await self.display_data(
             interaction,
