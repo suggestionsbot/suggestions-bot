@@ -608,7 +608,6 @@ class Suggestion:
         bot: SuggestionsBot,
         interaction: disnake.Interaction,
     ):
-        log.debug("Starting to update vote counts")
         try:
             await MessageEditing(
                 bot, channel_id=self.channel_id, message_id=self.message_id
@@ -623,5 +622,3 @@ class Suggestion:
                 ephemeral=True,
             )
             raise ErrorHandled
-
-        log.debug("Finished updating vote counts")
