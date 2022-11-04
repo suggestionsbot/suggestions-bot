@@ -75,11 +75,11 @@ class SuggestionsCog(commands.Cog):
                 ),
                 ephemeral=True,
             )
-            log.debug(
-                "Member %s modified their vote on %s to an up vote",
-                member_id,
-                suggestion_id,
-            )
+            # log.debug(
+            #     "Member %s modified their vote on %s to an up vote",
+            #     member_id,
+            #     suggestion_id,
+            # )
             return
 
         suggestion.up_voted_by.add(member_id)
@@ -93,7 +93,7 @@ class SuggestionsCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
+        # log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
 
     @components.button_listener()
     async def suggestion_down_vote(
@@ -141,11 +141,11 @@ class SuggestionsCog(commands.Cog):
                 ),
                 ephemeral=True,
             )
-            log.debug(
-                "Member %s modified their vote on %s to a down vote",
-                member_id,
-                suggestion_id,
-            )
+            # log.debug(
+            #     "Member %s modified their vote on %s to a down vote",
+            #     member_id,
+            #     suggestion_id,
+            # )
             return
 
         suggestion.down_voted_by.add(member_id)
@@ -159,7 +159,7 @@ class SuggestionsCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
+        # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
