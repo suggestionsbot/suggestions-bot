@@ -300,56 +300,12 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
-        if guild_config.keep_logs:
-            await suggestion.save_reaction_results(self.bot, interaction)
-            # In place suggestion edit
-            channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                suggestion.channel_id
-            )
-            message: disnake.Message = await channel.fetch_message(
-                suggestion.message_id
-            )
-
-            try:
-                await message.edit(
-                    embed=await suggestion.as_embed(self.bot), components=None
-                )
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions edit suggestions in your suggestions channel"
-                    ]
-                )
-
-            try:
-                await message.clear_reactions()
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions clear reactions in your suggestions channel"
-                    ]
-                )
-
-        else:
-            # Move the suggestion to the logs channel
-            await suggestion.save_reaction_results(self.bot, interaction)
-            await suggestion.try_delete(self.bot, interaction)
-            channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                guild_config.log_channel_id
-            )
-            try:
-                message: disnake.Message = await channel.send(
-                    embed=await suggestion.as_embed(self.bot)
-                )
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions to send in configured log channel"
-                    ]
-                )
-            suggestion.message_id = message.id
-            suggestion.channel_id = channel.id
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
+        await suggestion.edit_message_after_finalization(
+            state=self.state,
+            bot=self.bot,
+            interaction=interaction,
+            guild_config=guild_config,
+        )
 
         await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
         log.debug(
@@ -396,56 +352,13 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
-        if guild_config.keep_logs:
-            await suggestion.save_reaction_results(self.bot, interaction)
-            # In place suggestion edit
-            channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                suggestion.channel_id
-            )
-            message: disnake.Message = await channel.fetch_message(
-                suggestion.message_id
-            )
+        await suggestion.edit_message_after_finalization(
+            state=self.state,
+            bot=self.bot,
+            interaction=interaction,
+            guild_config=guild_config,
+        )
 
-            try:
-                await message.edit(
-                    embed=await suggestion.as_embed(self.bot), components=None
-                )
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions edit suggestions in your suggestions channel"
-                    ]
-                )
-
-            try:
-                await message.clear_reactions()
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions clear reactions in your suggestions channel"
-                    ]
-                )
-
-        else:
-            # Move the suggestion to the logs channel
-            await suggestion.save_reaction_results(self.bot, interaction)
-            await suggestion.try_delete(self.bot, interaction)
-            channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                guild_config.log_channel_id
-            )
-            try:
-                message: disnake.Message = await channel.send(
-                    embed=await suggestion.as_embed(self.bot)
-                )
-            except disnake.Forbidden:
-                raise commands.MissingPermissions(
-                    missing_permissions=[
-                        "Missing permissions to send in configured log channel"
-                    ]
-                )
-            suggestion.message_id = message.id
-            suggestion.channel_id = channel.id
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
         await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
         log.debug(
             "User %s rejected suggestion %s in guild %s",
