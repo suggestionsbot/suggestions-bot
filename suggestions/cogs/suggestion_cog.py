@@ -225,10 +225,13 @@ class SuggestionsCog(commands.Cog):
 
         try:
             embed: disnake.Embed = disnake.Embed(
-                description=f"Hey, {interaction.author.mention}. Your suggestion has been sent "
-                f"to {channel.mention} to be voted on!\n\n"
-                f"Please wait until it gets approved or rejected by a staff member.\n\n"
-                f"Your suggestion ID (sID) for reference is **{suggestion.suggestion_id}**.",
+                description=self.bot.get_locale(
+                    "SUGGEST_INNER_SUGGESTION_SENT", interaction.locale
+                ).format(
+                    interaction.author.mention,
+                    channel.mention,
+                    suggestion.suggestion_id,
+                ),
                 timestamp=self.state.now,
                 color=self.bot.colors.embed_color,
             )
@@ -237,7 +240,9 @@ class SuggestionsCog(commands.Cog):
                 icon_url=icon_url,
             )
             embed.set_footer(
-                text=f"Guild ID: {interaction.guild_id} | sID: {suggestion.suggestion_id}"
+                text=self.bot.get_locale(
+                    "SUGGEST_INNER_SUGGESTION_SENT_FOOTER", interaction.locale
+                ).format(interaction.guild_id, suggestion.suggestion_id)
             )
             user_config: UserConfig = await UserConfig.from_id(
                 interaction.author.id, self.bot.state
@@ -245,7 +250,10 @@ class SuggestionsCog(commands.Cog):
             if user_config.dm_messages_disabled or guild_config.dm_messages_disabled:
                 await interaction.send(embed=embed, ephemeral=True)
             else:
-                await interaction.send("Thanks for your suggestion!", ephemeral=True)
+                await interaction.send(
+                    self.bot.get_locale("SUGGEST_INNER_THANKS", interaction.locale),
+                    ephemeral=True,
+                )
                 await interaction.author.send(embed=embed)
         except disnake.HTTPException as e:
             log.debug(
@@ -307,7 +315,12 @@ class SuggestionsCog(commands.Cog):
             guild_config=guild_config,
         )
 
-        await interaction.send(f"You have approved **{suggestion_id}**", ephemeral=True)
+        await interaction.send(
+            self.bot.get_locale("APPROVE_INNER_MESSAGE", interaction.locale).format(
+                suggestion_id
+            ),
+            ephemeral=True,
+        )
         log.debug(
             "User %s approved suggestion %s in guild %s",
             interaction.author.id,
@@ -359,7 +372,12 @@ class SuggestionsCog(commands.Cog):
             guild_config=guild_config,
         )
 
-        await interaction.send(f"You have rejected **{suggestion_id}**", ephemeral=True)
+        await interaction.send(
+            self.bot.get_locale("REJECT_INNER_MESSAGE", interaction.locale).format(
+                suggestion_id
+            ),
+            ephemeral=True,
+        )
         log.debug(
             "User %s rejected suggestion %s in guild %s",
             interaction.author.id,
@@ -410,7 +428,10 @@ class SuggestionsCog(commands.Cog):
 
         await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         await interaction.send(
-            f"I have cleared `{suggestion_id}` for you.", ephemeral=True
+            self.bot.get_locale("CLEAR_INNER_MESSAGE", interaction.locale).format(
+                suggestion_id
+            ),
+            ephemeral=True,
         )
         log.debug(
             "User %s cleared suggestion %s in guild %s",
