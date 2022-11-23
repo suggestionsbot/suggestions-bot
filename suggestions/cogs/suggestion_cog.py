@@ -327,11 +327,6 @@ class SuggestionsCog(commands.Cog):
             suggestion.suggestion_id,
             interaction.guild_id,
         )
-        member_stats: MemberStats = await MemberStats.from_id(
-            interaction.author.id, interaction.guild_id, self.state
-        )
-        member_stats.approve.completed_at.append(self.state.now)
-        await self.state.member_stats_db.upsert(member_stats, member_stats)
         await self.stats.log_stats(
             interaction.author.id,
             interaction.guild_id,
