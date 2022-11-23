@@ -27,7 +27,6 @@ class StatsEnum(Enum):
     REJECT = "reject"
     REJECT_BY_MESSAGE_COMMAND = "reject_by_message_command"
     CLEAR = "clear"
-    CLEAR_BY_MESSAGE_COMMAND = "clear_by_message_command"
     MEMBER_DM_VIEW = "member_dm_view"
     MEMBER_DM_ENABLE = "member_dm_enable"
     MEMBER_DM_DISABLE = "member_dm_disable"
@@ -67,6 +66,7 @@ class StatsEnum(Enum):
                 "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
             }[name]
         except KeyError:
+            log.error("Failed to find StatsEnum for %s", name)
             return None
 
 

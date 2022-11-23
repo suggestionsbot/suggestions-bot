@@ -48,7 +48,6 @@ class MemberStats:
             "stats",
             "approve_by_message_command",
             "reject_by_message_command",
-            "clear_by_message_command",
         ]
 
         if commands:
