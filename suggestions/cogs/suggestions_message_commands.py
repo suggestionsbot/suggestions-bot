@@ -26,7 +26,7 @@ class SuggestionsMessageCommands(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
 
-    @commands.message_command(name="Approve Suggestion")
+    @commands.message_command(name="Approve suggestion")
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def approve_suggestion(self, interaction: disnake.GuildCommandInteraction):
@@ -65,7 +65,7 @@ class SuggestionsMessageCommands(commands.Cog):
             self.stats.type.APPROVE_BY_MESSAGE_COMMAND,
         )
 
-    @commands.message_command(name="Reject Suggestion")
+    @commands.message_command(name="Reject suggestion")
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def reject_suggestion(self, interaction: disnake.GuildCommandInteraction):
