@@ -44,6 +44,11 @@ class StatsEnum(Enum):
 
     @classmethod
     def from_command_name(cls, name: str) -> Optional[StatsEnum]:
+        if name == "Approve Suggestion":
+            return cls.APPROVE_BY_MESSAGE_COMMAND
+        elif name == "Reject Suggestion":
+            return cls.REJECT_BY_MESSAGE_COMMAND
+
         try:
             return {
                 "suggest": cls.SUGGEST,
