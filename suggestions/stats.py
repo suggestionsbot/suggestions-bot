@@ -44,11 +44,6 @@ class StatsEnum(Enum):
 
     @classmethod
     def from_command_name(cls, name: str) -> Optional[StatsEnum]:
-        if name == "Approve suggestion":
-            return cls.APPROVE_BY_MESSAGE_COMMAND
-        elif name == "Reject suggestion":
-            return cls.REJECT_BY_MESSAGE_COMMAND
-
         try:
             return {
                 "suggest": cls.SUGGEST,
@@ -69,6 +64,8 @@ class StatsEnum(Enum):
                 "config thread disable": cls.GUILD_THREAD_DISABLE,
                 "config keeplogs enable": cls.GUILD_KEEPLOGS_ENABLE,
                 "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
+                "Approve suggestion": cls.APPROVE_BY_MESSAGE_COMMAND,
+                "Reject suggestion": cls.REJECT_BY_MESSAGE_COMMAND,
             }[name]
         except KeyError:
             log.error("Failed to find StatsEnum for %s", name)
