@@ -47,7 +47,7 @@
   "APPROVE_INNER_MESSAGE": "You have approved **{}**",
   "REJECT_INNER_MESSAGE": "You have rejected **{}**",
   "CLEAR_INNER_MESSAGE": "I have cleared `{}` for you.",
-  "SUGGEST_INNER_SUGGESTION_SENT": "Hey, {}. Your suggestion has been sent to {} to be voted on!\nPlease wait until it gets approved or rejected by a staff member.\nYour suggestion ID (sID) for reference is **{}**.",
+  "SUGGEST_INNER_SUGGESTION_SENT": "Hey, {}. Your suggestion has been sent to {} to be voted on!\n\nPlease wait until it gets approved or rejected by a staff member.\n\nYour suggestion ID (sID) for reference is **{}**.",
   "SUGGEST_INNER_SUGGESTION_SENT_FOOTER": "Guild ID: {} | sID: {}",
   "SUGGEST_INNER_THANKS": "Thanks for your suggestion!"
 }
