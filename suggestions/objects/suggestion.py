@@ -11,6 +11,7 @@ from alaric.comparison import EQ
 from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
 from disnake import Embed, Guild
+from disnake.ext import commands
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
@@ -622,3 +623,63 @@ class Suggestion:
                 ephemeral=True,
             )
             raise ErrorHandled
+
+    async def edit_message_after_finalization(
+        self,
+        *,
+        guild_config: GuildConfig,
+        bot: SuggestionsBot,
+        state: State,
+        interaction: disnake.GuildCommandInteraction,
+    ):
+        """
+        Modify the suggestion message inline with the guilds
+        configuration now that the suggestion has entered one of
+        the following states:
+         - Approved
+         - Rejected
+        """
+        if guild_config.keep_logs:
+            await self.save_reaction_results(bot, interaction)
+            # In place suggestion edit
+            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+
+            try:
+                await message.edit(embed=await self.as_embed(bot), components=None)
+            except disnake.Forbidden:
+                raise commands.MissingPermissions(
+                    missing_permissions=[
+                        "Missing permissions edit suggestions in your suggestions channel"
+                    ]
+                )
+
+            try:
+                await message.clear_reactions()
+            except disnake.Forbidden:
+                raise commands.MissingPermissions(
+                    missing_permissions=[
+                        "Missing permissions clear reactions in your suggestions channel"
+                    ]
+                )
+
+        else:
+            # Move the suggestion to the logs channel
+            await self.save_reaction_results(bot, interaction)
+            await self.try_delete(bot, interaction)
+            channel: WrappedChannel = await bot.get_or_fetch_channel(
+                guild_config.log_channel_id
+            )
+            try:
+                message: disnake.Message = await channel.send(
+                    embed=await self.as_embed(bot)
+                )
+            except disnake.Forbidden:
+                raise commands.MissingPermissions(
+                    missing_permissions=[
+                        "Missing permissions to send in configured log channel"
+                    ]
+                )
+            self.message_id = message.id
+            self.channel_id = channel.id
+            await state.suggestions_db.upsert(self, self)

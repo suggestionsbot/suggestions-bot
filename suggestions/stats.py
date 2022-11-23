@@ -23,7 +23,9 @@ log = logging.getLogger(__name__)
 class StatsEnum(Enum):
     SUGGEST = "suggest"
     APPROVE = "approve"
+    APPROVE_BY_MESSAGE_COMMAND = "approve_by_message_command"
     REJECT = "reject"
+    REJECT_BY_MESSAGE_COMMAND = "reject_by_message_command"
     CLEAR = "clear"
     MEMBER_DM_VIEW = "member_dm_view"
     MEMBER_DM_ENABLE = "member_dm_enable"
@@ -42,6 +44,11 @@ class StatsEnum(Enum):
 
     @classmethod
     def from_command_name(cls, name: str) -> Optional[StatsEnum]:
+        if name == "Approve Suggestion":
+            return cls.APPROVE_BY_MESSAGE_COMMAND
+        elif name == "Reject Suggestion":
+            return cls.REJECT_BY_MESSAGE_COMMAND
+
         try:
             return {
                 "suggest": cls.SUGGEST,
@@ -64,6 +71,7 @@ class StatsEnum(Enum):
                 "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
             }[name]
         except KeyError:
+            log.error("Failed to find StatsEnum for %s", name)
             return None
 
 
