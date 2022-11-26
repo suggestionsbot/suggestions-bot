@@ -119,20 +119,6 @@ class HelpGuildCog(commands.Cog):
             file=disnake.File(io.StringIO(error.traceback), filename="traceback.txt"),
         )
 
-    @error_information.autocomplete("error_id")
-    async def get_error_ids(
-        self,
-        interaction: disnake.ApplicationCommandInteraction,
-        user_input: str,
-    ):
-        values = list(self.bot.state.existing_error_ids)
-        possible_choices = [v for v in values if user_input.lower() in v.lower()]
-
-        if len(possible_choices) > 25:
-            return []
-
-        return possible_choices
-
 
 def setup(bot):
     bot.add_cog(HelpGuildCog(bot))
