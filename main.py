@@ -1,28 +1,16 @@
 import asyncio
-import contextlib
-import io
 import logging
 import os
-import signal
-import sys
-import textwrap
-from traceback import format_exception
 
-import cooldowns
-import disnake
 from dotenv import load_dotenv
-from disnake.ext import commands
-from bot_base.paginators.disnake_paginator import DisnakePaginator
 
 import suggestions
-from suggestions import SuggestionsBot
-from suggestions.cooldown_bucket import InteractionBucket
 
 load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(levelname)-7s | %(asctime)s | %(filename)19s:%(funcName)-27s | %(message)s",
+    format="%(levelname)-8s | %(asctime)s | %(filename)19s:%(funcName)-27s | %(message)s",
     datefmt="%d/%m/%Y %I:%M:%S %p",
 )
 
