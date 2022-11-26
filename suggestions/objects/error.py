@@ -24,6 +24,10 @@ class Error:
         self.command_name: str = command_name
         self.created_at: datetime.datetime = created_at
 
+    @property
+    def id(self) -> str:
+        return self._id
+
     def as_filter(self) -> dict:
         return {"_id": self._id}
 
