@@ -48,6 +48,7 @@ class State:
         self.guild_configs: Dict[int, GuildConfig] = {}
         self.user_configs: Dict[int, UserConfig] = {}
 
+        self.existing_error_ids: Set[str] = set()
         self.existing_suggestion_ids: Set[str] = set()
         self._background_tasks: list[asyncio.Task] = []
 
@@ -58,6 +59,18 @@ class State:
     @is_closing.setter
     def is_closing(self, value):
         self._is_closing = value
+
+    def get_new_error_id(self) -> str:
+        """See get_new_suggestion_id, except its for errors"""
+        error_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        while error_id in self.existing_error_ids:
+            error_id = "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=8)
+            )
+            log.critical("Encountered an existing error id")
+
+        self.existing_error_ids.add(error_id)
+        return error_id
 
     def get_new_suggestion_id(self) -> str:
         """Generate a new SID, ensuring uniqueness."""
@@ -180,6 +193,14 @@ class State:
         )
         for entry in suggestion_ids:
             self.existing_suggestion_ids.add(entry["_id"])
+
+        error_ids: List[Dict] = await self.bot.db.error_tracking.get_all(
+            {},
+            projections=PROJECTION(SHOW("_id")),
+            try_convert=False,
+        )
+        for entry in error_ids:
+            self.existing_error_ids.add(entry["_id"])
 
         # Populate existing guilds
         guilds: List[GuildConfig] = await self.guild_config_db.get_all()

@@ -29,6 +29,7 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
 )
 from suggestions.http_error_parser import try_parse_http_error
+from suggestions.objects import Error
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 
@@ -200,6 +201,26 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.stats.log_stats(
             interaction.author.id, interaction.guild_id, stat_type, was_success=False
         )
+
+    async def persist_error(
+        self,
+        error: disnake.DiscordException,
+        interaction: disnake.ApplicationCommandInteraction,
+    ) -> Error:
+        print(traceback.format_exc())
+        error = Error(
+            _id=self.state.get_new_error_id(),
+            traceback=...,
+            error=error.__class__.__name__,
+            cluster_id=self.cluster_id,
+            shard_id=self.get_shard_id(interaction.guild_id),
+            command_name=interaction.application_command.qualified_name,
+            created_at=self.state.now,
+            guild_id=interaction.guild_id,
+            user_id=interaction.author.id,
+        )
+        await self.db.error_tracking.insert(error)
+        return error
 
     async def on_user_command_error(self, interaction, exception) -> None:
         return await self.on_slash_command_error(interaction, exception)
