@@ -1,7 +1,7 @@
 from alaric import Document
 from bot_base.db import MongoManager
 
-from suggestions.objects import Suggestion, GuildConfig, UserConfig
+from suggestions.objects import Suggestion, GuildConfig, UserConfig, Error
 from suggestions.objects.stats import MemberStats
 
 
@@ -29,3 +29,6 @@ class SuggestionsMongoManager(MongoManager):
             self.db, "member_stats", converter=MemberStats
         )
         self.locale_tracking: Document = Document(self.db, "locale_tracking")
+        self.error_tracking: Document = Document(
+            self.db, "error_tracking", converter=Error
+        )

@@ -29,6 +29,7 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
 )
 from suggestions.http_error_parser import try_parse_http_error
+from suggestions.objects import Error
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 
@@ -117,6 +118,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self,
         title: str,
         description: str,
+        error: Optional[Error] = None,
         *,
         footer_text: Optional[str] = None,
         error_code: Optional[ErrorCode] = None,
@@ -133,11 +135,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif footer_text:
             embed.set_footer(text=footer_text)
         elif error_code:
-            embed.set_footer(
-                text=f"Error code {error_code.value} | Cluster {self.cluster_id}"
-            )
+            if error:
+                embed.set_footer(
+                    text=f"Error code {error_code.value} | Error ID {error.id}"
+                )
+            else:
+                embed.set_footer(
+                    text=f"Error code {error_code.value} | Cluster ID {self.cluster_id}"
+                )
 
             log.debug("Encountered %s", error_code.name)
+        elif error:
+            embed.set_footer(text=f"Error ID {error.id}")
 
         return embed
 
@@ -201,6 +210,31 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             interaction.author.id, interaction.guild_id, stat_type, was_success=False
         )
 
+    async def persist_error(
+        self,
+        error: Exception,
+        interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
+    ) -> Error:
+
+        if isinstance(interaction, disnake.MessageInteraction):
+            cmd_name = interaction.data.custom_id
+        else:
+            cmd_name = interaction.application_command.qualified_name
+
+        error = Error(
+            _id=self.state.get_new_error_id(),
+            traceback="".join(traceback.format_exception(error)),
+            error=error.__class__.__name__,
+            cluster_id=self.cluster_id,
+            shard_id=self.get_shard_id(interaction.guild_id),
+            command_name=cmd_name,
+            created_at=self.state.now,
+            guild_id=interaction.guild_id,
+            user_id=interaction.author.id,
+        )
+        await self.db.error_tracking.insert(error)
+        return error
+
     async def on_user_command_error(self, interaction, exception) -> None:
         return await self.on_slash_command_error(interaction, exception)
 
@@ -214,6 +248,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     ) -> None:
         await self._push_slash_error_stats(interaction)
         exception = getattr(exception, "original", exception)
+        error: Error = await self.persist_error(exception, interaction)
 
         if isinstance(exception, ErrorHandled):
             return
@@ -225,6 +260,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Configuration Error",
                     "I do not have permission to use your guilds configured suggestions channel.",
                     error_code=attempt_code,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -235,6 +271,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Configuration Error",
                     "I do not have permission to use your guilds configured logs channel.",
                     error_code=attempt_code,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -256,6 +293,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Please contact an administrator and ask them to set one up "
                     "using the following command.\n`/config channel`",
                     error_code=ErrorCode.MISSING_SUGGESTIONS_CHANNEL,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -268,6 +306,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Please contact an administrator and ask them to set one up "
                     "using the following command.\n`/config logs`",
                     error_code=ErrorCode.MISSING_LOG_CHANNEL,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -280,6 +319,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     f"I need the following permissions in order to run this command.\n{perms}\n"
                     f"Please contact an administrator and ask them to provide them for me.",
                     error_code=ErrorCode.MISSING_PERMISSIONS,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -290,6 +330,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     str(exception),
                     error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -300,6 +341,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "Your suggestion content was too long, please limit it to 1000 characters or less.",
                     error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -310,6 +352,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "The provided guild config choice doesn't exist.",
                     error_code=ErrorCode.INVALID_GUILD_CONFIG_CHOICE,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -320,6 +363,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command on Cooldown",
                     f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -331,6 +375,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "I cannot find your configured channel for this command.\n"
                     "Please ask an administrator to reconfigure one.",
                     error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -342,6 +387,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.MISSING_TRANSLATION,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -355,6 +401,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "I've failed to find something, please retry whatever you were doing.\n"
                     f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
                     error_code=ErrorCode.GENERIC_NOT_FOUND,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -368,6 +415,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Looks like something went wrong. "
                     "Please make sure I have all the correct permissions in your configured channels.",
                     error_code=ErrorCode.GENERIC_FORBIDDEN,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -379,6 +427,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command failed",
                     "You do not have permission to run this command.",
                     error_code=ErrorCode.OWNER_ONLY,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -399,6 +448,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.UNHANDLED_ERROR,
+                    error=error,
                 ),
                 ephemeral=True,
             )
@@ -411,12 +461,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         exception: Exception,
     ):
         if isinstance(exception, LocalizationKeyError):
+            error: Error = await self.persist_error(exception, interaction)
             gid = interaction.guild_id if interaction.guild_id else None
             return await interaction.send(
                 embed=self.error_embed(
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.MISSING_TRANSLATION,
+                    error=error,
                 ),
                 ephemeral=True,
             )
