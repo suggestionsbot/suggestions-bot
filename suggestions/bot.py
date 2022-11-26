@@ -118,7 +118,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self,
         title: str,
         description: str,
-        error: Optional[Error],
+        error: Optional[Error] = None,
         *,
         footer_text: Optional[str] = None,
         error_code: Optional[ErrorCode] = None,
@@ -135,12 +135,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif footer_text:
             embed.set_footer(text=footer_text)
         elif error_code:
-            embed.set_footer(
-                text=f"Error code {error_code.value} | Error ID {error.id}"
-            )
+            if error:
+                embed.set_footer(
+                    text=f"Error code {error_code.value} | Error ID {error.id}"
+                )
+            else:
+                embed.set_footer(
+                    text=f"Error code {error_code.value} | Cluster ID {self.cluster_id}"
+                )
 
             log.debug("Encountered %s", error_code.name)
-        else:
+        elif error:
             embed.set_footer(text=f"Error ID {error.id}")
 
         return embed
@@ -227,7 +232,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             guild_id=interaction.guild_id,
             user_id=interaction.author.id,
         )
-        # await self.db.error_tracking.insert(error)
+        await self.db.error_tracking.insert(error)
         return error
 
     async def on_user_command_error(self, interaction, exception) -> None:
@@ -242,8 +247,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         exception: commands.CommandError,
     ) -> None:
         await self._push_slash_error_stats(interaction)
-        error: Error = await self.persist_error(exception, interaction)
         exception = getattr(exception, "original", exception)
+        error: Error = await self.persist_error(exception, interaction)
 
         if isinstance(exception, ErrorHandled):
             return
