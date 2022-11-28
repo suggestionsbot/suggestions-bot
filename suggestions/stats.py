@@ -6,6 +6,8 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Optional, Dict, Literal, Union, Type
 
+import alaric
+from alaric import Cursor, AQ
 from alaric.comparison import EQ
 from alaric.types import ObjectId
 from bot_base.caches import TimedCache
@@ -131,21 +133,17 @@ class Stats:
             return len(self.bot.guilds)
 
         total_count: int = 0
-        raw_collection: AsyncIOMotorCollection = (
-            self.database.cluster_guild_counts.raw_collection
+        cursor: Cursor = (
+            Cursor.from_document(self.database.cluster_guild_counts)
+            .set_sort(("timestamp", alaric.Descending))
+            .set_limit(1)
         )
         total_cluster_count = self.bot.total_cluster_count
         for i in range(1, total_cluster_count + 1):
             if i not in self.cluster_guild_cache:
-                query = EQ("cluster_id", i)
-                cursor = (
-                    raw_collection.find(query.build()).sort("timestamp", -1).limit(1)
-                )
-                items = await cursor.to_list(1)  # Known to be one
-                entry: Dict[
-                    Literal["cluster_id", "_id", "guild_count", "timestamp"],
-                    Union[int, ObjectId, datetime.datetime],
-                ] = items[0]
+                cursor = cursor.copy().set_filter(AQ(EQ("cluster_id", i)))
+                items = await cursor.execute()
+                entry = items[0]
                 self.cluster_guild_cache.add_entry(
                     i,
                     entry["guild_count"],
@@ -160,17 +158,14 @@ class Stats:
 
     async def load(self):
         try:
-            query = EQ("cluster_id", self.bot.cluster_id)
-            cursor = (
-                self.database.cluster_guild_counts.raw_collection.find(query.build())
-                .sort("timestamp", -1)
-                .limit(1)
+            cursor: Cursor = (
+                Cursor.from_document(self.database.cluster_shutdown_requests)
+                .set_sort(("timestamp", alaric.Descending))
+                .set_limit(1)
+                .set_filter(AQ(EQ("cluster_id", self.bot.cluster_id)))
             )
-            items = await cursor.to_list(1)
-            entry: Dict[
-                Literal["cluster_id", "_id", "guild_count", "timestamp"],
-                Union[int, ObjectId, datetime.datetime],
-            ] = items[0]
+            items = await cursor.execute()
+            entry = items[0]
             self._old_guild_count = entry["guild_count"]
         except:
             pass

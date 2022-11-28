@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Type, Optional
 
 import aiohttp
+import alaric
 import disnake
+from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
@@ -518,12 +520,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.debug("Started listening for shutdown requests")
 
             while not state.is_closing:
-                cursor = (
-                    self.db.cluster_shutdown_requests.raw_collection.find({})
-                    .sort("timestamp", -1)
-                    .limit(1)
+                cursor: Cursor = (
+                    Cursor.from_document(self.db.cluster_shutdown_requests)
+                    .set_sort(("timestamp", alaric.Descending))
+                    .set_limit(1)
                 )
-                items = await cursor.to_list(1)
+                items = await cursor.execute()
                 if not items:
                     await self.sleep_with_condition(15, lambda: self.state.is_closing)
                     continue
