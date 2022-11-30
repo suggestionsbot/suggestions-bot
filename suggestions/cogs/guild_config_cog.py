@@ -258,6 +258,34 @@ class GuildConfigCog(commands.Cog):
         )
 
     @config.sub_command_group()
+    async def anonymous(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @anonymous.sub_command()
+    async def enable(self, interaction: disnake.GuildCommandInteraction):
+        """Enable anonymous suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_anonymous_suggestions",
+            True,
+            "I have enabled DM messages for this guild.",
+            "Enabled anonymous suggestions for guild %s",
+            self.stats.type.GUILD_DM_ENABLE,
+        )
+
+    @anonymous.sub_command()
+    async def disable(self, interaction: disnake.GuildCommandInteraction):
+        """Disable anonymous suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_anonymous_suggestions",
+            False,
+            "I have disabled DM messages for this guild.",
+            "Disabled anonymous suggestions for guild %s",
+            self.stats.type.GUILD_DM_DISABLE,
+        )
+
+    @config.sub_command_group()
     async def thread(self, interaction: disnake.GuildCommandInteraction):
         pass
 

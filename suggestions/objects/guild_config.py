@@ -21,6 +21,7 @@ class GuildConfig:
         log_channel_id: Optional[int] = None,
         threads_for_suggestions: bool = True,
         suggestions_channel_id: Optional[int] = None,
+        can_have_anonymous_suggestions: bool = False,
         **kwargs,
     ):
         self._id: int = _id
@@ -29,6 +30,7 @@ class GuildConfig:
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.threads_for_suggestions: bool = threads_for_suggestions
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
+        self.can_have_anonymous_suggestions: bool = can_have_anonymous_suggestions
 
     @property
     def guild_id(self) -> int:
@@ -78,6 +80,7 @@ class GuildConfig:
             "dm_messages_disabled": self.dm_messages_disabled,
             "threads_for_suggestions": self.threads_for_suggestions,
             "suggestions_channel_id": self.suggestions_channel_id,
+            "can_have_anonymous_suggestions": self.can_have_anonymous_suggestions,
         }
 
     def as_filter(self) -> Dict:
