@@ -2,6 +2,8 @@ import asyncio
 import logging
 import os
 
+import alaric
+from alaric import Cursor
 from dotenv import load_dotenv
 
 import suggestions
@@ -36,12 +38,12 @@ async def run_bot():
     bot = await suggestions.create_bot()
 
     # Make sure we don't shutdown due to a previous shutdown request
-    cursor = (
-        bot.db.cluster_shutdown_requests.raw_collection.find({})
-        .sort("timestamp", -1)
-        .limit(1)
+    cursor: Cursor = (
+        Cursor.from_document(bot.db.cluster_shutdown_requests)
+        .set_sort(("timestamp", alaric.Descending))
+        .set_limit(1)
     )
-    items = await cursor.to_list(1)
+    items = await cursor.execute()
     if items:
         entry = items[0]
         if bot.cluster_id not in entry["responded_clusters"]:
