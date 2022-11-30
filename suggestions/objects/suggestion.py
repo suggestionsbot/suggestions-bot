@@ -79,6 +79,7 @@ class Suggestion:
         resolved_at: Optional[datetime.datetime] = None,
         image_url: Optional[str] = None,
         uses_views_for_votes: bool = False,
+        is_anonymous: bool = False,
         **kwargs,
     ):
         """
@@ -138,6 +139,9 @@ class Suggestion:
 
             Defaults to `False` as all old suggestions will use this
             value since they don't have the field in the database
+        is_anonymous: bool
+            Whether or not this suggestion
+            should be displayed anonymous
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -161,6 +165,7 @@ class Suggestion:
         self.up_voted_by: set[int] = set(up_voted_by) if up_voted_by else set()
         self.down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
         self.image_url: Optional[str] = image_url
+        self.is_anonymous: bool = is_anonymous
 
     @property
     def total_up_votes(self) -> Optional[int]:
@@ -293,6 +298,7 @@ class Suggestion:
         state: State,
         *,
         image_url: Optional[str] = None,
+        is_anonymous: bool = False,
     ) -> Suggestion:
         """Create and return a new valid suggestion.
 
@@ -311,6 +317,8 @@ class Suggestion:
         ----------------
         image_url: Optional[str]
             An image to attach to this suggestion.
+        is_anonymous: bool
+            Whether or not this suggestion should be anonymous
 
         Returns
         -------
@@ -327,6 +335,7 @@ class Suggestion:
             created_at=state.now,
             image_url=image_url,
             uses_views_for_votes=True,
+            is_anonymous=is_anonymous,
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
@@ -344,6 +353,7 @@ class Suggestion:
             "suggestion_author_id": self.suggestion_author_id,
             "created_at": self.created_at,
             "uses_views_for_votes": self.uses_views_for_votes,
+            "is_anonymous": self.is_anonymous,
         }
 
         if self.resolved_by:
@@ -375,18 +385,21 @@ class Suggestion:
             return await self._as_resolved_embed(bot)
 
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
-        embed: Embed = (
-            Embed(
-                description=f"**Submitter**\n{user.display_name}\n\n"
-                f"**Suggestion**\n{self.suggestion}",
-                colour=self.color,
-                timestamp=bot.state.now,
-            )
-            .set_thumbnail(user.display_avatar)
-            .set_footer(
-                text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
-            )
+        if self.is_anonymous:
+            submitter = "Anonymous"
+        else:
+            submitter = user.display_name
+
+        embed: Embed = Embed(
+            description=f"**Submitter**\n{submitter}\n\n"
+            f"**Suggestion**\n{self.suggestion}",
+            colour=self.color,
+            timestamp=bot.state.now,
+        ).set_footer(
+            text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
         )
+        if not self.is_anonymous:
+            embed.set_thumbnail(user.display_avatar)
 
         if self.image_url:
             embed.set_image(self.image_url)
@@ -406,10 +419,14 @@ class Suggestion:
             f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
         )
 
+        if self.is_anonymous:
+            submitter = "Anonymous"
+        else:
+            submitter = f"<@{self.suggestion_author_id}>"
         text = "Approved" if self.state == SuggestionState.approved else "Rejected"
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
-            f"**Submitter**\n<@{self.suggestion_author_id}>\n\n"
+            f"**Submitter**\n{submitter}\n\n"
             f"**{text} By**\n<@{self.resolved_by}>\n\n",
             colour=self.color,
             timestamp=bot.state.now,
@@ -553,6 +570,7 @@ class Suggestion:
         if user_config.dm_messages_disabled:
             log.debug(
                 "User %s has dm messages disabled, failed to notify change to suggestion %s",
+                self.suggestion_author_id,
                 self.suggestion_author_id,
                 self.suggestion_id,
             )

@@ -171,6 +171,9 @@ class SuggestionsCog(commands.Cog):
         image: disnake.Attachment = commands.Param(
             default=None, description="An image to add to your suggestion."
         ),
+        anonymously: bool = commands.Param(
+            default=False, description="Submit your suggestion anonymously."
+        ),
     ):
         """Create a new suggestion."""
         if len(suggestion) > 1000:
@@ -186,6 +189,7 @@ class SuggestionsCog(commands.Cog):
             state=self.state,
             author_id=interaction.author.id,
             image_url=image_url,
+            is_anonymous=anonymously,
         )
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
