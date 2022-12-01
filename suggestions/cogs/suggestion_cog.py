@@ -185,7 +185,10 @@ class SuggestionsCog(commands.Cog):
         )
         if anonymously and not guild_config.can_have_anonymous_suggestions:
             await interaction.send(
-                "Your guild does not allow anonymous suggestions.", ephemeral=True
+                self.bot.get_locale(
+                    "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS", interaction.locale
+                ),
+                ephemeral=True,
             )
             raise ErrorHandled
 

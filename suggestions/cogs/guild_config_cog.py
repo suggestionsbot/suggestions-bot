@@ -278,7 +278,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "can_have_anonymous_suggestions",
             True,
-            "I have enabled anonymous suggestions for this guild.",
+            self.bot.get_locale(
+                "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS", interaction.locale
+            ),
             "Enabled anonymous suggestions for guild %s",
             self.stats.type.GUILD_ANONYMOUS_ENABLE,
         )
@@ -290,7 +292,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "can_have_anonymous_suggestions",
             False,
-            "I have disabled anonymous suggestions for this guild.",
+            self.bot.get_locale(
+                "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS", interaction.locale
+            ),
             "Disabled anonymous suggestions for guild %s",
             self.stats.type.GUILD_ANONYMOUS_DISABLE,
         )
