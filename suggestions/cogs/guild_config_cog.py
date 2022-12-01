@@ -115,6 +115,7 @@ class GuildConfigCog(commands.Cog):
                 "Dm responses",
                 "Threads for suggestions",
                 "Keep logs",
+                "Anonymous suggestions",
             ],
             default=None,
         ),
@@ -170,6 +171,10 @@ class GuildConfigCog(commands.Cog):
                     "Suggestion logs will be kept in your logs channel."
                 )
 
+        elif config == "Anonymous suggestions":
+            text = "can" if guild_config.can_have_anonymous_suggestions else "cannot"
+            embed.description += f"This guild {text} have anonymous suggestions."
+
         else:
             raise InvalidGuildConfigOption
 
@@ -208,12 +213,17 @@ class GuildConfigCog(commands.Cog):
         else:
             keep_logs = "Suggestion logs will be kept in your logs channel."
 
+        if guild_config.can_have_anonymous_suggestions:
+            anon = "Enabled"
+        else:
+            anon = "Disabled"
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
-            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}",
+            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -268,9 +278,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "can_have_anonymous_suggestions",
             True,
-            "I have enabled DM messages for this guild.",
+            "I have enabled anonymous suggestions for this guild.",
             "Enabled anonymous suggestions for guild %s",
-            self.stats.type.GUILD_DM_ENABLE,
+            self.stats.type.GUILD_ANONYMOUS_ENABLE,
         )
 
     @anonymous.sub_command()
@@ -280,9 +290,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "can_have_anonymous_suggestions",
             False,
-            "I have disabled DM messages for this guild.",
+            "I have disabled anonymous suggestions for this guild.",
             "Disabled anonymous suggestions for guild %s",
-            self.stats.type.GUILD_DM_DISABLE,
+            self.stats.type.GUILD_ANONYMOUS_DISABLE,
         )
 
     @config.sub_command_group()
