@@ -44,10 +44,12 @@ class MemberStats:
             "guild_thread_disable",
             "guild_keeplogs_enable",
             "guild_keeplogs_disable",
+            "guild_keeplogs_disable",
+            "guild_keeplogs_disable",
             "activate_beta",
             "stats",
-            "approve_by_message_command",
-            "reject_by_message_command",
+            "guild_anonymous_enable",
+            "guild_anonymous_disable",
         ]
 
         if commands:
@@ -72,6 +74,8 @@ class MemberStats:
             self.guild_dm_disable: MemberCommandStats = ...
             self.guild_thread_enable: MemberCommandStats = ...
             self.guild_thread_disable: MemberCommandStats = ...
+            self.guild_anonymous_enable: MemberCommandStats = ...
+            self.guild_anonymous_disable: MemberCommandStats = ...
             self.activate_beta: MemberCommandStats = ...
             self.stats: MemberCommandStats = ...
 
