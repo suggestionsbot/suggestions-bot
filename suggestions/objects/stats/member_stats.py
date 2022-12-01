@@ -44,10 +44,10 @@ class MemberStats:
             "guild_thread_disable",
             "guild_keeplogs_enable",
             "guild_keeplogs_disable",
-            "guild_keeplogs_disable",
-            "guild_keeplogs_disable",
             "activate_beta",
             "stats",
+            "approve_by_message_command",
+            "reject_by_message_command",
             "guild_anonymous_enable",
             "guild_anonymous_disable",
         ]
