@@ -395,11 +395,14 @@ class Suggestion:
             f"**Suggestion**\n{self.suggestion}",
             colour=self.color,
             timestamp=bot.state.now,
-        ).set_footer(
-            text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
         )
         if not self.is_anonymous:
             embed.set_thumbnail(user.display_avatar)
+            embed.set_footer(
+                text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
+            )
+        else:
+            embed.set_footer(text=f"sID: {self.suggestion_id}")
 
         if self.image_url:
             embed.set_image(self.image_url)
@@ -570,7 +573,6 @@ class Suggestion:
         if user_config.dm_messages_disabled:
             log.debug(
                 "User %s has dm messages disabled, failed to notify change to suggestion %s",
-                self.suggestion_author_id,
                 self.suggestion_author_id,
                 self.suggestion_id,
             )
