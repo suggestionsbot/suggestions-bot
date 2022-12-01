@@ -49,5 +49,8 @@
   "CLEAR_INNER_MESSAGE": "I have cleared `{}` for you.",
   "SUGGEST_INNER_SUGGESTION_SENT": "Hey, {}. Your suggestion has been sent to {} to be voted on!\n\nPlease wait until it gets approved or rejected by a staff member.\n\nYour suggestion ID (sID) for reference is **{}**.",
   "SUGGEST_INNER_SUGGESTION_SENT_FOOTER": "Guild ID: {} | sID: {}",
-  "SUGGEST_INNER_THANKS": "Thanks for your suggestion!"
+  "SUGGEST_INNER_THANKS": "Thanks for your suggestion!",
+  "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Your guild does not allow anonymous suggestions.",
+  "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "I have enabled anonymous suggestions for this guild.",
+  "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild."
 }

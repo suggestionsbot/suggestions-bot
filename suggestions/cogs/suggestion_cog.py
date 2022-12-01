@@ -13,9 +13,8 @@ from disnake.ext import commands, components
 from suggestions import checks, Stats
 from suggestions.clunk import ClunkLock
 from suggestions.cooldown_bucket import InteractionBucket
-from suggestions.exceptions import SuggestionTooLong
+from suggestions.exceptions import SuggestionTooLong, ErrorHandled
 from suggestions.objects import Suggestion, GuildConfig, UserConfig
-from suggestions.objects.stats import MemberStats
 from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
@@ -171,12 +170,28 @@ class SuggestionsCog(commands.Cog):
         image: disnake.Attachment = commands.Param(
             default=None, description="An image to add to your suggestion."
         ),
+        anonymously: bool = commands.Param(
+            default=False, description="Submit your suggestion anonymously."
+        ),
     ):
         """Create a new suggestion."""
         if len(suggestion) > 1000:
             raise SuggestionTooLong
 
         await interaction.response.defer(ephemeral=True)
+
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            interaction.guild_id, self.state
+        )
+        if anonymously and not guild_config.can_have_anonymous_suggestions:
+            await interaction.send(
+                self.bot.get_locale(
+                    "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS", interaction.locale
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         image_url = image.url if isinstance(image, disnake.Attachment) else None
@@ -186,9 +201,7 @@ class SuggestionsCog(commands.Cog):
             state=self.state,
             author_id=interaction.author.id,
             image_url=image_url,
-        )
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
+            is_anonymous=anonymously,
         )
         try:
             channel: WrappedChannel = await self.bot.get_or_fetch_channel(

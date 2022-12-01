@@ -115,6 +115,7 @@ class GuildConfigCog(commands.Cog):
                 "Dm responses",
                 "Threads for suggestions",
                 "Keep logs",
+                "Anonymous suggestions",
             ],
             default=None,
         ),
@@ -170,6 +171,10 @@ class GuildConfigCog(commands.Cog):
                     "Suggestion logs will be kept in your logs channel."
                 )
 
+        elif config == "Anonymous suggestions":
+            text = "can" if guild_config.can_have_anonymous_suggestions else "cannot"
+            embed.description += f"This guild {text} have anonymous suggestions."
+
         else:
             raise InvalidGuildConfigOption
 
@@ -208,12 +213,17 @@ class GuildConfigCog(commands.Cog):
         else:
             keep_logs = "Suggestion logs will be kept in your logs channel."
 
+        if guild_config.can_have_anonymous_suggestions:
+            anon = "Enabled"
+        else:
+            anon = "Disabled"
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
-            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}",
+            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -255,6 +265,38 @@ class GuildConfigCog(commands.Cog):
             "I have disabled DM messages for this guild.",
             "Disabled DM messages for guild %s",
             self.stats.type.GUILD_DM_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def anonymous(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @anonymous.sub_command()
+    async def enable(self, interaction: disnake.GuildCommandInteraction):
+        """Enable anonymous suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_anonymous_suggestions",
+            True,
+            self.bot.get_locale(
+                "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS", interaction.locale
+            ),
+            "Enabled anonymous suggestions for guild %s",
+            self.stats.type.GUILD_ANONYMOUS_ENABLE,
+        )
+
+    @anonymous.sub_command()
+    async def disable(self, interaction: disnake.GuildCommandInteraction):
+        """Disable anonymous suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_anonymous_suggestions",
+            False,
+            self.bot.get_locale(
+                "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS", interaction.locale
+            ),
+            "Disabled anonymous suggestions for guild %s",
+            self.stats.type.GUILD_ANONYMOUS_DISABLE,
         )
 
     @config.sub_command_group()

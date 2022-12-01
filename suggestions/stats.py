@@ -41,6 +41,8 @@ class StatsEnum(Enum):
     GUILD_THREAD_DISABLE = "guild_thread_disable"
     GUILD_KEEPLOGS_ENABLE = "guild_keeplogs_enable"
     GUILD_KEEPLOGS_DISABLE = "guild_keeplogs_disable"
+    GUILD_ANONYMOUS_ENABLE = "guild_anonymous_enable"
+    GUILD_ANONYMOUS_DISABLE = "guild_anonymous_disable"
     ACTIVATE_BETA = "activate_beta"
     STATS = "stats"
 
@@ -66,6 +68,8 @@ class StatsEnum(Enum):
                 "config thread disable": cls.GUILD_THREAD_DISABLE,
                 "config keeplogs enable": cls.GUILD_KEEPLOGS_ENABLE,
                 "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
+                "config anonymous enable": cls.GUILD_ANONYMOUS_ENABLE,
+                "config anonymous disable": cls.GUILD_ANONYMOUS_DISABLE,
                 "Approve suggestion": cls.APPROVE_BY_MESSAGE_COMMAND,
                 "Reject suggestion": cls.REJECT_BY_MESSAGE_COMMAND,
             }[name]
