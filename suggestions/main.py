@@ -115,6 +115,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         ),
     ):
         """View bot information."""
+        await interaction.response.defer()
         if support and bot.is_prod and interaction.guild_id:
             shard_id = bot.get_shard_id(interaction.guild_id)
             shard = bot.get_shard(shard_id)
