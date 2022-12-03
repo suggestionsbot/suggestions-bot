@@ -244,7 +244,7 @@ class GuildConfigCog(commands.Cog):
         pass
 
     @dm.sub_command()
-    async def enable(self, interaction: disnake.GuildCommandInteraction):
+    async def dm_enable(self, interaction: disnake.GuildCommandInteraction):
         """Enable DM's responses to actions guild wide."""
         await self.modify_guild_config(
             interaction,
@@ -256,7 +256,7 @@ class GuildConfigCog(commands.Cog):
         )
 
     @dm.sub_command()
-    async def disable(self, interaction: disnake.GuildCommandInteraction):
+    async def dm_disable(self, interaction: disnake.GuildCommandInteraction):
         """Disable DM's responses to actions guild wide."""
         await self.modify_guild_config(
             interaction,
@@ -272,7 +272,7 @@ class GuildConfigCog(commands.Cog):
         pass
 
     @anonymous.sub_command()
-    async def enable(self, interaction: disnake.GuildCommandInteraction):
+    async def anon_enable(self, interaction: disnake.GuildCommandInteraction):
         """Enable anonymous suggestions."""
         await self.modify_guild_config(
             interaction,
@@ -286,7 +286,7 @@ class GuildConfigCog(commands.Cog):
         )
 
     @anonymous.sub_command()
-    async def disable(self, interaction: disnake.GuildCommandInteraction):
+    async def anon_disable(self, interaction: disnake.GuildCommandInteraction):
         """Disable anonymous suggestions."""
         await self.modify_guild_config(
             interaction,
