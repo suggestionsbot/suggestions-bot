@@ -19,7 +19,6 @@ class ZonisRoutes:
             if self.bot.is_prod
             else "wss://garven.dev.suggestions.gg/ws"
         )
-        url = "ws://127.0.0.1:8001/ws"
         self.client: client.Client = client.Client(
             url=url,
             identifier=str(bot.cluster_id),
