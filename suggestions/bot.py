@@ -34,6 +34,7 @@ from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
+from suggestions.zonis_routes import ZonisRoutes
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +96,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self._has_dispatched_initial_ready: bool = False
         self._initial_ready_future: asyncio.Future = asyncio.Future()
+
+        self.zonis: ZonisRoutes = ZonisRoutes(self)
 
     async def get_or_fetch_channel(self, channel_id: int):
         try:
@@ -495,6 +498,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.push_status()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
+        await self.zonis.start()
 
     async def graceful_shutdown(self) -> None:
         """Gracefully shutdown the bot.
@@ -504,6 +508,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
         await self.clunk.kill_all()
+        await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")
         await self.close()
