@@ -19,13 +19,16 @@ class ZonisRoutes:
             if self.bot.is_prod
             else "wss://garven.dev.suggestions.gg/ws"
         )
+        url = "ws://127.0.0.1:8001/ws"
         self.client: client.Client = client.Client(
             url=url,
             identifier=str(bot.cluster_id),
             secret_key=os.environ["ZONIS_SECRET_KEY"],
             override_key=os.environ.get("ZONIS_OVERRIDE_KEY"),
         )
-        self.client.register_class_instance_for_routes(self, "guild_count")
+        self.client.register_class_instance_for_routes(
+            self, "guild_count", "cluster_status"
+        )
 
     async def start(self):
         self.client.load_routes()
@@ -36,3 +39,19 @@ class ZonisRoutes:
     @client.route()
     async def guild_count(self):
         return len(self.bot.guilds)
+
+    @client.route()
+    async def cluster_status(self):
+        data = {"shards": {}}
+        for shard_id, shard_info in self.bot.shards.items():
+            data["shards"][shard_id] = {
+                "latency": shard_info.latency,
+                "is_currently_up": not shard_info.is_closed(),
+            }
+
+        if all(d["is_currently_up"] is False for d in data["shards"].values()):
+            data["cluster_is_up"] = False
+        else:
+            data["cluster_is_up"] = True
+
+        return data
