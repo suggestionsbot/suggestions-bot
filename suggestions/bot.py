@@ -611,7 +611,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
                 body = {
                     "guildCount": data["statistic"],
-                    "timestamp": str(datetime.datetime.now()),
+                    "timestamp": datetime.datetime.now().timestamp(),
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
