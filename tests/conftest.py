@@ -30,6 +30,7 @@ async def causar(monkeypatch, mocked_database) -> Causar:
         "disnake.ext.commands.interaction_bot_base.InteractionBotBase._prepare_application_commands",
         AsyncMock(),
     )
+    monkeypatch.setenv("ZONIS_SECRET_KEY", "test")
 
     bot = await suggestions.create_bot(mocked_database)
     await bot.load_cogs()
