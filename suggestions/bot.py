@@ -564,6 +564,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
+        # TODO Implement this using cluster IPC
         if not self.is_prod or 1 == 1:  # Disable for now
             # log.warning("Cancelling bot listing updates as we aren't in production.")
             return

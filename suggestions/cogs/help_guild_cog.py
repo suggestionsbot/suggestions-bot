@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import io
 import logging
+import os
+import typing
 from typing import TYPE_CHECKING, Optional
 
+import aiohttp
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
@@ -119,6 +122,89 @@ class HelpGuildCog(commands.Cog):
             ephemeral=True,
             file=disnake.File(io.StringIO(error.traceback), filename="traceback.txt"),
         )
+
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(kick_members=True),
+        guild_ids=[601219766258106399, 737166408525283348],
+        name="bot_status",
+    )
+    async def show_bot_status(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+    ):
+        """See bot status information"""
+        await interaction.response.defer(ephemeral=True)
+
+        red_circle = "🔴"
+        green_circle = "🟢"
+        url = (
+            "https://garven.suggestions.gg/cluster/status"
+            if self.bot.is_prod
+            else "https://garven.dev.suggestions.gg/cluster/status"
+        )
+
+        embed = disnake.Embed(
+            timestamp=self.bot.state.now,
+            title="Bot infrastructure status",
+        )
+        down_shards: list[str] = []
+        down_clusters: list[str] = []
+        avg_bot_latency: list[float] = []
+        async with aiohttp.ClientSession(
+            headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
+        ) as session:
+            async with session.get(url) as resp:
+                data: dict[str, dict | bool] = await resp.json()
+                if resp.status != 200:
+                    return await interaction.send(
+                        f"Something went wrong: {data}", ephemeral=True
+                    )
+
+        if data.pop("partial_response"):
+            embed.set_footer(text="Partial response")
+
+        for cluster_id, v in data["clusters"].items():
+            cluster_is_up = v.pop("cluster_is_up")
+            if not cluster_is_up:
+                down_clusters.append(cluster_id)
+                continue
+
+            for shard_id, d in v["shards"].items():
+                latency = d["latency"]
+                is_currently_up = d["is_currently_up"]
+                if not is_currently_up:
+                    down_shards.append(shard_id)
+                    continue
+
+                avg_bot_latency.append(latency)
+
+        bot_latency = sum(avg_bot_latency) / len(avg_bot_latency)
+
+        def calculate_extra(var) -> str:
+            if not var:
+                return ""
+
+            ai = f"\n{red_circle} "
+            ai += "("
+            for i in var:
+                ai += f"`{i}`, "
+
+            ai = ai.rstrip(", ")
+            ai += ")"
+            return ai
+
+        additional_shard_info = calculate_extra(down_shards)
+        additional_cluster_info = calculate_extra(down_clusters)
+
+        embed.description = (
+            f"{green_circle} **Shards:** `{self.bot.total_shards - len(down_shards)}`\n"
+            f"{red_circle} **Shards:** `{len(down_shards)}`{additional_shard_info}\n\n"
+            f"{green_circle} **Clusters:** `{self.bot.total_cluster_count - len(down_clusters)}`\n"
+            f"{red_circle} **Clusters:** `{len(down_clusters)}`{additional_cluster_info}\n\n"
+            f"Average bot latency: `{round(bot_latency, 3)}ms`"
+        )
+        await interaction.send(ephemeral=True, embed=embed)
 
 
 def setup(bot):
