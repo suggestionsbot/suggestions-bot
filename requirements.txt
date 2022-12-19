@@ -37,4 +37,6 @@ python-dotenv==0.20.0
 sentinels==1.0.0
 tomli==2.0.1
 typing_extensions==4.3.0
+websockets==10.4
 yarl==1.7.2
+zonis==1.2.4
