@@ -119,6 +119,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def total_cluster_count(self) -> int:
         return math.ceil(self.total_shards / 10)
 
+    @property
+    def is_primary_cluster(self) -> bool:
+        return bool(os.environ.get("IS_PRIMARY_CLUSTER", False))
+
     def error_embed(
         self,
         title: str,
@@ -564,9 +568,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
-        # TODO Implement this using cluster IPC
-        if not self.is_prod or 1 == 1:  # Disable for now
+        if not self.is_prod:
             # log.warning("Cancelling bot listing updates as we aren't in production.")
+            return
+
+        if not self.is_primary_cluster:
+            log.debug("I am not the primary cluster, disabling bot listing updates")
             return
 
         state: State = self.state
@@ -577,30 +584,51 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
             headers = {"Authorization": f'Bearer {os.environ["SUGGESTIONS_API_KEY"]}'}
             while not state.is_closing:
+                url = (
+                    "https://garven.suggestions.gg/aggregate/guilds/count"
+                    if self.is_prod
+                    else "https://garven.dev.suggestions.gg/aggregate/guilds/count"
+                )
+                async with aiohttp.ClientSession(
+                    headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
+                ) as session:
+                    async with session.get(url) as resp:
+                        data: dict = await resp.json()
+                        if resp.status != 200:
+                            log.error("Stopping bot list updates")
+                            log.error("%s", data)
+                            break
+
+                if data["partial_response"]:
+                    log.warning(
+                        "Skipping bot list updates as IPC returned a partial responses"
+                    )
+                    await self.sleep_with_condition(
+                        time_between_updates.total_seconds(),
+                        lambda: self.state.is_closing,
+                    )
+                    continue
+
                 body = {
-                    "guildCount": len(self.guilds),
+                    "guildCount": data["statistic"],
                     "timestamp": str(datetime.datetime.now()),
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
                         os.environ["SUGGESTIONS_STATS_API_URL"], json=body
                     ) as r:
-                        pass
+                        if r.status != 200:
+                            log.warning("%s", r.text)
 
                 log.debug("Updated bot listings")
-
-                remaining_seconds = time_between_updates.total_seconds()
-                while remaining_seconds > 0:
-
-                    remaining_seconds -= 5
-                    await asyncio.sleep(5)
-
-                    if state.is_closing:
-                        return
+                await self.sleep_with_condition(
+                    time_between_updates.total_seconds(),
+                    lambda: self.state.is_closing,
+                )
 
         task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
-        log.info("Setup bot listing updates")
+        log.info("Setup bot list updates")
 
     def get_shard_id(self, guild_id: Optional[int]) -> int:
         # DM's go to shard 0
