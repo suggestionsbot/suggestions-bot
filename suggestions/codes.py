@@ -20,6 +20,7 @@ class ErrorCode(IntEnum):
     MISSING_PERMISSIONS_IN_SUGGESTIONS_CHANNEL = 14
     MISSING_PERMISSIONS_IN_LOGS_CHANNEL = 15
     MISSING_TRANSLATION = 16
+    SUGGESTION_RESOLUTION_ERROR = 17
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

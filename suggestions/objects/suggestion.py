@@ -727,3 +727,43 @@ class Suggestion:
         )
         await message.thread.edit(locked=True, archived=True)
         log.debug("Locked thread for suggestion %s", self.suggestion_id)
+
+    async def resolve(
+        self,
+        guild_config: GuildConfig,
+        bot: SuggestionsBot,
+        state: State,
+        interaction: disnake.GuildCommandInteraction,
+        resolution_type: SuggestionState,
+        resolution_note: Optional[str] = None,
+    ):
+        # https://github.com/suggestionsbot/suggestions-bot/issues/36
+        if resolution_type is SuggestionState.approved:
+            await self.mark_approved_by(state, interaction.author.id, resolution_note)
+        elif resolution_type is SuggestionState.rejected:
+            await self.mark_rejected_by(state, interaction.author.id, resolution_note)
+        else:
+            log.error(
+                "Resolving suggestion %s received a resolution_type of %s",
+                self.suggestion_id,
+                resolution_type,
+            )
+            await interaction.send(
+                embed=bot.error_embed(
+                    "Something went wrong",
+                    f"Please contact support.",
+                    error_code=ErrorCode.SUGGESTION_RESOLUTION_ERROR,
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
+        await self.archive_thread_if_required(
+            bot=bot, guild_config=guild_config, locale=interaction.locale
+        )
+        await self.edit_message_after_finalization(
+            state=state,
+            bot=bot,
+            interaction=interaction,
+            guild_config=guild_config,
+        )

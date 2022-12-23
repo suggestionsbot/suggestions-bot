@@ -320,15 +320,13 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, interaction.guild_id, self.state
         )
-        await suggestion.mark_approved_by(self.state, interaction.author.id, response)
-        await suggestion.archive_thread_if_required(
-            bot=self.bot, guild_config=guild_config, locale=interaction.locale
-        )
-        await suggestion.edit_message_after_finalization(
-            state=self.state,
-            bot=self.bot,
-            interaction=interaction,
+        await suggestion.resolve(
             guild_config=guild_config,
+            state=self.state,
+            interaction=interaction,
+            resolution_note=response,
+            resolution_type=SuggestionState.approved,
+            bot=self.bot,
         )
 
         await interaction.send(
@@ -375,15 +373,13 @@ class SuggestionsCog(commands.Cog):
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, interaction.guild_id, self.state
         )
-        await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
-        await suggestion.archive_thread_if_required(
-            bot=self.bot, guild_config=guild_config, locale=interaction.locale
-        )
-        await suggestion.edit_message_after_finalization(
-            state=self.state,
-            bot=self.bot,
-            interaction=interaction,
+        await suggestion.resolve(
             guild_config=guild_config,
+            state=self.state,
+            interaction=interaction,
+            resolution_note=response,
+            resolution_type=SuggestionState.rejected,
+            bot=self.bot,
         )
 
         await interaction.send(

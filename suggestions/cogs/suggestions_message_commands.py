@@ -10,6 +10,7 @@ from disnake.ext import commands
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.objects import Suggestion, GuildConfig
+from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Stats
@@ -40,15 +41,12 @@ class SuggestionsMessageCommands(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        await suggestion.mark_approved_by(self.state, interaction.user.id)
-        await suggestion.archive_thread_if_required(
-            bot=self.bot, guild_config=guild_config, locale=interaction.locale
-        )
-        await suggestion.edit_message_after_finalization(
-            state=self.state,
-            bot=self.bot,
-            interaction=interaction,
+        await suggestion.resolve(
             guild_config=guild_config,
+            state=self.state,
+            interaction=interaction,
+            resolution_type=SuggestionState.approved,
+            bot=self.bot,
         )
         await interaction.send(
             self.bot.get_locale("APPROVE_INNER_MESSAGE", interaction.locale).format(
@@ -82,15 +80,12 @@ class SuggestionsMessageCommands(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        await suggestion.mark_rejected_by(self.state, interaction.user.id)
-        await suggestion.archive_thread_if_required(
-            bot=self.bot, guild_config=guild_config, locale=interaction.locale
-        )
-        await suggestion.edit_message_after_finalization(
-            state=self.state,
-            bot=self.bot,
-            interaction=interaction,
+        await suggestion.resolve(
             guild_config=guild_config,
+            state=self.state,
+            interaction=interaction,
+            resolution_type=SuggestionState.rejected,
+            bot=self.bot,
         )
         await interaction.send(
             self.bot.get_locale("REJECT_INNER_MESSAGE", interaction.locale).format(
