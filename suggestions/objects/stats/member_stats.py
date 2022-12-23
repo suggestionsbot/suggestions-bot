@@ -52,6 +52,9 @@ class MemberStats:
             "reject_by_message_command",
             "guild_anonymous_enable",
             "guild_anonymous_disable",
+            "view_up_voters",
+            "view_down_voters",
+            "view_voters",
         ]
 
         if commands:

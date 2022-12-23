@@ -47,6 +47,9 @@ class StatsEnum(Enum):
     GUILD_ANONYMOUS_DISABLE = "guild_anonymous_disable"
     ACTIVATE_BETA = "activate_beta"
     STATS = "stats"
+    VIEW_UP_VOTERS = "view_up_voters"
+    VIEW_DOWN_VOTERS = "view_down_voters"
+    VIEW_VOTERS = "view_voters"
 
     @classmethod
     def from_command_name(cls, name: str) -> Optional[StatsEnum]:
@@ -76,6 +79,9 @@ class StatsEnum(Enum):
                 "config auto_archive_threads disable": cls.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
                 "Approve suggestion": cls.APPROVE_BY_MESSAGE_COMMAND,
                 "Reject suggestion": cls.REJECT_BY_MESSAGE_COMMAND,
+                "View up voters": cls.VIEW_UP_VOTERS,
+                "View down voters": cls.VIEW_DOWN_VOTERS,
+                "View voters": cls.VIEW_VOTERS,
             }[name]
         except KeyError:
             log.error("Failed to find StatsEnum for %s", name)
