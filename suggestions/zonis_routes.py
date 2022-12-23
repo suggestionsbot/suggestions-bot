@@ -48,7 +48,7 @@ class ZonisRoutes:
             data["shards"][shard_id] = {
                 "latency": shard_info.latency
                 if not math.isnan(shard_info.latency)
-                else -1,
+                else None,
                 "is_currently_up": not shard_info.is_closed(),
             }
 
