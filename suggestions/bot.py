@@ -502,9 +502,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.push_status()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
-
-        if not self.is_prod:
-            await self.zonis.start()
+        await self.zonis.start()
 
     async def graceful_shutdown(self) -> None:
         """Gracefully shutdown the bot.
