@@ -180,7 +180,7 @@ class HelpGuildCog(commands.Cog):
                 if latency:
                     avg_bot_latency.append(latency)
 
-        bot_latency = sum(avg_bot_latency) / len(avg_bot_latency)
+        bot_latency = (sum(avg_bot_latency) / len(avg_bot_latency)) * 1000
 
         def calculate_extra(var) -> str:
             if not var:
