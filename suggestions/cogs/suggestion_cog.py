@@ -321,6 +321,9 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         await suggestion.mark_approved_by(self.state, interaction.author.id, response)
+        await suggestion.archive_thread_if_required(
+            bot=self.bot, guild_config=guild_config, locale=interaction.locale
+        )
         await suggestion.edit_message_after_finalization(
             state=self.state,
             bot=self.bot,
@@ -373,6 +376,9 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         await suggestion.mark_rejected_by(self.state, interaction.author.id, response)
+        await suggestion.archive_thread_if_required(
+            bot=self.bot, guild_config=guild_config, locale=interaction.locale
+        )
         await suggestion.edit_message_after_finalization(
             state=self.state,
             bot=self.bot,

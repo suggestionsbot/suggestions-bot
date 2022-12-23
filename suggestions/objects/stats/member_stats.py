@@ -44,6 +44,8 @@ class MemberStats:
             "guild_thread_disable",
             "guild_keeplogs_enable",
             "guild_keeplogs_disable",
+            "guild_auto_archive_threads_enable",
+            "guild_auto_archive_threads_disable",
             "activate_beta",
             "stats",
             "approve_by_message_command",

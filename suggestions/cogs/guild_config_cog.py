@@ -116,6 +116,7 @@ class GuildConfigCog(commands.Cog):
                 "Threads for suggestions",
                 "Keep logs",
                 "Anonymous suggestions",
+                "Auto archive threads",
             ],
             default=None,
         ),
@@ -175,6 +176,12 @@ class GuildConfigCog(commands.Cog):
             text = "can" if guild_config.can_have_anonymous_suggestions else "cannot"
             embed.description += f"This guild {text} have anonymous suggestions."
 
+        elif config == "Auto archive threads":
+            text = "will" if guild_config.auto_archive_threads else "will not"
+            embed.description += (
+                f"I {text} automatically archive threads created for suggestions."
+            )
+
         else:
             raise InvalidGuildConfigOption
 
@@ -218,12 +225,18 @@ class GuildConfigCog(commands.Cog):
         else:
             anon = "Disabled"
 
+        auto_archive_threads = (
+            "will" if guild_config.auto_archive_threads else "will not"
+        )
+        auto_archive_threads = f"I {auto_archive_threads} automatically archive threads created for suggestions."
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
-            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}",
+            f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
+            f"Automatic thread archiving: {auto_archive_threads}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -353,6 +366,40 @@ class GuildConfigCog(commands.Cog):
             "Suggestions will now be moved to your logs channel when finished.",
             "Disabled keep logs on suggestions for guild %s",
             self.stats.type.GUILD_KEEPLOGS_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def auto_archive_threads(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @auto_archive_threads.sub_command(name="enable")
+    async def auto_archive_threads_enable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Automatically archive threads created for suggestions upon suggestion resolution."""
+        await self.modify_guild_config(
+            interaction,
+            "auto_archive_threads",
+            True,
+            "Automatically created threads for suggestions "
+            "will now be archived upon suggestion resolution.",
+            "Enabled auto archive threads on suggestions for guild %s",
+            self.stats.type.GUILD_AUTO_ARCHIVE_THREADS_ENABLE,
+        )
+
+    @auto_archive_threads.sub_command(name="disable")
+    async def auto_archive_threads_disable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Don't archive threads created for suggestions upon suggestion resolution."""
+        await self.modify_guild_config(
+            interaction,
+            "auto_archive_threads",
+            False,
+            "Automatically created threads for suggestions "
+            "will no longer be archived upon suggestion resolution.",
+            "Disabled auto archive threads on suggestions for guild %s",
+            self.stats.type.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
         )
 
     async def modify_guild_config(

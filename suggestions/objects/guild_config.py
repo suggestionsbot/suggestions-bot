@@ -22,11 +22,13 @@ class GuildConfig:
         threads_for_suggestions: bool = True,
         suggestions_channel_id: Optional[int] = None,
         can_have_anonymous_suggestions: bool = False,
+        auto_archive_threads: bool = False,
         **kwargs,
     ):
         self._id: int = _id
         self.keep_logs: bool = keep_logs
         self.log_channel_id: Optional[int] = log_channel_id
+        self.auto_archive_threads: bool = auto_archive_threads
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.threads_for_suggestions: bool = threads_for_suggestions
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
@@ -77,6 +79,7 @@ class GuildConfig:
             "_id": self.guild_id,
             "keep_logs": self.keep_logs,
             "log_channel_id": self.log_channel_id,
+            "auto_archive_threads": self.auto_archive_threads,
             "dm_messages_disabled": self.dm_messages_disabled,
             "threads_for_suggestions": self.threads_for_suggestions,
             "suggestions_channel_id": self.suggestions_channel_id,

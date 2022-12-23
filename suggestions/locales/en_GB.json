@@ -52,5 +52,6 @@
   "SUGGEST_INNER_THANKS": "Thanks for your suggestion!",
   "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Your guild does not allow anonymous suggestions.",
   "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "I have enabled anonymous suggestions for this guild.",
-  "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild."
+  "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild.",
+  "SUGGESTION_OBJECT_LOCK_THREAD": "Locking this thread as the suggestion has reached a resolution."
 }

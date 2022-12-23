@@ -39,6 +39,8 @@ class StatsEnum(Enum):
     GUILD_DM_DISABLE = "guild_dm_disable"
     GUILD_THREAD_ENABLE = "guild_thread_enable"
     GUILD_THREAD_DISABLE = "guild_thread_disable"
+    GUILD_AUTO_ARCHIVE_THREADS_ENABLE = "guild_auto_archive_threads_enable"
+    GUILD_AUTO_ARCHIVE_THREADS_DISABLE = "guild_auto_archive_threads_disable"
     GUILD_KEEPLOGS_ENABLE = "guild_keeplogs_enable"
     GUILD_KEEPLOGS_DISABLE = "guild_keeplogs_disable"
     GUILD_ANONYMOUS_ENABLE = "guild_anonymous_enable"
@@ -70,6 +72,8 @@ class StatsEnum(Enum):
                 "config keeplogs disable": cls.GUILD_KEEPLOGS_DISABLE,
                 "config anonymous enable": cls.GUILD_ANONYMOUS_ENABLE,
                 "config anonymous disable": cls.GUILD_ANONYMOUS_DISABLE,
+                "config auto_archive_threads enable": cls.GUILD_AUTO_ARCHIVE_THREADS_ENABLE,
+                "config auto_archive_threads disable": cls.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
                 "Approve suggestion": cls.APPROVE_BY_MESSAGE_COMMAND,
                 "Reject suggestion": cls.REJECT_BY_MESSAGE_COMMAND,
             }[name]

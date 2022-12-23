@@ -13,6 +13,7 @@ import aiohttp
 import alaric
 import disnake
 from alaric import Cursor
+from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
@@ -99,7 +100,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self.zonis: ZonisRoutes = ZonisRoutes(self)
 
-    async def get_or_fetch_channel(self, channel_id: int):
+    async def get_or_fetch_channel(self, channel_id: int) -> WrappedChannel:
         try:
             return await super().get_or_fetch_channel(channel_id)
         except disnake.NotFound as e:

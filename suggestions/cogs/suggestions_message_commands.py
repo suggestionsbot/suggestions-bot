@@ -41,6 +41,9 @@ class SuggestionsMessageCommands(commands.Cog):
             interaction.guild_id, self.state
         )
         await suggestion.mark_approved_by(self.state, interaction.user.id)
+        await suggestion.archive_thread_if_required(
+            bot=self.bot, guild_config=guild_config, locale=interaction.locale
+        )
         await suggestion.edit_message_after_finalization(
             state=self.state,
             bot=self.bot,
@@ -80,6 +83,9 @@ class SuggestionsMessageCommands(commands.Cog):
             interaction.guild_id, self.state
         )
         await suggestion.mark_rejected_by(self.state, interaction.user.id)
+        await suggestion.archive_thread_if_required(
+            bot=self.bot, guild_config=guild_config, locale=interaction.locale
+        )
         await suggestion.edit_message_after_finalization(
             state=self.state,
             bot=self.bot,

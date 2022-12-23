@@ -703,3 +703,27 @@ class Suggestion:
             self.message_id = message.id
             self.channel_id = channel.id
             await state.suggestions_db.upsert(self, self)
+
+    async def archive_thread_if_required(
+        self, *, guild_config: GuildConfig, bot: SuggestionsBot, locale: disnake.Locale
+    ):
+        """Attempts to archive the attached thread if the feature is enabled."""
+        if not guild_config.auto_archive_threads:
+            # Guild does not want thread archived
+            return
+
+        channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+        message: disnake.Message = await channel.fetch_message(self.message_id)
+        if not message.thread:
+            # Suggestion has no created thread
+            return
+
+        if message.thread.owner_id != bot.user.id:
+            # I did not create this thread
+            return
+
+        await message.thread.send(
+            bot.get_locale("SUGGESTION_OBJECT_LOCK_THREAD", locale),
+        )
+        await message.thread.edit(locked=True, archived=True)
+        log.debug("Locked thread for suggestion %s", self.suggestion_id)
