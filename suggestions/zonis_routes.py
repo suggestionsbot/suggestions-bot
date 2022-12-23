@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+import disnake
 from zonis import client
 
 from suggestions.scheduler import exception_aware_scheduler
@@ -21,12 +22,13 @@ class ZonisRoutes:
         )
         self.client: client.Client = client.Client(
             url=url,
-            identifier=str(bot.cluster_id),
+            identifier="2",
+            # identifier=str(bot.cluster_id),
             secret_key=os.environ["ZONIS_SECRET_KEY"],
             override_key=os.environ.get("ZONIS_OVERRIDE_KEY"),
         )
         self.client.register_class_instance_for_routes(
-            self, "guild_count", "cluster_status"
+            self, "guild_count", "cluster_status", "share_with_devs"
         )
 
     async def start(self):
@@ -54,3 +56,14 @@ class ZonisRoutes:
             data["cluster_is_up"] = True
 
         return data
+
+    @client.route()
+    async def share_with_devs(self, title, description, sender):
+        channel: disnake.TextChannel = await self.bot.get_or_fetch_channel(  # type: ignore
+            602332642456764426
+        )
+        embed = disnake.Embed(
+            title=title, description=description, timestamp=self.bot.state.now
+        )
+        embed.set_footer(text=f"Sender: {sender}")
+        await channel.send(embed=embed)
