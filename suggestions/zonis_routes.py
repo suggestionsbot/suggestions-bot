@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 from typing import TYPE_CHECKING
 
@@ -45,7 +46,9 @@ class ZonisRoutes:
         data = {"shards": {}}
         for shard_id, shard_info in self.bot.shards.items():
             data["shards"][shard_id] = {
-                "latency": shard_info.latency,
+                "latency": shard_info.latency
+                if not math.isnan(shard_info.latency)
+                else -1,
                 "is_currently_up": not shard_info.is_closed(),
             }
 

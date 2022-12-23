@@ -177,7 +177,8 @@ class HelpGuildCog(commands.Cog):
                     down_shards.append(shard_id)
                     continue
 
-                avg_bot_latency.append(latency)
+                if latency != -1:
+                    avg_bot_latency.append(latency)
 
         bot_latency = sum(avg_bot_latency) / len(avg_bot_latency)
 
