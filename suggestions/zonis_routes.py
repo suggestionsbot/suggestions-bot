@@ -22,8 +22,7 @@ class ZonisRoutes:
         )
         self.client: client.Client = client.Client(
             url=url,
-            identifier="2",
-            # identifier=str(bot.cluster_id),
+            identifier=str(bot.cluster_id),
             secret_key=os.environ["ZONIS_SECRET_KEY"],
             override_key=os.environ.get("ZONIS_OVERRIDE_KEY"),
         )
