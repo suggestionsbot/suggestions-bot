@@ -722,6 +722,11 @@ class Suggestion:
             # I did not create this thread
             return
 
+        if message.thread.archived or message.thread.locked:
+            # Thread is already archived or
+            # locked so no need to redo the action
+            return
+
         await message.thread.send(
             bot.get_locale("SUGGESTION_OBJECT_LOCK_THREAD", locale),
         )
