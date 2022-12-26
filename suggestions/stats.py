@@ -144,7 +144,7 @@ class Stats:
 
     async def fetch_global_guild_count(self) -> int:
         if not self.bot.is_prod:
-            return len(self.bot.guilds)
+            return len(self.bot.guild_ids)
 
         total_count: int = 0
         cursor: Cursor = (
@@ -189,7 +189,7 @@ class Stats:
 
     async def push_stats(self):
         while not self.state.is_closing:
-            current_count = len(self.bot.guilds)
+            current_count = len(self.bot.guild_ids)
             if current_count != self._old_guild_count and current_count != 0:
                 # Let's actually change it
                 await self.database.cluster_guild_counts.insert(

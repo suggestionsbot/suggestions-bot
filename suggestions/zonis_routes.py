@@ -41,7 +41,7 @@ class ZonisRoutes:
 
     @client.route()
     async def guild_count(self):
-        return len(self.bot.guilds)
+        return len(self.bot.guild_ids)
 
     @client.route()
     async def cluster_status(self):

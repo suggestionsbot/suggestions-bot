@@ -20,6 +20,7 @@ from suggestions.cooldown_bucket import InteractionBucket
 async def create_bot(database_wrapper=None) -> SuggestionsBot:
     log = logging.getLogger(__name__)
     intents = disnake.Intents.none()
+    intents.guilds = True
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
