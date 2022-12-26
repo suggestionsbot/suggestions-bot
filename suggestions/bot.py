@@ -581,7 +581,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         async def process_update_bot_listings():
             await self.wait_until_ready()
 
-            headers = {"Authorization": f'Bearer {os.environ["SUGGESTIONS_API_KEY"]}'}
+            headers = {"Authorization": os.environ["SUGGESTIONS_API_KEY"]}
             while not state.is_closing:
                 url = (
                     "https://garven.suggestions.gg/aggregate/guilds/count"
@@ -609,8 +609,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     continue
 
                 body = {
-                    "guild_count": data["statistic"],
-                    "timestamp": datetime.datetime.now().timestamp(),
+                    "guild_count": int(data["statistic"]),
+                    "shard_count": int(self.shard_count),
+                    "dry_run": True,
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
