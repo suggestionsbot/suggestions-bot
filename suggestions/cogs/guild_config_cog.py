@@ -54,7 +54,9 @@ class GuildConfigCog(commands.Cog):
         )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
-            f"I have set this guilds suggestion channel to {channel.mention}",
+            self.bot.get_locale(
+                "CONFIG_CHANNEL_INNER_MESSAGE", interaction.locale
+            ).format(channel.mention),
             ephemeral=True,
         )
         log.debug(
@@ -88,7 +90,9 @@ class GuildConfigCog(commands.Cog):
         )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
-            f"I have set this guilds log channel to {channel.mention}",
+            self.bot.get_locale("CONFIG_LOGS_INNER_MESSAGE", interaction.locale).format(
+                channel.mention
+            ),
             ephemeral=True,
         )
         log.debug(
@@ -131,56 +135,104 @@ class GuildConfigCog(commands.Cog):
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
-            description=f"Configuration for {guild.name}\n\n",
+            description=self.bot.get_locale(
+                "CONFIG_GET_INNER_BASE_EMBED_DESCRIPTION", interaction.locale
+            ).format(guild.name),
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
 
         if config == "Log channel":
             log_channel = (
-                f"Log channel: <#{guild_config.log_channel_id}>"
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_SET", interaction.locale
+                ).format(guild_config.log_channel_id)
                 if guild_config.log_channel_id
-                else "Not set"
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_NOT_SET", interaction.locale
+                )
             )
             embed.description += log_channel
 
         elif config == "Suggestions channel":
             suggestions_channel = (
-                f"Suggestion channel: <#{guild_config.suggestions_channel_id}>"
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_SUGGESTION_CHANNEL_SET",
+                    interaction.locale,
+                ).format(guild_config.suggestions_channel_id)
                 if guild_config.suggestions_channel_id
-                else "Not set"
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_SUGGESTION_CHANNEL_NOT_SET",
+                    interaction.locale,
+                )
             )
             embed.description += suggestions_channel
 
         elif config == "Dm responses":
-            dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
-            embed.description += (
-                f"Dm responses: I {dm_responses} DM users on actions such as suggest"
+            dm_responses = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_NOT_SET", interaction.locale
+                )
+                if guild_config.dm_messages_disabled
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_SET", interaction.locale
+                )
             )
+            embed.description += self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_MESSAGE", interaction.locale
+            ).format(dm_responses)
 
         elif config == "Threads for suggestions":
-            plural = "will" if guild_config.threads_for_suggestions else "will not"
-            embed.description += f"I {plural} create threads for new suggestions"
+            plural = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_THREADS_SET", interaction.locale
+                )
+                if guild_config.threads_for_suggestions
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_THREADS_NOT_SET", interaction.locale
+                )
+            )
+            embed.description += self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_THREADS_MESSAGE", interaction.locale
+            ).format(plural)
 
         elif config == "Keep logs":
             if guild_config.keep_logs:
-                embed.description += (
-                    "Suggestion logs will be kept in your suggestions channel."
+                embed.description += self.bot.get_locale(
+                    "CONFIG_GET_INNER_KEEP_LOGS_SET", interaction.locale
                 )
             else:
-                embed.description += (
-                    "Suggestion logs will be kept in your logs channel."
+                embed.description += self.bot.get_locale(
+                    "CONFIG_GET_INNER_KEEP_LOGS_NOT_SET", interaction.locale
                 )
 
         elif config == "Anonymous suggestions":
-            text = "can" if guild_config.can_have_anonymous_suggestions else "cannot"
-            embed.description += f"This guild {text} have anonymous suggestions."
+            text = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_SET", interaction.locale
+                )
+                if guild_config.can_have_anonymous_suggestions
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_NOT_SET", interaction.locale
+                )
+            )
+            embed.description += self.bot.get_locale(
+                "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_MESSAGE", interaction.locale
+            ).format(text)
 
         elif config == "Auto archive threads":
-            text = "will" if guild_config.auto_archive_threads else "will not"
-            embed.description += (
-                f"I {text} automatically archive threads created for suggestions."
+            text = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_SET", interaction.locale
+                )
+                if guild_config.auto_archive_threads
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_NOT_SET", interaction.locale
+                )
             )
+            embed.description += self.bot.get_locale(
+                "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_MESSAGE", interaction.locale
+            ).format(text)
 
         else:
             raise InvalidGuildConfigOption
@@ -205,30 +257,75 @@ class GuildConfigCog(commands.Cog):
         log_channel = (
             f"<#{guild_config.log_channel_id}>"
             if guild_config.log_channel_id
-            else "Not set"
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_NOT_SET", interaction.locale
+            )
         )
         suggestions_channel = (
             f"<#{guild_config.suggestions_channel_id}>"
             if guild_config.suggestions_channel_id
-            else "Not set"
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_SUGGESTION_CHANNEL_NOT_SET",
+                interaction.locale,
+            )
         )
-        dm_responses = "will not" if guild_config.dm_messages_disabled else "will"
-        plural = "will" if guild_config.threads_for_suggestions else "will not"
-        threads = f"I {plural} create threads for new suggestions"
+        dm_responses = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_NOT_SET", interaction.locale
+            )
+            if guild_config.dm_messages_disabled
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_SET", interaction.locale
+            )
+        )
+
+        threads_text = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_THREADS_SET", interaction.locale
+            )
+            if guild_config.threads_for_suggestions
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_THREADS_NOT_SET", interaction.locale
+            )
+        )
+        threads = self.bot.get_locale(
+            "CONFIG_GET_INNER_PARTIAL_THREADS_MESSAGE", interaction.locale
+        ).format(threads_text)
+
         if guild_config.keep_logs:
-            keep_logs = "Suggestion logs will be kept in your suggestions channel."
+            keep_logs = self.bot.get_locale(
+                "CONFIG_GET_INNER_KEEP_LOGS_SET", interaction.locale
+            )
         else:
-            keep_logs = "Suggestion logs will be kept in your logs channel."
+            keep_logs = self.bot.get_locale(
+                "CONFIG_GET_INNER_KEEP_LOGS_NOT_SET", interaction.locale
+            )
 
-        if guild_config.can_have_anonymous_suggestions:
-            anon = "Enabled"
-        else:
-            anon = "Disabled"
-
-        auto_archive_threads = (
-            "will" if guild_config.auto_archive_threads else "will not"
+        anon_text = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_SET", interaction.locale
+            )
+            if guild_config.can_have_anonymous_suggestions
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_NOT_SET", interaction.locale
+            )
         )
-        auto_archive_threads = f"I {auto_archive_threads} automatically archive threads created for suggestions."
+        anon = self.bot.get_locale(
+            "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_MESSAGE", interaction.locale
+        ).format(anon_text)
+
+        auto_archive_threads_text = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_SET", interaction.locale
+            )
+            if guild_config.auto_archive_threads
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_NOT_SET", interaction.locale
+            )
+        )
+        auto_archive_threads = self.bot.get_locale(
+            "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_MESSAGE", interaction.locale
+        ).format(auto_archive_threads_text)
 
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
@@ -263,7 +360,7 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "dm_messages_disabled",
             False,
-            "I have enabled DM messages for this guild.",
+            self.bot.get_locale("CONFIG_DM_ENABLE_INNER_MESSAGE", interaction.locale),
             "Enabled DM messages for guild %s",
             self.stats.type.GUILD_DM_ENABLE,
         )
@@ -275,7 +372,7 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "dm_messages_disabled",
             True,
-            "I have disabled DM messages for this guild.",
+            self.bot.get_locale("CONFIG_DM_DISABLE_INNER_MESSAGE", interaction.locale),
             "Disabled DM messages for guild %s",
             self.stats.type.GUILD_DM_DISABLE,
         )
@@ -323,7 +420,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "threads_for_suggestions",
             True,
-            "I have enabled threads on new suggestions for this guild.",
+            self.bot.get_locale(
+                "CONFIG_THREAD_ENABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Enabled threads on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_ENABLE,
         )
@@ -335,7 +434,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "threads_for_suggestions",
             False,
-            "I have disabled thread creation on new suggestions for this guild.",
+            self.bot.get_locale(
+                "CONFIG_THREAD_ENABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Disabled thread creation on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_DISABLE,
         )
@@ -351,7 +452,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "keep_logs",
             True,
-            "Suggestions will now stay in your suggestions channel instead of going to logs.",
+            self.bot.get_locale(
+                "CONFIG_KEEPLOGS_ENABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Enabled keep logs on suggestions for guild %s",
             self.stats.type.GUILD_KEEPLOGS_ENABLE,
         )
@@ -363,7 +466,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "keep_logs",
             False,
-            "Suggestions will now be moved to your logs channel when finished.",
+            self.bot.get_locale(
+                "CONFIG_KEEPLOGS_DISABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Disabled keep logs on suggestions for guild %s",
             self.stats.type.GUILD_KEEPLOGS_DISABLE,
         )
@@ -381,8 +486,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "auto_archive_threads",
             True,
-            "Automatically created threads for suggestions "
-            "will now be archived upon suggestion resolution.",
+            self.bot.get_locale(
+                "CONFIG_AUTO_ARCHIVE_THREADS_ENABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Enabled auto archive threads on suggestions for guild %s",
             self.stats.type.GUILD_AUTO_ARCHIVE_THREADS_ENABLE,
         )
@@ -396,8 +502,9 @@ class GuildConfigCog(commands.Cog):
             interaction,
             "auto_archive_threads",
             False,
-            "Automatically created threads for suggestions "
-            "will no longer be archived upon suggestion resolution.",
+            self.bot.get_locale(
+                "CONFIG_AUTO_ARCHIVE_THREADS_DISABLE_INNER_MESSAGE", interaction.locale
+            ),
             "Disabled auto archive threads on suggestions for guild %s",
             self.stats.type.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
         )
