@@ -611,7 +611,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 body = {
                     "guild_count": int(data["statistic"]),
                     "shard_count": int(self.shard_count),
-                    "dry_run": True,
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
