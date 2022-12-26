@@ -522,11 +522,6 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id, self.state
         )
         setattr(guild_config, field, new_value)
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
         await self.bot.db.guild_configs.upsert(guild_config, guild_config)
         await interaction.send(
             user_message,
