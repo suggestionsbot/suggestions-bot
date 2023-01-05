@@ -56,7 +56,7 @@
   "SUGGESTION_OBJECT_LOCK_THREAD": "Locking this thread as the suggestion has reached a resolution.",
   "CONFIG_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion channel to {}",
   "CONFIG_LOGS_INNER_MESSAGE": "I have set this guilds log channel to {}",
-  "CONFIG_GET_INNER_BASE_EMBED_DESCRIPTION": "Configuration for {}{}\n",
+  "CONFIG_GET_INNER_BASE_EMBED_DESCRIPTION": "Configuration for {}\n",
   "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_SET": "Log channel: <#{}>",
   "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_NOT_SET": "Not set",
   "CONFIG_GET_INNER_PARTIAL_SUGGESTION_CHANNEL_SET": "Suggestion channel: <#{}>",
