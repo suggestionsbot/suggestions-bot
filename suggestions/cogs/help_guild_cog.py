@@ -115,7 +115,7 @@ class HelpGuildCog(commands.Cog):
             f"**Shard ID**: `{error.shard_id}` | **Cluster ID**: `{error.cluster_id}`\n"
             f"**User ID**: `{error.user_id}` | **Guild ID**: `{error.guild_id}`\n\n"
             f"**Error**: `{error.error}`\n"
-            f"**Error occurred**: `{naturaldate(error.created_at)}` (`{format_dt(error.created_at, style='F')}`)",
+            f"**Error occurred**: `{naturaldate(error.created_at)}` ({format_dt(error.created_at, style='F')})",
         )
         await interaction.send(
             embed=embed,
