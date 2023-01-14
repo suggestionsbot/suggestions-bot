@@ -10,6 +10,7 @@ examples/dev.py
 docs/_build
 test/
 *.prof
+suggestions/telemetry/error_telemetry_tracebacks
 
 # IntelliJ project files
 .idea
