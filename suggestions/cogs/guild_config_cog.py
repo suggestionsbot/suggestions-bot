@@ -435,7 +435,7 @@ class GuildConfigCog(commands.Cog):
             "threads_for_suggestions",
             False,
             self.bot.get_locale(
-                "CONFIG_THREAD_ENABLE_INNER_MESSAGE", interaction.locale
+                "CONFIG_THREAD_DISABLE_INNER_MESSAGE", interaction.locale
             ),
             "Disabled thread creation on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_DISABLE,
