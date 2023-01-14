@@ -263,8 +263,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         if isinstance(exception, ErrorHandled):
             return
 
-        attempt_code: Optional[ErrorCode] = try_parse_http_error(traceback.format_exc())
-        if attempt_code == ErrorCode.MISSING_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
+        attempt_code: Optional[ErrorCode] = try_parse_http_error(
+            "".join(traceback.format_exception(exception))
+        )
+        if attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
@@ -275,11 +277,22 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
-        elif attempt_code == ErrorCode.MISSING_PERMISSIONS_IN_LOGS_CHANNEL:
+        elif attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL:
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
                     "I do not have permission to use your guilds configured logs channel.",
+                    error_code=attempt_code,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif attempt_code == ErrorCode.MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL:
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Configuration Error",
+                    "I do not have permission to send messages in your guilds suggestion channel.",
                     error_code=attempt_code,
                     error=error,
                 ),
