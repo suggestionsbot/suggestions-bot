@@ -504,11 +504,29 @@ class Suggestion:
         self,
         bot: SuggestionsBot,
         interaction: disnake.GuildCommandInteraction,
-    ):
+        silently: bool = False,
+    ) -> bool:
+        """
+
+        Parameters
+        ----------
+        bot
+        interaction
+        silently: bool
+            Do nothing on failure
+
+        Returns
+        -------
+        bool
+            Whether or not deleting succeeded
+        """
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
         except disnake.HTTPException:
+            if silently:
+                return False
+
             await interaction.send(
                 embed=bot.error_embed(
                     "Command failed",
@@ -519,11 +537,17 @@ class Suggestion:
             )
             raise ErrorHandled
 
-        await message.delete()
+        try:
+            await message.delete()
+        except disnake.HTTPException:
+            if silently:
+                return False
+            raise
 
         self.message_id = None
         self.channel_id = None
         await bot.db.suggestions.update(self, self)
+        return True
 
     async def save_reaction_results(
         self,

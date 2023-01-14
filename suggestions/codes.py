@@ -22,6 +22,7 @@ class ErrorCode(IntEnum):
     MISSING_TRANSLATION = 16
     SUGGESTION_RESOLUTION_ERROR = 17
     MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL = 18
+    MISSING_THREAD_CREATE_PERMISSIONS = 19
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

@@ -10,7 +10,7 @@ from bot_base.wraps import WrappedChannel
 from disnake import Guild
 from disnake.ext import commands, components
 
-from suggestions import checks, Stats
+from suggestions import checks, Stats, ErrorCode
 from suggestions.clunk import ClunkLock
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong, ErrorHandled
@@ -236,6 +236,37 @@ class SuggestionsCog(commands.Cog):
         suggestion.channel_id = channel.id
         await self.state.suggestions_db.upsert(suggestion, suggestion)
 
+        if guild_config.threads_for_suggestions:
+            try:
+                await suggestion.create_thread(message)
+            except disnake.HTTPException:
+                log.debug(
+                    "Failed to create a thread on suggestion %s",
+                    suggestion.suggestion_id,
+                )
+                did_delete = await suggestion.try_delete(
+                    bot=self.bot, interaction=interaction, silently=True
+                )
+                if not did_delete:
+                    # Propagate it to error handlers and let them deal with it
+                    raise
+
+                return await interaction.send(
+                    embed=self.bot.error_embed(
+                        "Missing permissions",
+                        "I am unable to create threads in your suggestions channel, "
+                        "please contact an administrator and ask them to give me "
+                        "'Create Public Threads' permissions.\n\n"
+                        "Alternatively, ask your administrator to disable automatic thread creation "
+                        "using `/config thread disable`",
+                        error_code=ErrorCode.MISSING_THREAD_CREATE_PERMISSIONS,
+                    ),
+                    ephemeral=True,
+                )
+
+            else:
+                log.debug("Created a thread on suggestion %s", suggestion.suggestion_id)
+
         try:
             embed: disnake.Embed = disnake.Embed(
                 description=self.bot.get_locale(
@@ -268,23 +299,11 @@ class SuggestionsCog(commands.Cog):
                     ephemeral=True,
                 )
                 await interaction.author.send(embed=embed)
-        except disnake.HTTPException as e:
+        except disnake.HTTPException:
             log.debug(
                 "Failed to DM %s regarding there suggestion",
                 interaction.author.id,
             )
-
-        if guild_config.threads_for_suggestions:
-            try:
-                await suggestion.create_thread(message)
-            except Exception as e:
-                log.debug(
-                    "Failed to create a thread on suggestion %s with error %s",
-                    suggestion.suggestion_id,
-                    str(e),
-                )
-            else:
-                log.debug("Created a thread on suggestion %s", suggestion.suggestion_id)
 
         log.debug(
             "User %s created new suggestion %s in guild %s",
