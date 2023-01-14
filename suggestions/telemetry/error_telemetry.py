@@ -81,3 +81,18 @@ async def unique_unhandled_errors() -> set[Error]:
         )
     )
     return set(unhandled_errors)
+
+
+async def get_unique_forbidden() -> set[Error]:
+    client = AsyncIOMotorClient(os.environ["PROD_MONGO_URL"])
+    database = client["suggestions-rewrite"]
+    document = Document(database, "error_tracking", converter=Error)
+    unhandled_errors: list[Error] = await document.find_many(
+        AQ(
+            AND(
+                EQ("error", "Forbidden"),
+                OR(EQ("has_been_fixed", False), Negate(Exists("has_been_fixed"))),
+            )
+        )
+    )
+    return set(unhandled_errors)
