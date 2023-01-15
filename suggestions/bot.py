@@ -266,6 +266,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         attempt_code: Optional[ErrorCode] = try_parse_http_error(
             "".join(traceback.format_exception(exception))
         )
+        if attempt_code:
+            error.has_been_fixed = True
+            await self.db.error_tracking.update(error, error)
+
         if attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
             return await interaction.send(
                 embed=self.error_embed(

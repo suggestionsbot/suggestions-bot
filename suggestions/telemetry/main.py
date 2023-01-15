@@ -43,6 +43,12 @@ async def load_forbidden():
             f.write(error.traceback)
 
 
+async def mark_forbidden_done():
+    for item in await get_unique_forbidden():
+        item.has_been_fixed = True
+        await error_tracking_document.update(item, item)
+
+
 async def main():
     await load_forbidden()
 
