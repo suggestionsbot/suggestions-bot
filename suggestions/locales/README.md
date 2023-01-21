@@ -36,13 +36,13 @@ or existing `en_GB` translation to see what these values are.
 #### Guild Configuration Values
 
 All values within the `objects.GuildConfig` class are available as
-`$GUILD_CONFIG_<FIELD>` where the field is the capitalized variable name.
+`$GUILD_CONFIG_<FIELD>` where the field is the uppercase variable name.
 
 **Note:** *These values will not be available for all translations*
 
 #### User Configuration Values
 
 All values within the `objects.UserConfig` class are available as
-`$USER_CONFIG_<FIELD>` where the field is the capitalized variable name.
+`$USER_CONFIG_<FIELD>` where the field is the uppercase variable name.
 
 **Note:** *These values will not be available for all translations*
