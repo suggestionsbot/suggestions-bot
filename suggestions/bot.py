@@ -705,11 +705,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self,
         key: str,
         interaction: disnake.Interaction,
+        *,
+        extras: Optional[dict] = None,
         guild_config: Optional[GuildConfig] = None,
     ):
         content = self.get_locale(key, interaction.locale)
         return self.inject_locale_values(
-            content, interaction=interaction, guild_config=guild_config
+            content, interaction=interaction, guild_config=guild_config, extras=extras
         )
 
     async def on_application_command(

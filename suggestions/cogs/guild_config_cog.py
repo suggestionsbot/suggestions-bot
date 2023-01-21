@@ -121,6 +121,7 @@ class GuildConfigCog(commands.Cog):
                 "Keep logs",
                 "Anonymous suggestions",
                 "Auto archive threads",
+                "Suggestions queue",
             ],
             default=None,
         ),
@@ -234,6 +235,20 @@ class GuildConfigCog(commands.Cog):
                 "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_MESSAGE", interaction.locale
             ).format(text)
 
+        elif config == "Suggestions queue":
+            locale_string = (
+                "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_SET"
+                if guild_config.uses_suggestion_queue
+                else "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_NOT_SET"
+            )
+            text = self.bot.get_localized_string(locale_string, interaction)
+
+            embed.description += self.bot.get_localized_string(
+                "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_MESSAGE",
+                interaction,
+                extras={"TEXT": text.lower()},
+            )
+
         else:
             raise InvalidGuildConfigOption
 
@@ -327,13 +342,20 @@ class GuildConfigCog(commands.Cog):
             "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_MESSAGE", interaction.locale
         ).format(auto_archive_threads_text)
 
+        locale_string = (
+            "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_SET"
+            if guild_config.uses_suggestion_queue
+            else "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_NOT_SET"
+        )
+        suggestions_queue = self.bot.get_localized_string(locale_string, interaction)
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
-            f"Automatic thread archiving: {auto_archive_threads}",
+            f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -507,6 +529,42 @@ class GuildConfigCog(commands.Cog):
             ),
             "Disabled auto archive threads on suggestions for guild %s",
             self.stats.type.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def suggestion_queue(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @suggestion_queue.sub_command(name="enable")
+    async def suggestion_queue_enable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Send all suggestions to a queue for approval before going to your suggestions channel."""
+        await self.modify_guild_config(
+            interaction,
+            "uses_suggestion_queue",
+            True,
+            self.bot.get_localized_string(
+                "CONFIG_SUGGESTIONS_QUEUE_ENABLE_INNER_MESSAGE", interaction
+            ),
+            "Enabled suggestions queue on suggestions for guild %s",
+            self.stats.type.GUILD_SUGGESTIONS_QUEUE_ENABLE,
+        )
+
+    @suggestion_queue.sub_command(name="disable")
+    async def suggestion_queue_disable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Send all suggestions directly to your suggestions channel."""
+        await self.modify_guild_config(
+            interaction,
+            "uses_suggestion_queue",
+            False,
+            self.bot.get_localized_string(
+                "CONFIG_SUGGESTIONS_QUEUE_DISABLE_INNER_MESSAGE", interaction
+            ),
+            "Disabled suggestions queue on suggestions for guild %s",
+            self.stats.type.GUILD_SUGGESTIONS_QUEUE_DISABLE,
         )
 
     async def modify_guild_config(

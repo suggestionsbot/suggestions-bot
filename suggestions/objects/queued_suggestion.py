@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from suggestions import State
+if TYPE_CHECKING:
+    from suggestions import State
 
 
 class QueuedSuggestion:
