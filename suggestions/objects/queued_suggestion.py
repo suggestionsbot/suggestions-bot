@@ -20,6 +20,7 @@ class QueuedSuggestion:
         still_in_queue: bool = True,
         image_url: Optional[str] = None,
         resolved_by: Optional[int] = None,
+        resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
     ):
         self._id: str = _id
@@ -31,6 +32,8 @@ class QueuedSuggestion:
         self.resolved_by: Optional[int] = resolved_by
         self.created_at: datetime.datetime = created_at
         self.suggestion_author_id: int = suggestion_author_id
+        # For example saying why it didn't get approved
+        self.resolution_note: Optional[str] = resolution_note
         self.resolved_at: Optional[datetime.datetime] = resolved_at
 
     @classmethod
@@ -101,6 +104,9 @@ class QueuedSuggestion:
         if self.resolved_by:
             data["resolved_by"] = self.resolved_by
             data["resolved_at"] = self.resolved_at
+
+        if self.resolution_note:
+            data["resolution_note"] = self.resolution_note
 
         if self.image_url is not None:
             data["image_url"] = self.image_url
