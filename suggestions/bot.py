@@ -7,6 +7,7 @@ import math
 import os
 import traceback
 from pathlib import Path
+from string import Template
 from typing import Type, Optional
 
 import aiohttp
@@ -32,7 +33,7 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
 )
 from suggestions.http_error_parser import try_parse_http_error
-from suggestions.objects import Error
+from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 from suggestions.zonis_routes import ZonisRoutes
@@ -664,6 +665,52 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         except KeyError:
             # Default to known translations if not set
             return values["en-GB"]
+
+    @staticmethod
+    def inject_locale_values(
+        content: str,
+        interaction: disnake.Interaction,
+        *,
+        extras: Optional[dict] = None,
+        user_config: Optional[UserConfig] = None,
+        guild_config: Optional[GuildConfig] = None,
+    ):
+        base_config = {
+            "CHANNEL_ID": interaction.channel_id,
+            "GUILD_ID": interaction.guild_id,
+            "AUTHOR_ID": interaction.author.id,
+        }
+        if extras is not None:
+            base_config = {**base_config, **extras}
+
+        if guild_config is not None:
+            guild_data = {}
+            for k, v in guild_config.as_dict():
+                guild_data[f"GUILD_CONFIG_{k.upper()}"] = v
+
+            guild_data.pop("GUILD_CONFIG__ID")
+            base_config = {**base_config, **guild_data}
+
+        if user_config is not None:
+            user_data = {}
+            for k, v in user_config.as_dict():
+                user_data[f"USER_CONFIG_{k.upper()}"] = v
+
+            user_data.pop("USER_CONFIG__ID")
+            base_config = {**base_config, **user_data}
+
+        return Template(content).safe_substitute(base_config)
+
+    def get_localized_string(
+        self,
+        key: str,
+        interaction: disnake.Interaction,
+        guild_config: Optional[GuildConfig] = None,
+    ):
+        content = self.get_locale(key, interaction.locale)
+        return self.inject_locale_values(
+            content, interaction=interaction, guild_config=guild_config
+        )
 
     async def on_application_command(
         self, interaction: disnake.ApplicationCommandInteraction

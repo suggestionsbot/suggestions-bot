@@ -19,3 +19,30 @@ Files are expected in the following format:
 
 - `_ARG_` is reserved for all parameters to the provided method
 - `_INNER_` is reserved for all strings sent within the method itself
+
+## Variables
+
+The following variables *should* be available to all translations:
+
+- `$CHANNEL_ID` - The id for the channel this command was executed in
+- `$AUTHOR_ID` - The id for the author who executed this command
+- `$GUILD_ID` - The id for the guild this command was executed in
+
+### Extra Values
+
+Certain translations require non-standard values, please refer to the code
+or existing `en_GB` translation to see what these values are.
+
+#### Guild Configuration Values
+
+All values within the `objects.GuildConfig` class are available as
+`$GUILD_CONFIG_<FIELD>` where the field is the capitalized variable name.
+
+**Note:** *These values will not be available for all translations*
+
+#### User Configuration Values
+
+All values within the `objects.UserConfig` class are available as
+`$USER_CONFIG_<FIELD>` where the field is the capitalized variable name.
+
+**Note:** *These values will not be available for all translations*
