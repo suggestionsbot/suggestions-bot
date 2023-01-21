@@ -37,3 +37,7 @@ class InvalidGuildConfigOption(disnake.DiscordException):
 
 class ConfiguredChannelNoLongerExists(disnake.DiscordException):
     """The configured channel can no longer be found."""
+
+
+class UnhandledError(Exception):
+    """Something went wrong."""

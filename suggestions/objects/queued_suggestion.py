@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import datetime
-from typing import Optional, TYPE_CHECKING
+import logging
+from typing import Optional, TYPE_CHECKING, overload
+
+from suggestions.exceptions import UnhandledError
+from suggestions.objects import Suggestion
 
 if TYPE_CHECKING:
     from suggestions import State
+
+log = logging.getLogger(__name__)
 
 
 class QueuedSuggestion:
@@ -22,6 +28,7 @@ class QueuedSuggestion:
         resolved_by: Optional[int] = None,
         resolution_note: Optional[str] = None,
         resolved_at: Optional[datetime.datetime] = None,
+        related_suggestion_id: Optional[str] = None,
     ):
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -35,6 +42,10 @@ class QueuedSuggestion:
         # For example saying why it didn't get approved
         self.resolution_note: Optional[str] = resolution_note
         self.resolved_at: Optional[datetime.datetime] = resolved_at
+
+        # If this queued suggestion get approved,
+        # this field will be the id of the created suggestion
+        self.related_suggestion_id: Optional[str] = related_suggestion_id
 
     @classmethod
     async def new(
@@ -111,4 +122,45 @@ class QueuedSuggestion:
         if self.image_url is not None:
             data["image_url"] = self.image_url
 
+        if self.related_suggestion_id:
+            data["related_suggestion_id"] = self.related_suggestion_id
+
         return data
+
+    async def convert_to_suggestion(self, state: State) -> Suggestion:
+        if not self._id:
+            # It is not expected to reach this as this object should
+            # have two distinct states:
+            # 1. This object is created for a suggestion, inserted into
+            #    the database and is then disregarded
+            # 2. When we get here the object should have been retrieved
+            #    via the queue system so the object should have an attached id
+            log.error("QueuedSuggestion(%s) does not have an id", self.as_dict())
+            raise UnhandledError(
+                f"QueuedSuggestion({self.as_dict()}) does not have an id"
+            )
+
+        suggestion = await Suggestion.new(
+            suggestion=self.suggestion,
+            guild_id=self.guild_id,
+            author_id=self.suggestion_author_id,
+            state=state,
+            image_url=self.image_url,
+            is_anonymous=self.is_anonymous,
+        )
+        self.related_suggestion_id = suggestion.suggestion_id
+        await state.queued_suggestions_db.update(self, self)
+        return suggestion
+
+    @overload
+    async def resolve(self, state, was_approved=True) -> Suggestion:
+        ...
+
+    @overload
+    async def resolve(self, state, was_approved=False) -> None:
+        ...
+
+    async def resolve(self, *, state: State, was_approved) -> Optional[Suggestion]:
+        self.still_in_queue = False
+        if was_approved:
+            return await self.convert_to_suggestion(state)

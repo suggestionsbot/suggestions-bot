@@ -31,6 +31,7 @@ from suggestions.exceptions import (
     SuggestionTooLong,
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
+    UnhandledError,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -263,6 +264,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         if isinstance(exception, ErrorHandled):
             return
+
+        if isinstance(exception, UnhandledError):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Something went wrong",
+                    f"Please contact support.",
+                    error_code=ErrorCode.UNHANDLED_ERROR,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
 
         attempt_code: Optional[ErrorCode] = try_parse_http_error(
             "".join(traceback.format_exception(exception))
