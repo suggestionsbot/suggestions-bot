@@ -360,7 +360,7 @@ class Suggestion:
             data["resolved_by"] = self.resolved_by
             data["resolution_note"] = self.resolution_note
 
-        if self.resolution_note:
+        if self.resolved_at:
             data["resolved_at"] = self.resolved_at
 
         if self.message_id:

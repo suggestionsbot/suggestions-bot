@@ -97,6 +97,10 @@ class State:
         return self.database.suggestions
 
     @property
+    def queued_suggestions_db(self) -> Document:
+        return self.database.queued_suggestions
+
+    @property
     def guild_config_db(self) -> Document:
         return self.database.guild_configs
 
