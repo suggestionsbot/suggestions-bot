@@ -38,9 +38,6 @@ class ZonisRoutes:
             "refresh_premium",
             "shared_guilds",
         )
-        self._shared_guilds_cache: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=15), lazy_eviction=False
-        )
 
     async def start(self):
         self.client.load_routes()
@@ -89,25 +86,5 @@ class ZonisRoutes:
         return True
 
     @client.route()
-    async def shared_guilds(self, user_id: int, guild_ids: list[int]):
-        to_return = []
-        to_check = [gid for gid in guild_ids if gid in self.bot.guild_ids]
-        for guild_id in to_check:
-            key = f"{user_id}|{guild_id}"
-            try:
-                self._shared_guilds_cache.get_entry(key)
-            except NonExistentEntry:
-                pass
-            else:
-                to_return.append(guild_id)
-                continue
-
-            try:
-                await self.bot.http.get_member(guild_id, user_id)
-            except disnake.HTTPException:
-                continue
-            else:
-                to_return.append(guild_id)
-                self._shared_guilds_cache.add_entry(key, True, override=True)
-
-        return to_return
+    async def shared_guilds(self, guild_ids: list[int]):
+        return [gid for gid in guild_ids if gid in self.bot.guild_ids]
