@@ -38,10 +38,6 @@ class SuggestionsQueueCog(commands.Cog):
             global_ttl=timedelta(minutes=15), lazy_eviction=False
         )
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.info(f"{self.__class__.__name__}: Ready")
-
     async def get_paginator_for(
         self, paginator_id: str, interaction: disnake.Interaction
     ) -> QueuedSuggestionsPaginator:
