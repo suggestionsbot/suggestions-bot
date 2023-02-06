@@ -209,7 +209,7 @@ class SuggestionsCog(commands.Cog):
             )
             return await interaction.send(
                 ephemeral=True,
-                content=await self.bot.get_localized_string(
+                content=self.bot.get_localized_string(
                     "SUGGEST_INNER_SENT_TO_QUEUE",
                     interaction,
                     guild_config=guild_config,

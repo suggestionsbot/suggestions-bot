@@ -708,7 +708,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         if guild_config is not None:
             guild_data = {}
-            for k, v in guild_config.as_dict():
+            for k, v in guild_config.as_dict().items():
                 guild_data[f"GUILD_CONFIG_{k.upper()}"] = v
 
             guild_data.pop("GUILD_CONFIG__ID")

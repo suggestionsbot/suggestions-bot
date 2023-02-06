@@ -49,7 +49,7 @@ class SuggestionsQueueCog(commands.Cog):
             return self.paginator_objects.get_entry(paginator_id)
         except NonExistentEntry:
             await interaction.send(
-                await self.bot.get_localized_string(
+                self.bot.get_localized_string(
                     "PAGINATION_INNER_SESSION_EXPIRED", interaction
                 ),
                 ephemeral=True,
@@ -65,7 +65,7 @@ class SuggestionsQueueCog(commands.Cog):
             embed=await paginator.format_page()
         )
         await inter.send(
-            await self.bot.get_localized_string("PAGINATION_INNER_NEXT_ITEM", inter),
+            self.bot.get_localized_string("PAGINATION_INNER_NEXT_ITEM", inter),
             ephemeral=True,
         )
 
@@ -78,9 +78,7 @@ class SuggestionsQueueCog(commands.Cog):
             embed=await paginator.format_page()
         )
         await inter.send(
-            await self.bot.get_localized_string(
-                "PAGINATION_INNER_PREVIOUS_ITEM", inter
-            ),
+            self.bot.get_localized_string("PAGINATION_INNER_PREVIOUS_ITEM", inter),
             ephemeral=True,
         )
 
@@ -92,14 +90,12 @@ class SuggestionsQueueCog(commands.Cog):
         await paginator.original_interaction.edit_original_message(
             components=[],
             embeds=[],
-            content=await self.bot.get_localized_string(
+            content=self.bot.get_localized_string(
                 "PAGINATION_INNER_QUEUE_EXPIRED", inter
             ),
         )
         await inter.send(
-            await self.bot.get_localized_string(
-                "PAGINATION_INNER_QUEUE_CANCELLED", inter
-            ),
+            self.bot.get_localized_string("PAGINATION_INNER_QUEUE_CANCELLED", inter),
             ephemeral=True,
         )
 
@@ -128,9 +124,7 @@ class SuggestionsQueueCog(commands.Cog):
             comes_from_queue=True,
         )
         await inter.send(
-            await self.bot.get_localized_string(
-                "PAGINATION_INNER_QUEUE_ACCEPTED", inter
-            ),
+            self.bot.get_localized_string("PAGINATION_INNER_QUEUE_ACCEPTED", inter),
             ephemeral=True,
         )
 
@@ -150,7 +144,7 @@ class SuggestionsQueueCog(commands.Cog):
             icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
             guild = self.state.guild_cache.get_entry(inter.guild_id)
             embed: disnake.Embed = disnake.Embed(
-                description=await self.bot.get_localized_string(
+                description=self.bot.get_localized_string(
                     "QUEUE_INNER_USER_REJECTED", inter
                 ),
                 colour=self.bot.colors.embed_color,
@@ -176,9 +170,7 @@ class SuggestionsQueueCog(commands.Cog):
             )
 
         await inter.send(
-            await self.bot.get_localized_string(
-                "PAGINATION_INNER_QUEUE_REJECTED", inter
-            ),
+            self.bot.get_localized_string("PAGINATION_INNER_QUEUE_REJECTED", inter),
             ephemeral=True,
         )
 
@@ -228,7 +220,7 @@ class SuggestionsQueueCog(commands.Cog):
         )
         if not data:
             return await interaction.send(
-                await self.bot.get_localized_string(
+                self.bot.get_localized_string(
                     "QUEUE_VIEW_INNER_NOTHING_QUEUED", interaction
                 ),
                 ephemeral=True,
@@ -236,7 +228,7 @@ class SuggestionsQueueCog(commands.Cog):
 
         content = None
         if not guild_config.uses_suggestion_queue:
-            content = await self.bot.get_localized_string(
+            content = self.bot.get_localized_string(
                 "QUEUE_VIEW_INNER_PRIOR_QUEUE", interaction
             )
 
