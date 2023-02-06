@@ -8,20 +8,23 @@ import cooldowns
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
+from alaric.logical import AND
 from alaric.projections import Projection, SHOW
 from bot_base import NonExistentEntry
 from bot_base.caches import TimedCache
+from disnake import Guild
 from disnake.ext import commands, components
 
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import ErrorHandled
-from suggestions.objects import GuildConfig
+from suggestions.objects import GuildConfig, UserConfig
 from suggestions.qs_paginator import QueuedSuggestionsPaginator
 
 if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot
+    from suggestions.objects import Suggestion
 
 log = logging.getLogger(__name__)
 
@@ -83,11 +86,74 @@ class SuggestionsQueueCog(commands.Cog):
 
     @components.button_listener()
     async def approve_button(self, inter: disnake.MessageInteraction, *, pid: str):
+        await inter.response.defer(ephemeral=True, with_message=True)
         paginator = await self.get_paginator_for(pid, inter)
+        current_suggestion = await paginator.get_current_queued_suggestion()
+        await paginator.remove_current_page()
+        suggestion: Suggestion = await current_suggestion.resolve(
+            was_approved=True, state=self.bot.state, resolved_by=inter.author.id
+        )
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            inter.guild_id, self.state
+        )
+        icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
+        guild = self.state.guild_cache.get_entry(inter.guild_id)
+        await suggestion.setup_initial_messages(
+            guild_config=guild_config,
+            interaction=inter,
+            state=self.state,
+            bot=self.bot,
+            cog=self.bot.get_cog("SuggestionsCog"),
+            guild=guild,
+            icon_url=icon_url,
+            comes_from_queue=True,
+        )
+        await inter.send(
+            "I have accepted that suggestion from the queue.", ephemeral=True
+        )
 
     @components.button_listener()
     async def reject_button(self, inter: disnake.MessageInteraction, *, pid: str):
+        await inter.response.defer(ephemeral=True, with_message=True)
         paginator = await self.get_paginator_for(pid, inter)
+        current_suggestion = await paginator.get_current_queued_suggestion()
+        await paginator.remove_current_page()
+        await current_suggestion.resolve(
+            was_approved=False, state=self.bot.state, resolved_by=inter.author.id
+        )
+        try:
+            guild_config: GuildConfig = await GuildConfig.from_id(
+                inter.guild_id, self.state
+            )
+            icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
+            guild = self.state.guild_cache.get_entry(inter.guild_id)
+            embed: disnake.Embed = disnake.Embed(
+                description="Your queued suggestion was rejected.",
+                colour=self.bot.colors.embed_color,
+                timestamp=self.state.now,
+            )
+            embed.set_author(
+                name=guild.name,
+                icon_url=icon_url,
+            )
+            embed.set_footer(text=f"Guild ID {inter.guild_id}")
+            user_config: UserConfig = await UserConfig.from_id(
+                inter.author.id, self.bot.state
+            )
+            if (
+                not user_config.dm_messages_disabled
+                and not guild_config.dm_messages_disabled
+            ):
+                await inter.author.send(embed=embed)
+        except disnake.HTTPException:
+            log.debug(
+                "Failed to DM %s regarding there queued suggestion",
+                inter.author.id,
+            )
+
+        await inter.send(
+            "I have removed that suggestion from the queue.", ephemeral=True
+        )
 
     @commands.slash_command(dm_permission=False)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
@@ -110,7 +176,7 @@ class SuggestionsQueueCog(commands.Cog):
             interaction.guild_id, self.state
         )
         data: list = await self.queued_suggestions_db.find_many(
-            AQ(EQ("guild_id", interaction.guild_id)),
+            AQ(AND(EQ("guild_id", interaction.guild_id), EQ("still_in_queue", True))),
             projections=Projection(SHOW("_id")),
             try_convert=False,
         )

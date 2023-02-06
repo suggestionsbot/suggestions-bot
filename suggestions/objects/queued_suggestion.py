@@ -159,7 +159,7 @@ class QueuedSuggestion:
             #    the database and is then disregarded
             # 2. When we get here the object should have been retrieved
             #    via the queue system so the object should have an attached id
-            log.error("QueuedSuggestion(%s) does not have an id", self.as_dict())
+            log.critical("QueuedSuggestion(%s) does not have an id", self.as_dict())
             raise UnhandledError(
                 f"QueuedSuggestion({self.as_dict()}) does not have an id"
             )
@@ -176,15 +176,13 @@ class QueuedSuggestion:
         await state.queued_suggestions_db.update(self, self)
         return suggestion
 
-    @overload
-    async def resolve(self, state, was_approved=True) -> Suggestion:
-        ...
-
-    @overload
-    async def resolve(self, state, was_approved=False) -> None:
-        ...
-
-    async def resolve(self, *, state: State, was_approved) -> Optional[Suggestion]:
+    async def resolve(
+        self, *, state: State, was_approved, resolved_by
+    ) -> Optional[Suggestion]:
+        self.resolved_by = resolved_by
+        self.resolved_at = state.now
         self.still_in_queue = False
         if was_approved:
             return await self.convert_to_suggestion(state)
+
+        await state.queued_suggestions_db.update(self, self)

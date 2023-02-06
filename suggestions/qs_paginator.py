@@ -42,10 +42,28 @@ class QueuedSuggestionsPaginator:
         """How many pages exist in this paginator."""
         return len(self._paged_data)
 
-    async def format_page(self) -> disnake.Embed:
-        suggestion: QueuedSuggestion = await self.bot.db.queued_suggestions.find(
+    async def remove_current_page(self):
+        wrap = self.current_page == self.total_pages
+        self._paged_data.pop(self._current_page_index)
+        if wrap:
+            self.current_page = 1
+
+        if self.total_pages == 0:
+            return await self.original_interaction.edit_original_message(
+                embeds=[], components=[], content="No more suggestions in queue."
+            )
+
+        await self.original_interaction.edit_original_message(
+            embed=await self.format_page()
+        )
+
+    async def get_current_queued_suggestion(self) -> QueuedSuggestion:
+        return await self.bot.db.queued_suggestions.find(
             AQ(EQ("_id", self._paged_data[self._current_page_index]))
         )
+
+    async def format_page(self) -> disnake.Embed:
+        suggestion: QueuedSuggestion = await self.get_current_queued_suggestion()
         embed: disnake.Embed = await suggestion.as_embed(self.bot)
         if suggestion.is_anonymous:
             embed.set_footer(text=f"Page {self.current_page}/{self.total_pages}")
