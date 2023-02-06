@@ -195,7 +195,7 @@ class SuggestionsQueueCog(commands.Cog):
             title="Queue Info",
             timestamp=self.bot.state.now,
             description=f"`{count}` suggestions currently in queue.\n"
-            f"New suggestions will {'' if guild_config.uses_suggestion_queue else 'not '} be "
+            f"New suggestions will {'' if guild_config.uses_suggestion_queue else 'not'} be "
             f"sent to the suggestions queue.",
             colour=self.bot.colors.embed_color,
         )
