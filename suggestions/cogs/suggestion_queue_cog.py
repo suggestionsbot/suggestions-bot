@@ -14,7 +14,7 @@ from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import ErrorHandled
 from suggestions.objects import GuildConfig
-from suggestions.queued_suggestions_util import QueuedSuggestionsPaginator
+from suggestions.qs_paginator import QueuedSuggestionsPaginator
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -71,7 +71,9 @@ class SuggestionsQueueCog(commands.Cog):
         await inter.response.defer(ephemeral=True, with_message=True)
         paginator = await self.get_paginator_for(pid, inter)
         self.paginator_objects.pop(pid)
-        await paginator.original_interaction.edit_original_message(components=[])
+        await paginator.original_interaction.edit_original_message(
+            components=[], embeds=[], content="This queue has expired."
+        )
         await inter.send("I have cancelled this queue for you.", ephemeral=True)
 
     @components.button_listener()
