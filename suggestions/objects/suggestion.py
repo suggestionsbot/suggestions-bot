@@ -699,7 +699,8 @@ class Suggestion:
                 )
 
             try:
-                await message.clear_reactions()
+                if not self.uses_views_for_votes:
+                    await message.clear_reactions()
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
