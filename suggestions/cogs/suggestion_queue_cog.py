@@ -164,9 +164,28 @@ class SuggestionsQueueCog(commands.Cog):
     @queue.sub_command()
     async def info(self, interaction: disnake.GuildCommandInteraction):
         """View information about this guilds suggestions queue."""
+        await interaction.response.defer(ephemeral=True, with_message=True)
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
+        count: int = await self.queued_suggestions_db.count(
+            AQ(AND(EQ("guild_id", interaction.guild_id), EQ("still_in_queue", True)))
+        )
+        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        guild = self.state.guild_cache.get_entry(interaction.guild_id)
+        embed = disnake.Embed(
+            title="Queue Info",
+            timestamp=self.bot.state.now,
+            description=f"`{count}` suggestions currently in queue.\n"
+            f"New suggestions will {'' if guild_config.uses_suggestion_queue else 'not '} be "
+            f"sent to the suggestions queue.",
+            colour=self.bot.colors.embed_color,
+        )
+        embed.set_author(
+            name=guild.name,
+            icon_url=icon_url,
+        )
+        await interaction.send(embed=embed, ephemeral=True)
 
     @queue.sub_command()
     async def view(self, interaction: disnake.GuildCommandInteraction):
