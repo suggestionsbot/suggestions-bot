@@ -46,6 +46,8 @@ class MemberStats:
             "guild_keeplogs_disable",
             "guild_auto_archive_threads_enable",
             "guild_auto_archive_threads_disable",
+            "guild_suggestions_queue_enable",
+            "guild_suggestions_queue_disable",
             "activate_beta",
             "stats",
             "approve_by_message_command",
@@ -83,6 +85,8 @@ class MemberStats:
             self.guild_anonymous_disable: MemberCommandStats = ...
             self.activate_beta: MemberCommandStats = ...
             self.stats: MemberCommandStats = ...
+            self.guild_suggestions_queue_enable: MemberCommandStats = ...
+            self.guild_suggestions_queue_disable: MemberCommandStats = ...
 
     @property
     def valid_fields(self) -> List[str]:

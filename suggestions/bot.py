@@ -7,6 +7,7 @@ import math
 import os
 import traceback
 from pathlib import Path
+from string import Template
 from typing import Type, Optional
 
 import aiohttp
@@ -30,9 +31,11 @@ from suggestions.exceptions import (
     SuggestionTooLong,
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
+    UnhandledError,
+    QueueImbalance,
 )
 from suggestions.http_error_parser import try_parse_http_error
-from suggestions.objects import Error
+from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 from suggestions.zonis_routes import ZonisRoutes
@@ -42,7 +45,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.11"
+        self.version: str = "Public Release 3.12"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -225,7 +228,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         error: Exception,
         interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
     ) -> Error:
-
         if isinstance(interaction, disnake.MessageInteraction):
             cmd_name = interaction.data.custom_id
         else:
@@ -262,6 +264,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         if isinstance(exception, ErrorHandled):
             return
+
+        if isinstance(exception, UnhandledError):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Something went wrong",
+                    f"Please contact support.",
+                    error_code=ErrorCode.UNHANDLED_ERROR,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
 
         attempt_code: Optional[ErrorCode] = try_parse_http_error(
             "".join(traceback.format_exception(exception))
@@ -414,6 +427,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.MISSING_TRANSLATION,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, QueueImbalance):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Queue Imbalance",
+                    f"This suggestion has already been handled in another queue.",
+                    error_code=ErrorCode.QUEUE_IMBALANCE,
                     error=error,
                 ),
                 ephemeral=True,
@@ -664,6 +688,54 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         except KeyError:
             # Default to known translations if not set
             return values["en-GB"]
+
+    @staticmethod
+    def inject_locale_values(
+        content: str,
+        interaction: disnake.Interaction,
+        *,
+        extras: Optional[dict] = None,
+        user_config: Optional[UserConfig] = None,
+        guild_config: Optional[GuildConfig] = None,
+    ):
+        base_config = {
+            "CHANNEL_ID": interaction.channel_id,
+            "GUILD_ID": interaction.guild_id,
+            "AUTHOR_ID": interaction.author.id,
+        }
+        if extras is not None:
+            base_config = {**base_config, **extras}
+
+        if guild_config is not None:
+            guild_data = {}
+            for k, v in guild_config.as_dict().items():
+                guild_data[f"GUILD_CONFIG_{k.upper()}"] = v
+
+            guild_data.pop("GUILD_CONFIG__ID")
+            base_config = {**base_config, **guild_data}
+
+        if user_config is not None:
+            user_data = {}
+            for k, v in user_config.as_dict():
+                user_data[f"USER_CONFIG_{k.upper()}"] = v
+
+            user_data.pop("USER_CONFIG__ID")
+            base_config = {**base_config, **user_data}
+
+        return Template(content).safe_substitute(base_config)
+
+    def get_localized_string(
+        self,
+        key: str,
+        interaction: disnake.Interaction,
+        *,
+        extras: Optional[dict] = None,
+        guild_config: Optional[GuildConfig] = None,
+    ):
+        content = self.get_locale(key, interaction.locale)
+        return self.inject_locale_values(
+            content, interaction=interaction, guild_config=guild_config, extras=extras
+        )
 
     async def on_application_command(
         self, interaction: disnake.ApplicationCommandInteraction

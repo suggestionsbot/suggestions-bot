@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING, Literal, Union, Optional
+from typing import TYPE_CHECKING, Literal, Union, Optional, cast
 
 import disnake
 from alaric import AQ
@@ -360,7 +360,7 @@ class Suggestion:
             data["resolved_by"] = self.resolved_by
             data["resolution_note"] = self.resolution_note
 
-        if self.resolution_note:
+        if self.resolved_at:
             data["resolved_at"] = self.resolved_at
 
         if self.message_id:
@@ -699,7 +699,8 @@ class Suggestion:
                 )
 
             try:
-                await message.clear_reactions()
+                if not self.uses_views_for_votes:
+                    await message.clear_reactions()
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
@@ -796,3 +797,121 @@ class Suggestion:
             interaction=interaction,
             guild_config=guild_config,
         )
+
+    async def setup_initial_messages(
+        self,
+        *,
+        guild_config: GuildConfig,
+        bot: SuggestionsBot,
+        cog,
+        state: State,
+        interaction: disnake.GuildCommandInteraction | disnake.MessageInteraction,
+        guild: disnake.Guild,
+        icon_url,
+        comes_from_queue=False,
+    ):
+        """Encapsulates creation logic to save code re-use"""
+        try:
+            channel: WrappedChannel = await bot.get_or_fetch_channel(
+                guild_config.suggestions_channel_id
+            )
+            channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
+            message: disnake.Message = await channel.send(
+                embed=await self.as_embed(bot),
+                components=[
+                    disnake.ui.Button(
+                        emoji=await bot.suggestion_emojis.default_up_vote(),
+                        custom_id=await cog.suggestion_up_vote.build_custom_id(
+                            suggestion_id=self.suggestion_id
+                        ),
+                    ),
+                    disnake.ui.Button(
+                        emoji=await bot.suggestion_emojis.default_down_vote(),
+                        custom_id=await cog.suggestion_down_vote.build_custom_id(
+                            suggestion_id=self.suggestion_id
+                        ),
+                    ),
+                ],
+            )
+        except disnake.Forbidden as e:
+            state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
+            await state.suggestions_db.delete(self.as_filter())
+            raise e
+
+        self.message_id = message.id
+        self.channel_id = channel.id
+        await state.suggestions_db.upsert(self, self)
+
+        if guild_config.threads_for_suggestions:
+            try:
+                await self.create_thread(message)
+            except disnake.HTTPException:
+                log.debug(
+                    "Failed to create a thread on suggestion %s",
+                    self.suggestion_id,
+                )
+                did_delete = await self.try_delete(
+                    bot=bot, interaction=interaction, silently=True
+                )
+                if not did_delete:
+                    # Propagate it to error handlers and let them deal with it
+                    raise
+
+                await interaction.send(
+                    embed=bot.error_embed(
+                        "Missing permissions",
+                        "I am unable to create threads in your suggestions channel, "
+                        "please contact an administrator and ask them to give me "
+                        "'Create Public Threads' permissions.\n\n"
+                        "Alternatively, ask your administrator to disable automatic thread creation "
+                        "using `/config thread disable`",
+                        error_code=ErrorCode.MISSING_THREAD_CREATE_PERMISSIONS,
+                    ),
+                    ephemeral=True,
+                )
+                raise ErrorHandled
+
+            else:
+                log.debug("Created a thread on suggestion %s", self.suggestion_id)
+
+        try:
+            embed: disnake.Embed = disnake.Embed(
+                description=bot.get_locale(
+                    "SUGGEST_INNER_SUGGESTION_SENT", interaction.locale
+                ).format(
+                    interaction.author.mention,
+                    channel.mention,
+                    self.suggestion_id,
+                ),
+                timestamp=state.now,
+                color=bot.colors.embed_color,
+            )
+            embed.set_author(
+                name=guild.name,
+                icon_url=icon_url,
+            )
+            embed.set_footer(
+                text=bot.get_locale(
+                    "SUGGEST_INNER_SUGGESTION_SENT_FOOTER", interaction.locale
+                ).format(interaction.guild_id, self.suggestion_id)
+            )
+            user_config: UserConfig = await UserConfig.from_id(
+                interaction.author.id, bot.state
+            )
+            if user_config.dm_messages_disabled or guild_config.dm_messages_disabled:
+                if comes_from_queue:
+                    # We can't do anything here, as it's a delayed message
+                    pass
+                else:
+                    await interaction.send(embed=embed, ephemeral=True)
+            else:
+                await interaction.send(
+                    bot.get_locale("SUGGEST_INNER_THANKS", interaction.locale),
+                    ephemeral=True,
+                )
+                await interaction.author.send(embed=embed)
+        except disnake.HTTPException:
+            log.debug(
+                "Failed to DM %s regarding there suggestion",
+                interaction.author.id,
+            )

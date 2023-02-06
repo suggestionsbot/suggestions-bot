@@ -1,7 +1,13 @@
 from alaric import Document
 from bot_base.db import MongoManager
 
-from suggestions.objects import Suggestion, GuildConfig, UserConfig, Error
+from suggestions.objects import (
+    Suggestion,
+    GuildConfig,
+    UserConfig,
+    Error,
+    QueuedSuggestion,
+)
 from suggestions.objects.stats import MemberStats
 
 
@@ -31,4 +37,7 @@ class SuggestionsMongoManager(MongoManager):
         self.locale_tracking: Document = Document(self.db, "locale_tracking")
         self.error_tracking: Document = Document(
             self.db, "error_tracking", converter=Error
+        )
+        self.queued_suggestions: Document = Document(
+            self.db, "queued_suggestions", converter=QueuedSuggestion
         )

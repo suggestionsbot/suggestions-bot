@@ -41,6 +41,8 @@ class StatsEnum(Enum):
     GUILD_THREAD_DISABLE = "guild_thread_disable"
     GUILD_AUTO_ARCHIVE_THREADS_ENABLE = "guild_auto_archive_threads_enable"
     GUILD_AUTO_ARCHIVE_THREADS_DISABLE = "guild_auto_archive_threads_disable"
+    GUILD_SUGGESTIONS_QUEUE_ENABLE = "guild_suggestions_queue_enable"
+    GUILD_SUGGESTIONS_QUEUE_DISABLE = "guild_suggestions_queue_disable"
     GUILD_KEEPLOGS_ENABLE = "guild_keeplogs_enable"
     GUILD_KEEPLOGS_DISABLE = "guild_keeplogs_disable"
     GUILD_ANONYMOUS_ENABLE = "guild_anonymous_enable"
