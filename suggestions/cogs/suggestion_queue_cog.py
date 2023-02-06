@@ -49,7 +49,9 @@ class SuggestionsQueueCog(commands.Cog):
             return self.paginator_objects.get_entry(paginator_id)
         except NonExistentEntry:
             await interaction.send(
-                "This pagination session has expired, please start a new one with `/queue view`",
+                await self.bot.get_localized_string(
+                    "PAGINATION_INNER_SESSION_EXPIRED", interaction
+                ),
                 ephemeral=True,
             )
             raise ErrorHandled
@@ -62,7 +64,10 @@ class SuggestionsQueueCog(commands.Cog):
         await paginator.original_interaction.edit_original_message(
             embed=await paginator.format_page()
         )
-        await inter.send("Viewing next item in queue.", ephemeral=True)
+        await inter.send(
+            await self.bot.get_localized_string("PAGINATION_INNER_NEXT_ITEM", inter),
+            ephemeral=True,
+        )
 
     @components.button_listener()
     async def previous_button(self, inter: disnake.MessageInteraction, *, pid: str):
@@ -72,7 +77,12 @@ class SuggestionsQueueCog(commands.Cog):
         await paginator.original_interaction.edit_original_message(
             embed=await paginator.format_page()
         )
-        await inter.send("Viewing previous item in queue.", ephemeral=True)
+        await inter.send(
+            await self.bot.get_localized_string(
+                "PAGINATION_INNER_PREVIOUS_ITEM", inter
+            ),
+            ephemeral=True,
+        )
 
     @components.button_listener()
     async def stop_button(self, inter: disnake.MessageInteraction, *, pid: str):
@@ -80,9 +90,18 @@ class SuggestionsQueueCog(commands.Cog):
         paginator = await self.get_paginator_for(pid, inter)
         self.paginator_objects.delete_entry(pid)
         await paginator.original_interaction.edit_original_message(
-            components=[], embeds=[], content="This queue has expired."
+            components=[],
+            embeds=[],
+            content=await self.bot.get_localized_string(
+                "PAGINATION_INNER_QUEUE_EXPIRED", inter
+            ),
         )
-        await inter.send("I have cancelled this queue for you.", ephemeral=True)
+        await inter.send(
+            await self.bot.get_localized_string(
+                "PAGINATION_INNER_QUEUE_CANCELLED", inter
+            ),
+            ephemeral=True,
+        )
 
     @components.button_listener()
     async def approve_button(self, inter: disnake.MessageInteraction, *, pid: str):
@@ -109,7 +128,10 @@ class SuggestionsQueueCog(commands.Cog):
             comes_from_queue=True,
         )
         await inter.send(
-            "I have accepted that suggestion from the queue.", ephemeral=True
+            await self.bot.get_localized_string(
+                "PAGINATION_INNER_QUEUE_ACCEPTED", inter
+            ),
+            ephemeral=True,
         )
 
     @components.button_listener()
@@ -152,7 +174,10 @@ class SuggestionsQueueCog(commands.Cog):
             )
 
         await inter.send(
-            "I have removed that suggestion from the queue.", ephemeral=True
+            await self.bot.get_localized_string(
+                "PAGINATION_INNER_QUEUE_REJECTED", inter
+            ),
+            ephemeral=True,
         )
 
     @commands.slash_command(dm_permission=False)
@@ -201,12 +226,17 @@ class SuggestionsQueueCog(commands.Cog):
         )
         if not data:
             return await interaction.send(
-                "Your guild has no suggestions in the queue.", ephemeral=True
+                await self.bot.get_localized_string(
+                    "QUEUE_VIEW_INNER_NOTHING_QUEUED", interaction
+                ),
+                ephemeral=True,
             )
 
         content = None
         if not guild_config.uses_suggestion_queue:
-            content = "These suggestions were queued before your guild disabled the suggestions queue."
+            content = await self.bot.get_localized_string(
+                "QUEUE_VIEW_INNER_PRIOR_QUEUE", interaction
+            )
 
         paginator = QueuedSuggestionsPaginator(
             bot=self.bot, data=[d["_id"] for d in data], inter=interaction

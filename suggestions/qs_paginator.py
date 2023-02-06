@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import disnake
 from alaric import AQ
@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot
 
 
-T = TypeVar("T")
 log = logging.getLogger(__name__)
 
 

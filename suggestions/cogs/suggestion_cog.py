@@ -207,10 +207,13 @@ class SuggestionsCog(commands.Cog):
                 interaction.author.id,
                 interaction.guild_id,
             )
-            # TODO Localize
             return await interaction.send(
                 ephemeral=True,
-                content="Your suggestion has been sent to the queue for processing.",
+                content=await self.bot.get_localized_string(
+                    "SUGGEST_INNER_SENT_TO_QUEUE",
+                    interaction,
+                    guild_config=guild_config,
+                ),
             )
 
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)

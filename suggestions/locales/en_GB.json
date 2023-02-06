@@ -50,6 +50,7 @@
   "SUGGEST_INNER_SUGGESTION_SENT": "Hey, {}. Your suggestion has been sent to {} to be voted on!\n\nPlease wait until it gets approved or rejected by a staff member.\n\nYour suggestion ID (sID) for reference is **{}**.",
   "SUGGEST_INNER_SUGGESTION_SENT_FOOTER": "Guild ID: {} | sID: {}",
   "SUGGEST_INNER_THANKS": "Thanks for your suggestion!",
+  "SUGGEST_INNER_SENT_TO_QUEUE": "Your suggestion has been sent to the queue for processing.",
   "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Your guild does not allow anonymous suggestions.",
   "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "I have enabled anonymous suggestions for this guild.",
   "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild.",
@@ -87,5 +88,14 @@
   "CONFIG_SUGGESTIONS_QUEUE_DISABLE_INNER_MESSAGE": "All new suggestions will be sent directly to your suggestions channel.",
   "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_SET": "In use.",
   "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_NOT_SET": "Not in use.",
-  "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_MESSAGE": "Suggestions queue is $TEXT"
+  "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_MESSAGE": "Suggestions queue is $TEXT",
+  "PAGINATION_INNER_SESSION_EXPIRED": "This pagination session has expired, please start a new one with `/queue view`",
+  "PAGINATION_INNER_NEXT_ITEM": "Viewing next item in queue.",
+  "PAGINATION_INNER_PREVIOUS_ITEM": "Viewing previous item in queue.",
+  "PAGINATION_INNER_QUEUE_EXPIRED": "This queue has expired.",
+  "PAGINATION_INNER_QUEUE_CANCELLED": "I have cancelled this queue for you.",
+  "PAGINATION_INNER_QUEUE_ACCEPTED": "I have accepted that suggestion from the queue.",
+  "PAGINATION_INNER_QUEUE_REJECTED": "I have removed that suggestion from the queue.",
+  "QUEUE_VIEW_INNER_NOTHING_QUEUED": "Your guild has no suggestions in the queue.",
+  "QUEUE_VIEW_INNER_PRIOR_QUEUE": "These suggestions were queued before your guild disabled the suggestions queue."
 }
