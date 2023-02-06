@@ -97,5 +97,6 @@
   "PAGINATION_INNER_QUEUE_ACCEPTED": "I have accepted that suggestion from the queue.",
   "PAGINATION_INNER_QUEUE_REJECTED": "I have removed that suggestion from the queue.",
   "QUEUE_VIEW_INNER_NOTHING_QUEUED": "Your guild has no suggestions in the queue.",
-  "QUEUE_VIEW_INNER_PRIOR_QUEUE": "These suggestions were queued before your guild disabled the suggestions queue."
+  "QUEUE_VIEW_INNER_PRIOR_QUEUE": "These suggestions were queued before your guild disabled the suggestions queue.",
+  "QUEUE_INNER_USER_REJECTED": "Your queued suggestion was rejected."
 }

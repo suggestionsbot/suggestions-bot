@@ -150,7 +150,9 @@ class SuggestionsQueueCog(commands.Cog):
             icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
             guild = self.state.guild_cache.get_entry(inter.guild_id)
             embed: disnake.Embed = disnake.Embed(
-                description="Your queued suggestion was rejected.",
+                description=await self.bot.get_localized_string(
+                    "QUEUE_INNER_USER_REJECTED", inter
+                ),
                 colour=self.bot.colors.embed_color,
                 timestamp=self.state.now,
             )
