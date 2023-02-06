@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import datetime
 import io
 import logging
 import os
@@ -127,6 +128,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
                 f"**Cluster {bot.cluster_id} - Shard {shard_id}:** `{round(latency, 2)}ms`"
             )
 
+        year = datetime.datetime.now().year
         base_site = bot.base_website_url
         embed: disnake.Embed = disnake.Embed(
             title=bot.user.name,
@@ -146,7 +148,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             f"[Privacy Policy]({base_site}/privacy) | [Terms of Service]({base_site}/terms)",
         )
         embed.add_field("Version", bot.version)
-        embed.set_footer(text="© 2022 Anthony Collier")
+        embed.set_footer(text=f"© {year} Anthony Collier")
         await interaction.send(embed=embed)
 
     @bot.slash_command()
