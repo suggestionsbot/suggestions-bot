@@ -1,7 +1,13 @@
 from alaric import Document
 from mongomock_motor import AsyncMongoMockClient
 
-from suggestions.objects import Suggestion, GuildConfig, UserConfig
+from suggestions.objects import (
+    Suggestion,
+    GuildConfig,
+    UserConfig,
+    Error,
+    QueuedSuggestion,
+)
 from suggestions.objects.stats import MemberStats
 
 
@@ -32,4 +38,11 @@ class MockedSuggestionsMongoManager:
         )
         self.member_stats: Document = Document(
             self.db, "member_stats", converter=MemberStats
+        )
+        self.locale_tracking: Document = Document(self.db, "locale_tracking")
+        self.error_tracking: Document = Document(
+            self.db, "error_tracking", converter=Error
+        )
+        self.queued_suggestions: Document = Document(
+            self.db, "queued_suggestions", converter=QueuedSuggestion
         )
