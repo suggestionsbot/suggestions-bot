@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import TypeVar, TYPE_CHECKING
 
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
+from alaric.logical import AND
 
+from suggestions.exceptions import QueueImbalance
 from suggestions.objects import QueuedSuggestion
 
 if TYPE_CHECKING:
@@ -13,6 +16,7 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+log = logging.getLogger(__name__)
 
 
 class QueuedSuggestionsPaginator:
@@ -58,19 +62,32 @@ class QueuedSuggestionsPaginator:
         )
 
     async def get_current_queued_suggestion(self) -> QueuedSuggestion:
-        return await self.bot.db.queued_suggestions.find(
-            AQ(EQ("_id", self._paged_data[self._current_page_index]))
+        qs: QueuedSuggestion = await self.bot.db.queued_suggestions.find(
+            AQ(
+                AND(
+                    EQ("_id", self._paged_data[self._current_page_index]),
+                )
+            )
         )
+        if not qs.still_in_queue:
+            raise QueueImbalance
+
+        return qs
 
     async def format_page(self) -> disnake.Embed:
-        suggestion: QueuedSuggestion = await self.get_current_queued_suggestion()
-        embed: disnake.Embed = await suggestion.as_embed(self.bot)
-        if suggestion.is_anonymous:
-            embed.set_footer(text=f"Page {self.current_page}/{self.total_pages}")
+        try:
+            suggestion: QueuedSuggestion = await self.get_current_queued_suggestion()
+        except QueueImbalance:
+            await self.remove_current_page()
+            log.debug("Hit QueueImbalance")
         else:
-            embed.set_footer(
-                text=f"Submitter ID: {suggestion.suggestion_author_id} | "
-                f"Page {self.current_page}/{self.total_pages}"
-            )
+            embed: disnake.Embed = await suggestion.as_embed(self.bot)
+            if suggestion.is_anonymous:
+                embed.set_footer(text=f"Page {self.current_page}/{self.total_pages}")
+            else:
+                embed.set_footer(
+                    text=f"Submitter ID: {suggestion.suggestion_author_id} | "
+                    f"Page {self.current_page}/{self.total_pages}"
+                )
 
-        return embed
+            return embed

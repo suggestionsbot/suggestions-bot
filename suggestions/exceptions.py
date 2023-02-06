@@ -41,3 +41,7 @@ class ConfiguredChannelNoLongerExists(disnake.DiscordException):
 
 class UnhandledError(Exception):
     """Something went wrong."""
+
+
+class QueueImbalance(disnake.DiscordException):
+    """This queued suggestion has already been dealt with in another queue."""

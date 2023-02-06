@@ -32,6 +32,7 @@ from suggestions.exceptions import (
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
     UnhandledError,
+    QueueImbalance,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -227,7 +228,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         error: Exception,
         interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
     ) -> Error:
-
         if isinstance(interaction, disnake.MessageInteraction):
             cmd_name = interaction.data.custom_id
         else:
@@ -427,6 +427,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Something went wrong",
                     f"Please contact support.\n\nGuild ID: {gid}",
                     error_code=ErrorCode.MISSING_TRANSLATION,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, QueueImbalance):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Queue Imbalance",
+                    f"This suggestion has already been handled in another queue.",
+                    error_code=ErrorCode.QUEUE_IMBALANCE,
                     error=error,
                 ),
                 ephemeral=True,
