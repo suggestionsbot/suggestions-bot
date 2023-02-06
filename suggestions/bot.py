@@ -798,7 +798,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                                 "sender": f"Cluster {self.cluster_id}, shard {self.shard_id}",
                             },
                         ) as resp:
-                            if resp.status != 200:
+                            if resp.status != 204:
                                 log.error("Error when attempting to notify devs")
                                 break
 
