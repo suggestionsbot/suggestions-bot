@@ -14,7 +14,7 @@ from suggestions import checks, Stats, ErrorCode
 from suggestions.clunk import ClunkLock
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong, ErrorHandled
-from suggestions.objects import Suggestion, GuildConfig, UserConfig
+from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
@@ -192,9 +192,29 @@ class SuggestionsCog(commands.Cog):
             )
             raise ErrorHandled
 
+        image_url = image.url if isinstance(image, disnake.Attachment) else None
+        if guild_config.uses_suggestion_queue:
+            await QueuedSuggestion.new(
+                suggestion=suggestion,
+                guild_id=interaction.guild_id,
+                state=self.state,
+                author_id=interaction.author.id,
+                image_url=image_url,
+                is_anonymous=anonymously,
+            )
+            log.debug(
+                "User %s created new queued suggestion in guild %s",
+                interaction.author.id,
+                interaction.guild_id,
+            )
+            # TODO Localize
+            return await interaction.send(
+                ephemeral=True,
+                content="Your suggestion has been sent to the queue for processing.",
+            )
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
-        image_url = image.url if isinstance(image, disnake.Attachment) else None
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
             guild_id=interaction.guild_id,

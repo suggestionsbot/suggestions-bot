@@ -4,11 +4,13 @@ import datetime
 import logging
 from typing import Optional, TYPE_CHECKING, overload
 
+from disnake import Embed
+
 from suggestions.exceptions import UnhandledError
 from suggestions.objects import Suggestion
 
 if TYPE_CHECKING:
-    from suggestions import State
+    from suggestions import State, SuggestionsBot
 
 log = logging.getLogger(__name__)
 
@@ -126,6 +128,28 @@ class QueuedSuggestion:
             data["related_suggestion_id"] = self.related_suggestion_id
 
         return data
+
+    async def as_embed(self, bot: SuggestionsBot) -> Embed:
+        user = await bot.get_or_fetch_user(self.suggestion_author_id)
+        if self.is_anonymous:
+            submitter = "Anonymous"
+        else:
+            submitter = user.display_name
+
+        embed: Embed = Embed(
+            description=f"**Submitter**\n{submitter}\n\n"
+            f"**Suggestion**\n{self.suggestion}",
+            colour=bot.colors.embed_color,
+            timestamp=self.created_at,
+        )
+        if not self.is_anonymous:
+            embed.set_thumbnail(user.display_avatar)
+            embed.set_footer(text=f"Submitter ID: {self.suggestion_author_id}")
+
+        if self.image_url:
+            embed.set_image(self.image_url)
+
+        return embed
 
     async def convert_to_suggestion(self, state: State) -> Suggestion:
         if not self._id:

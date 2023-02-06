@@ -49,6 +49,7 @@ class State:
         self.user_configs: Dict[int, UserConfig] = {}
 
         self.existing_error_ids: Set[str] = set()
+        self.existing_paginator_ids: Set[str] = set()
         self.existing_suggestion_ids: Set[str] = set()
         self._background_tasks: list[asyncio.Task] = []
 
@@ -71,6 +72,17 @@ class State:
 
         self.existing_error_ids.add(error_id)
         return error_id
+
+    def get_new_sq_paginator_id(self) -> str:
+        pag_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        while pag_id in self.existing_paginator_ids:
+            pag_id = "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=8)
+            )
+            log.critical("Encountered an existing paginator id")
+
+        self.existing_paginator_ids.add(pag_id)
+        return pag_id
 
     def get_new_suggestion_id(self) -> str:
         """Generate a new SID, ensuring uniqueness."""
