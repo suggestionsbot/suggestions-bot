@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 import cooldowns
@@ -8,6 +9,8 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.projections import Projection, SHOW
+from bot_base import NonExistentEntry
+from bot_base.caches import TimedCache
 from disnake.ext import commands, components
 
 from suggestions import checks
@@ -28,7 +31,9 @@ class SuggestionsQueueCog(commands.Cog):
         self.bot: SuggestionsBot = bot
         self.state = self.bot.state
         self.queued_suggestions_db: Document = self.bot.db.queued_suggestions
-        self.paginator_objects: dict[str, ...] = {}
+        self.paginator_objects: TimedCache = TimedCache(
+            global_ttl=timedelta(minutes=15), lazy_eviction=False
+        )
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -38,8 +43,8 @@ class SuggestionsQueueCog(commands.Cog):
         self, paginator_id: str, interaction: disnake.Interaction
     ) -> QueuedSuggestionsPaginator:
         try:
-            return self.paginator_objects[paginator_id]
-        except KeyError:
+            return self.paginator_objects.get_entry(paginator_id)
+        except NonExistentEntry:
             await interaction.send(
                 "This pagination session has expired, please start a new one with `/queue view`",
                 ephemeral=True,
@@ -70,7 +75,7 @@ class SuggestionsQueueCog(commands.Cog):
     async def stop_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await inter.response.defer(ephemeral=True, with_message=True)
         paginator = await self.get_paginator_for(pid, inter)
-        self.paginator_objects.pop(pid)
+        self.paginator_objects.delete_entry(pid)
         await paginator.original_interaction.edit_original_message(
             components=[], embeds=[], content="This queue has expired."
         )
@@ -153,7 +158,7 @@ class SuggestionsQueueCog(commands.Cog):
                 ),
             ],
         )
-        self.paginator_objects[pid] = paginator
+        self.paginator_objects.add_entry(pid, paginator)
 
 
 def setup(bot):
