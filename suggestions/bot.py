@@ -758,27 +758,49 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             await self._initial_ready_future
             patch = os.environ["UPTIME_PATCH"]
             while not self.state.is_closing:
-                appears_down = False
-                for shard_id, shard_info in self.shards.items():
-                    if shard_info.is_closed():
-                        # We consider this as 'down' as sometimes
-                        # they fail to reconnect and we don't handle
-                        # that edge case as of current
-                        log.critical(
-                            "Shard %s in cluster %s is reporting as closed",
-                            shard_id,
-                            self.cluster_id,
-                        )
-                        appears_down = True
+                try:
+                    appears_down = False
+                    for shard_id, shard_info in self.shards.items():
+                        if shard_info.is_closed():
+                            # We consider this as 'down' as sometimes
+                            # they fail to reconnect and we don't handle
+                            # that edge case as of current
+                            log.critical(
+                                "Shard %s in cluster %s is reporting as closed",
+                                shard_id,
+                                self.cluster_id,
+                            )
+                            appears_down = True
 
-                if not appears_down:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(
-                            url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
-                        ):
-                            pass
+                    if not appears_down:
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(
+                                url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
+                            ):
+                                pass
 
-                await self.sleep_with_condition(60, lambda: self.state.is_closing)
+                    await self.sleep_with_condition(60, lambda: self.state.is_closing)
+                except Exception as e:
+                    if not self.is_prod:
+                        log.error("Borked it")
+                        return
+
+                    url = "https://garven." if self.is_prod else "https://garven.dev."
+                    url = f"{url}suggestions.gg/cluster/notify_devs"
+                    async with aiohttp.ClientSession(
+                        headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
+                    ) as session:
+                        async with session.post(
+                            url,
+                            data={
+                                "title": "Status page ping error",
+                                "description": str(e),
+                                "sender": f"Cluster {self.cluster_id}, shard {self.shard_id}",
+                            },
+                        ) as resp:
+                            if resp.status != 200:
+                                log.error("Error when attempting to notify devs")
+                                break
 
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)
