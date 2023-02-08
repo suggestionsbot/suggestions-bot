@@ -785,6 +785,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         log.error("Borked it")
                         return
 
+                    log.error(
+                        "Status update failed: %s",
+                        "".join(traceback.format_exception(e)),
+                    )
+
                     url = "https://garven." if self.is_prod else "https://garven.dev."
                     url = f"{url}suggestions.gg/cluster/notify_devs"
                     async with aiohttp.ClientSession(
@@ -800,6 +805,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         ) as resp:
                             if resp.status != 204:
                                 log.error("Error when attempting to notify devs")
+                                log.error("%s", await resp.text())
                                 break
 
         task_1 = asyncio.create_task(inner())

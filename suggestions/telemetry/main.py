@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from suggestions.objects import GuildConfig
 from suggestions.telemetry.error_telemetry import *
 
 load_dotenv()
@@ -15,6 +16,7 @@ load_dotenv()
 client = AsyncIOMotorClient(os.environ["PROD_MONGO_URL"])
 database = client["suggestions-rewrite"]
 error_tracking_document = Document(database, "error_tracking")
+guild_configs_document = Document(database, "guild_configs", converter=GuildConfig)
 
 
 async def load_unhandled_errors():
@@ -49,8 +51,13 @@ async def mark_forbidden_done():
         await error_tracking_document.update(item, item)
 
 
+async def count_with_queues():
+    totla = await guild_configs_document.count(AQ(EQ("uses_suggestion_queue", True)))
+    print(totla)
+
+
 async def main():
-    await load_forbidden()
+    await count_with_queues()
 
 
 asyncio.run(main())
