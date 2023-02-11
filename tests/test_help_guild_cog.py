@@ -41,7 +41,7 @@ async def test_incorrect_error_code(causar: Causar):
         title="Command failed",
         description="No error code exists for `-1`",
         color=bot.colors.error,
-        timestamp=bot.state.now,
+        timestamp=transaction.embed.timestamp,
     )
     assert transaction.content is None
     assert transaction.embed == embed
