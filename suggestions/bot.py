@@ -87,6 +87,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             "vote",
         }
         self.converted_prefix_commands: set[str] = {"suggest", "approve", "reject"}
+
+        # Sharding info
+        self.cluster_id: int = kwargs.pop("cluster", 0)
+        self.total_shards: int = kwargs.get("shard_count", 0)
+
         super().__init__(
             *args,
             **kwargs,
@@ -97,10 +102,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 type=disnake.ActivityType.watching,
             ),
         )
-
-        # Sharding info
-        self.cluster_id: int = kwargs.get("cluster", 0)
-        self.total_shards: int = kwargs.get("shard_count", 0)
 
         self._has_dispatched_initial_ready: bool = False
         self._initial_ready_future: asyncio.Future = asyncio.Future()
