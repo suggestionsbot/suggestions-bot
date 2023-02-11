@@ -54,8 +54,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
 
-        if kwargs.get("database_wrapper"):
-            self.db = kwargs.pop("database_wrapper")
+        db = None
+        if "database_wrapper" in kwargs:
+            db = kwargs.pop("database_wrapper")
+
+        if db is not None:
+            self.db = db
         else:
             self.db: SuggestionsMongoManager = SuggestionsMongoManager(
                 os.environ["PROD_MONGO_URL"]
