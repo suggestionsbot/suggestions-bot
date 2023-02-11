@@ -28,6 +28,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
 - Added `__eq__` to `disnake.Embed` 
   - This is used primarily within tests
   - This includes `__eq__` on `EmbedProxy` otherwise they compare as False
+  - Note: This now returns `None` on disnake `2.8.0` and older
 - Heavily modified guild caching in relation to <https://github.com/suggestionsbot/suggestions-bot/issues/24>
   - Introduced the variable `guild_ids`
   - Disabled the guild cache even with enabled guild intents
