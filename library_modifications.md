@@ -6,7 +6,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
 
 ## Features
 
-- `Interaction.deffered_without_send` -> `bool`
+- `Interaction.deferred_without_send` -> `bool`
   - Hooks into the `Interaction` object to see if a given interaction has been differed without a follow-up send occurring. We do this as we need to clean up after the bot in the case an error occurs otherwise our users will simply get "Interaction failed to respond" which is not ideal
   - Implementation details:
     - New variable on `Interaction` -> `self.has_been_followed_up: bool = False`
