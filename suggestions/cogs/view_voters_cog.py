@@ -8,7 +8,7 @@ import disnake
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 
-from suggestions import Stats, Colors
+from suggestions import Colors
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.objects import Suggestion
 
