@@ -284,7 +284,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     async def graceful_shutdown(bot: SuggestionsBot, signame):
         await bot.graceful_shutdown()
 
-    # https://github.com/gearbot/GearBot/blob/live/GearBot/GearBot.py#L206-L212
+    # https://github.com/gearbot/GearBot/blob/live/GearBot/GearBot.py
     try:
         for signame in ("SIGINT", "SIGTERM", "SIGKILL"):
             asyncio.get_event_loop().add_signal_handler(
