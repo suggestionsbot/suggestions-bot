@@ -785,6 +785,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                                 pass
 
                     await self.sleep_with_condition(60, lambda: self.state.is_closing)
+                except (aiohttp.ClientConnectorError, ConnectionRefusedError):
+                    log.warning("push_status failed to connect, retrying in 10 seconds")
+                    await self.sleep_with_condition(10, lambda: self.state.is_closing)
                 except Exception as e:
                     if not self.is_prod:
                         log.error("Borked it")
@@ -802,7 +805,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     ) as session:
                         async with session.post(
                             url,
-                            data={
+                            json={
                                 "title": "Status page ping error",
                                 "description": str(e),
                                 "sender": f"Cluster {self.cluster_id}, shard {self.shard_id}",
