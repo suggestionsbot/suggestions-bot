@@ -653,6 +653,15 @@ class Suggestion:
         bot: SuggestionsBot,
         interaction: disnake.Interaction,
     ):
+        if self.channel_id is None or self.message_id is None:
+            log.error(
+                "update_vote_count received a null value for SID %s, "
+                "channel_id=%s, message_id=%s",
+                self.channel_id,
+                self.message_id,
+            )
+            return
+
         try:
             await MessageEditing(
                 bot, channel_id=self.channel_id, message_id=self.message_id
