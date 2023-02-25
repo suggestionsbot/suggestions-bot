@@ -565,15 +565,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.clunk.kill_all()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
-
-        stdout = io.StringIO()
-
-        with contextlib.redirect_stdout(stdout):
-            self.tr.print_diff()
-            result = stdout.getvalue()
-        chan = await self.get_or_fetch_channel(602332642456764426)
-        await chan.send(result[:2000])
-
         log.info("Shutting down")
         await self.close()
 

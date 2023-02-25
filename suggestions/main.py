@@ -182,6 +182,35 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         default_member_permissions=disnake.Permissions(administrator=True),
     )
     @commands.is_owner()
+    async def ml(ctx):
+        """Go find memory leaks"""
+        await ctx.response.defer(ephemeral=True)
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            bot.tr.print_diff()
+            result = stdout.getvalue()
+
+        async def format_page(code, page_number):
+            embed = disnake.Embed(title=f"Mem check for {ctx.author.name}")
+            embed.description = f"```\n{code}\n```"
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            [result[i : i + 2000] for i in range(0, len(result), 2000)],
+            try_ephemeral=True,
+        )
+        paginator.format_page = format_page
+        await paginator.start(interaction=ctx)
+
+    @bot.slash_command(
+        dm_permission=False,
+        guild_ids=[601219766258106399, 737166408525283348],
+        default_member_permissions=disnake.Permissions(administrator=True),
+    )
+    @commands.is_owner()
     async def eval(ctx, code):
         """
         Evaluates given code.
