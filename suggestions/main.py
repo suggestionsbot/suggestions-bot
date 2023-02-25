@@ -186,6 +186,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         """
         Evaluates given code.
         """
+        await ctx.response.defer()
         code = clean_code(code)
 
         local_variables = {
