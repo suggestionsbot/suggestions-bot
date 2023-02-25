@@ -186,8 +186,12 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         """
         Evaluates given code.
         """
-        await ctx.response.defer()
+        await ctx.response.defer(ephemeral=True)
         code = clean_code(code)
+
+        # remove protections on string parsing to allow
+        # multi line eval within slash input
+        code = "\n".join(code.split("|"))
 
         local_variables = {
             "disnake": disnake,
@@ -213,7 +217,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
 
         async def format_page(code, page_number):
             embed = disnake.Embed(title=f"Eval for {ctx.author.name}")
-            embed.description = f"```{code}```"
+            embed.description = f"```\n{code}\n```"
 
             embed.set_footer(text=f"Page {page_number}")
             return embed
@@ -221,6 +225,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         paginator: DisnakePaginator = DisnakePaginator(
             1,
             [result[i : i + 2000] for i in range(0, len(result), 2000)],
+            try_ephemeral=True,
         )
         paginator.format_page = format_page
         await paginator.start(interaction=ctx)
