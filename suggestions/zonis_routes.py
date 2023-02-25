@@ -43,7 +43,7 @@ class ZonisRoutes:
         self.client.load_routes()
         await exception_aware_scheduler(
             self.client._connect,
-            retry_count=12,  # 30 minutes of retries
+            retry_count=100,  # Just over 4 hours of retries
             sleep_between_tries=150,  # 2.5 minutes between each
         )
 

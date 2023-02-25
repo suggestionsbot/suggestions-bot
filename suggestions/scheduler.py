@@ -25,4 +25,8 @@ async def exception_aware_scheduler(
 
             await asyncio.sleep(sleep_between_tries)
 
+        log.debug(
+            "exception_aware_scheduler for %s has run out of retries", str(caller)
+        )
+
     asyncio.create_task(inner_task(callee, *args, **kwargs))
