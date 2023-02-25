@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
+import io
 import logging
 import math
 import os
@@ -19,6 +21,7 @@ from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
+from pympler import tracker
 
 from suggestions import State, Colors, Emojis, ErrorCode
 from suggestions.clunk import Clunk
@@ -45,6 +48,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
+        self.tr = tracker.SummaryTracker()
         self.version: str = "Public Release 3.12"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
@@ -561,6 +565,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.clunk.kill_all()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
+
+        stdout = io.StringIO()
+
+        with contextlib.redirect_stdout(stdout):
+            self.tr.print_diff()
+            result = stdout.getvalue()
+        chan = await self.get_or_fetch_channel(602332642456764426)
+        await chan.send(result[:2000])
+
         log.info("Shutting down")
         await self.close()
 

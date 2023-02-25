@@ -6,8 +6,6 @@ import alaric
 from alaric import Cursor
 from dotenv import load_dotenv
 
-from pympler import tracker
-
 import suggestions
 
 load_dotenv()
@@ -57,9 +55,7 @@ async def run_bot():
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
 
     log.info("About to start SuggestionsBot | %s", bot.version)
-    tr = tracker.SummaryTracker()
     await bot.start(TOKEN)
-    tr.print_diff()
 
 
 asyncio.run(run_bot())
