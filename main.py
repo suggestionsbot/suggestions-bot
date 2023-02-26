@@ -35,7 +35,7 @@ member_stats_logger.setLevel(logging.INFO)
 
 
 async def run_bot():
-    tracemalloc.start()
+    # tracemalloc.start()
     log = logging.getLogger(__name__)
     bot = await suggestions.create_bot()
 

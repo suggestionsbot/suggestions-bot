@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import math
 import os
-from datetime import timedelta
 from typing import TYPE_CHECKING
 
 import disnake
-from bot_base import NonExistentEntry
-from bot_base.caches import TimedCache
 from zonis import client
 
 from suggestions.scheduler import exception_aware_scheduler

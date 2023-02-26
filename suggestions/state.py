@@ -37,11 +37,11 @@ class State:
         # Timed caches
         self.autocomplete_cache_ttl: timedelta = timedelta(minutes=10)
         self.autocomplete_cache: TimedCache[int, list[str]] = TimedCache(
-            global_ttl=self.autocomplete_cache_ttl
+            global_ttl=self.autocomplete_cache_ttl, lazy_eviction=False
         )
         self.guild_cache_ttl: timedelta = timedelta(minutes=15)
         self.guild_cache: TimedCache[int, disnake.Guild] = TimedCache(
-            global_ttl=self.guild_cache_ttl
+            global_ttl=self.guild_cache_ttl, lazy_eviction=False
         )
 
         # TODO Move these to a TTL cache

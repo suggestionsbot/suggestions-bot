@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import timedelta
 
 from bot_base import NonExistentEntry
 
@@ -12,7 +13,9 @@ log = logging.getLogger(__name__)
 class Clunk:
     def __init__(self, state: State):
         self._state: State = state
-        self._cache: ClunkCache[str, ClunkLock] = ClunkCache(lazy_eviction=False)
+        self._cache: ClunkCache[str, ClunkLock] = ClunkCache(
+            lazy_eviction=False, global_ttl=timedelta(hours=1)
+        )
 
     def acquire(self, suggestion_id: str) -> ClunkLock:
         key = suggestion_id

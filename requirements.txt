@@ -41,3 +41,4 @@ websockets==10.4
 yarl==1.7.2
 zonis==1.2.5
 pympler
+objgraph

@@ -98,8 +98,8 @@ class Stats:
         self.bot: SuggestionsBot = bot
         self.database: SuggestionsMongoManager = bot.db
         self._old_guild_count: Optional[int] = None
-        self.cluster_guild_cache: TimedCache = TimedCache()
-        self.member_stats_cache: TimedCache = TimedCache()
+        self.cluster_guild_cache: TimedCache = TimedCache(lazy_eviction=False)
+        self.member_stats_cache: TimedCache = TimedCache(lazy_eviction=False)
         self.type: Type[StatsEnum] = StatsEnum
 
     async def log_stats(
