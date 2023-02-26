@@ -33,6 +33,7 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
 - Heavily modified guild caching in relation to <https://github.com/suggestionsbot/suggestions-bot/issues/24>
   - Introduced the variable `guild_ids`
   - Disabled the guild cache even with enabled guild intents
+  - Change `state._add_guild_from_data` to not create and cache a guild object
   - See commit <https://github.com/suggestionsbot/disnake/commit/a21e761d72bba13af1f834f7f5b18724ea9ce0f5>
 
 ## Fixes
