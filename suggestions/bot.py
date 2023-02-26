@@ -21,7 +21,6 @@ from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
-from pympler import tracker
 
 from suggestions import State, Colors, Emojis, ErrorCode
 from suggestions.clunk import Clunk
@@ -48,7 +47,6 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.tr = tracker.SummaryTracker()
         self.version: str = "Public Release 3.12"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
