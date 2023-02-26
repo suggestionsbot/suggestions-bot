@@ -3,6 +3,8 @@ from typing import List, Dict
 
 
 class MemberCommandStats:
+    __slots__ = ("command_name", "completed_at", "failed_at")
+
     def __init__(
         self,
         command_name: str,
