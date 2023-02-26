@@ -5,6 +5,7 @@ from typing import Dict, TYPE_CHECKING, Optional
 
 from alaric import AQ
 from alaric.comparison import EQ
+from bot_base import NonExistentEntry
 
 if TYPE_CHECKING:
     from suggestions import State
@@ -21,8 +22,12 @@ class UserConfig:
 
     @classmethod
     async def from_id(cls, user_id: int, state: State):
-        if user_id in state.user_configs:
-            return state.user_configs[user_id]
+        try:
+            uc = state.user_configs.get_entry(user_id)
+            log.debug("Found cached UserConfig for user %s", user_id)
+            return uc
+        except NonExistentEntry:
+            pass
 
         user_config: Optional[UserConfig] = await state.user_config_db.find(
             AQ(EQ("_id", user_id))
@@ -30,6 +35,11 @@ class UserConfig:
         if not user_config:
             log.info("Created new UserConfig for %s", user_id)
             user_config = cls(_id=user_id)
+        else:
+            log.debug(
+                "Fetched UserConfig from database for %s",
+                user_id,
+            )
 
         state.refresh_user_config(user_config)
         return user_config

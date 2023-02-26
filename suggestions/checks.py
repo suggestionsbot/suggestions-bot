@@ -31,7 +31,7 @@ async def fetch_guild_config(interaction: disnake.Interaction) -> Optional[Guild
     if guild_id not in suggestions.state.guild_configs:
         return None
 
-    return suggestions.state.guild_configs[guild_id]
+    return suggestions.state.guild_configs.get_entry(guild_id)
 
 
 def ensure_guild_has_suggestions_channel():

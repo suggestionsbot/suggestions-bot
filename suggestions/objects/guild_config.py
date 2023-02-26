@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 
 from alaric import AQ
 from alaric.comparison import EQ
+from bot_base import NonExistentEntry
 
 if TYPE_CHECKING:
     from suggestions import State
@@ -56,9 +57,12 @@ class GuildConfig:
         GuildConfig
             The valid guilds config
         """
-        if guild_id in state.guild_configs:
+        try:
+            gc = state.guild_configs.get_entry(guild_id)
             log.debug("Found cached GuildConfig for guild %s", guild_id)
-            return state.guild_configs[guild_id]
+            return gc
+        except NonExistentEntry:
+            pass
 
         guild_config: Optional[GuildConfig] = await state.guild_config_db.find(
             AQ(EQ("_id", guild_id))

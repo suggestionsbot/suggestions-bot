@@ -44,9 +44,12 @@ class State:
             global_ttl=self.guild_cache_ttl, lazy_eviction=False
         )
 
-        # TODO Move these to a TTL cache
-        self.guild_configs: Dict[int, GuildConfig] = {}
-        self.user_configs: Dict[int, UserConfig] = {}
+        self.guild_configs: TimedCache = TimedCache(
+            global_ttl=timedelta(minutes=30), lazy_eviction=False
+        )
+        self.user_configs: TimedCache = TimedCache(
+            global_ttl=timedelta(minutes=30), lazy_eviction=False
+        )
 
         self.existing_error_ids: Set[str] = set()
         self.existing_paginator_ids: Set[str] = set()
@@ -136,10 +139,10 @@ class State:
         self.is_closing = True
 
     def refresh_guild_config(self, guild_config: GuildConfig) -> None:
-        self.guild_configs[guild_config.guild_id] = guild_config
+        self.guild_configs.add_entry(guild_config.guild_id, guild_config, override=True)
 
     def refresh_user_config(self, user_config: UserConfig) -> None:
-        self.user_configs[user_config.user_id] = user_config
+        self.user_configs.add_entry(user_config.user_id, user_config, override=True)
 
     def refresh_guild_cache(self, guild: disnake.Guild) -> None:
         self.guild_cache.add_entry(guild.id, guild, override=True)
@@ -217,15 +220,6 @@ class State:
         )
         for entry in error_ids:
             self.existing_error_ids.add(entry["_id"])
-
-        # Populate existing guilds
-        guilds: List[GuildConfig] = await self.guild_config_db.get_all()
-        for guild in guilds:
-            self.refresh_guild_config(guild)
-
-        users: List[UserConfig] = await self.user_config_db.get_all()
-        for user in users:
-            self.refresh_user_config(user)
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""
