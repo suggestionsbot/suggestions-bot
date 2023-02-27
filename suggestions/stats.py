@@ -101,6 +101,7 @@ class Stats:
         self.cluster_guild_cache: TimedCache = TimedCache(lazy_eviction=False)
         self.member_stats_cache: TimedCache = TimedCache(lazy_eviction=False)
         self.type: Type[StatsEnum] = StatsEnum
+        self._inter_count: int = 0
 
     async def log_stats(
         self,
@@ -186,8 +187,29 @@ class Stats:
         except:
             pass
 
-        task_1 = asyncio.create_task(self.push_stats())
-        self.state.add_background_task(task_1)
+        self.state.add_background_task(asyncio.create_task(self.push_stats()))
+        self.state.add_background_task(asyncio.create_task(self.push_inter_stats()))
+
+    async def push_inter_stats(self):
+        while not self.state.is_closing:
+            await self.bot.sleep_with_condition(
+                datetime.timedelta(hours=1).total_seconds(),
+                lambda: self.state.is_closing,
+            )
+            # Reset to account for database processing time
+            count = self._inter_count
+            self._inter_count = 0
+
+            if count == 0:
+                continue
+
+            await self.bot.db.interaction_events.insert(
+                {
+                    "count": count,
+                    "inserted_at": self.state.now,
+                    "cluster": self.bot.cluster_id,
+                }
+            )
 
     async def push_stats(self):
         while not self.state.is_closing:
@@ -207,3 +229,11 @@ class Stats:
                 )
 
             await self.bot.sleep_with_condition(5 * 60, lambda: self.state.is_closing)
+
+    def increment_event_type(self, event_type: str):
+        # We only want interactions for now
+        event_type = event_type.lower()
+        if event_type != "interaction_create":
+            return
+
+        self._inter_count += 1

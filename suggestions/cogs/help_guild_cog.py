@@ -28,6 +28,10 @@ class HelpGuildCog(commands.Cog):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
 
+    @commands.Cog.listener()
+    async def on_socket_event_type(self, event_type: str) -> None:
+        self.bot.stats.increment_event_type(event_type)
+
     @commands.slash_command(
         dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),
