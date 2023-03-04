@@ -10,7 +10,7 @@ causar==0.2.0
 cchardet==2.1.7
 cffi==1.15.0
 charset-normalizer==2.0.12
-disnake @ git+https://github.com/suggestionsbot/disnake.git@6d5422c41dfb7fedf9d1dedd57b8a550d20528a6
+disnake @ git+https://github.com/suggestionsbot/disnake.git@d0de022cce60d0ff11de983da467f0bfa2b70afc
 disnake-ext-components @ git+https://github.com/suggestionsbot/disnake-ext-components.git@91689ed74ffee73f631453a39e548af9b824826d
 dnspython==2.2.1
 frozenlist==1.3.0

@@ -41,4 +41,6 @@ class SuggestionsMongoManager(MongoManager):
         self.queued_suggestions: Document = Document(
             self.db, "queued_suggestions", converter=QueuedSuggestion
         )
-        self.interaction_events: Document = Document(self.db, "interaction_create_stats")
+        self.interaction_events: Document = Document(
+            self.db, "interaction_create_stats"
+        )
