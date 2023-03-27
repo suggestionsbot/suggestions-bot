@@ -744,21 +744,36 @@ class Suggestion:
         """Attempts to archive the attached thread if the feature is enabled."""
         if not guild_config.auto_archive_threads:
             # Guild does not want thread archived
+            log.debug("Guild %s does not want threads archived", guild_config.guild_id)
             return
 
         channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
         message: disnake.Message = await channel.fetch_message(self.message_id)
         if not message.thread:
             # Suggestion has no created thread
+            log.debug(
+                "No thread for suggestion %s, should have one: %s",
+                self.suggestion_id,
+                "yes" if guild_config.threads_for_suggestions else "no",
+            )
             return
 
         if message.thread.owner_id != bot.user.id:
             # I did not create this thread
+            log.debug(
+                "Thread on suggestion %s is owned by %s",
+                self.suggestion_id,
+                message.thread.owner_id,
+            )
             return
 
         if message.thread.archived or message.thread.locked:
             # Thread is already archived or
             # locked so no need to redo the action
+            log.debug(
+                "Thread on suggestion %s is already archived or locked",
+                self.suggestion_id,
+            )
             return
 
         await message.thread.send(
@@ -776,6 +791,7 @@ class Suggestion:
         resolution_type: SuggestionState,
         resolution_note: Optional[str] = None,
     ):
+        log.debug("Attempting to resolve suggestion %s", self.suggestion_id)
         # https://github.com/suggestionsbot/suggestions-bot/issues/36
         if resolution_type is SuggestionState.approved:
             await self.mark_approved_by(state, interaction.author.id, resolution_note)
