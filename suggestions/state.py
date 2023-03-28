@@ -234,7 +234,6 @@ class State:
             # between loops for if we wish to gracefully close the task
             remaining_seconds = self.autocomplete_cache_ttl.total_seconds()
             while remaining_seconds > 0:
-
                 remaining_seconds -= 5
                 await asyncio.sleep(5)
 
