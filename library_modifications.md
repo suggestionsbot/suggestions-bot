@@ -56,6 +56,11 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
   - Implementation details
     - Fixed by https://paste.disnake.dev/?id=1660730340161476
   - Related issue: https://github.com/DisnakeDev/disnake/issues/712
+- Move thread caching onto `Message`
+  - Due to our intents, threads on messages were not being cached correctly which meant features didnt work
+  - Fix: Move caching of message.thread onto the message itself
+
+
 ## Notes
 
 On startup even with `Intents.none()` we still receive partial guilds, noted as unavailable (or something like that). This allows for partial cache hits and explains the inconsistencies of bug reproduction as we require a guild who invited the bot during runtime as the first reproduction step.
