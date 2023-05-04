@@ -723,7 +723,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         if user_config is not None:
             user_data = {}
-            for k, v in user_config.as_dict():
+            for k, v in user_config.as_dict().items():
                 user_data[f"USER_CONFIG_{k.upper()}"] = v
 
             user_data.pop("USER_CONFIG__ID")
