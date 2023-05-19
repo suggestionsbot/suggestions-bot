@@ -236,6 +236,25 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         default_member_permissions=disnake.Permissions(administrator=True),
     )
     @commands.is_owner()
+    async def test(inter: disnake.GuildCommandInteraction):
+        # t = await bot.fetch_channel(737167291656962060)
+        # m = await t.send("test")
+        # await m.edit("blah")
+        await bot.garven.update_suggestion_message(
+            "u6hvc2t9",
+            guild_name="test",
+            user_display_name="Anthony",
+            user_display_avatar="https://cdn.discordapp.com/avatars/158063324699951104/d25a7deec7b308ddf8d4d152808f8058.png?size=1024",
+            guild_icon_url="https://cdn.discordapp.com/avatars/271612318947868673/dfec0a7fbdd5028c7cb617ae738fb9cd.png?size=1024",
+        )
+        await inter.send("Done")
+
+    @bot.slash_command(
+        dm_permission=False,
+        guild_ids=[601219766258106399, 737166408525283348],
+        default_member_permissions=disnake.Permissions(administrator=True),
+    )
+    @commands.is_owner()
     async def shutdown(
         interaction: disnake.ApplicationCommandInteraction,
         cluster_id=commands.Param(

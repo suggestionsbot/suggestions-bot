@@ -22,7 +22,7 @@ from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
-from suggestions import State, Colors, Emojis, ErrorCode
+from suggestions import State, Colors, Emojis, ErrorCode, Garven
 from suggestions.clunk import Clunk
 from suggestions.exceptions import (
     BetaOnly,
@@ -72,6 +72,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.colors: Type[Colors] = Colors
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
+        self.garven: Garven = Garven(self)
         self.clunk: Clunk = Clunk(self.state)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
@@ -799,24 +800,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         "Status update failed: %s",
                         "".join(traceback.format_exception(e)),
                     )
-
-                    url = "https://garven." if self.is_prod else "https://garven.dev."
-                    url = f"{url}suggestions.gg/cluster/notify_devs"
-                    async with aiohttp.ClientSession(
-                        headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-                    ) as session:
-                        async with session.post(
-                            url,
-                            json={
-                                "title": "Status page ping error",
-                                "description": str(e),
-                                "sender": f"Cluster {self.cluster_id}, shard {self.shard_id}",
-                            },
-                        ) as resp:
-                            if resp.status != 204:
-                                log.error("Error when attempting to notify devs")
-                                log.error("%s", await resp.text())
-                                break
+                    await self.garven.notify_devs(
+                        title="Status page ping error",
+                        description=str(e),
+                        sender=f"Cluster {self.cluster_id}, shard {self.shard_id}",
+                    )
 
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)

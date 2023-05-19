@@ -11,7 +11,7 @@ from disnake import Guild
 from disnake.ext import commands, components
 
 from suggestions import checks, Stats, ErrorCode
-from suggestions.clunk import ClunkLock
+from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import SuggestionTooLong, ErrorHandled
 from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
@@ -58,15 +58,12 @@ class SuggestionsCog(commands.Cog):
                 ephemeral=True,
             )
 
-        lock: ClunkLock = self.bot.clunk.acquire(suggestion_id)
-        await lock.run()
-
         if member_id in suggestion.down_voted_by:
             suggestion.down_voted_by.discard(member_id)
             suggestion.up_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
             # await suggestion.update_vote_count(self.bot, inter)
-            lock.enqueue(suggestion.update_vote_count(self.bot, inter))
+            # lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await inter.send(
                 self.bot.get_locale(
                     "SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE",
@@ -79,20 +76,18 @@ class SuggestionsCog(commands.Cog):
             #     member_id,
             #     suggestion_id,
             # )
-            return
+        else:
+            suggestion.up_voted_by.add(member_id)
+            await self.state.suggestions_db.upsert(suggestion, suggestion)
+            await inter.send(
+                self.bot.get_locale(
+                    "SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE",
+                    inter.locale,
+                ),
+                ephemeral=True,
+            )
 
-        suggestion.up_voted_by.add(member_id)
-        await self.state.suggestions_db.upsert(suggestion, suggestion)
-        # await suggestion.update_vote_count(self.bot, inter)
-        lock.enqueue(suggestion.update_vote_count(self.bot, inter))
-        await inter.send(
-            self.bot.get_locale(
-                "SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE",
-                inter.locale,
-            ),
-            ephemeral=True,
-        )
-        # log.debug("Member %s up voted suggestion %s", member_id, suggestion_id)
+        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
 
     @components.button_listener()
     async def suggestion_down_vote(
@@ -124,15 +119,10 @@ class SuggestionsCog(commands.Cog):
                 ephemeral=True,
             )
 
-        lock: ClunkLock = self.bot.clunk.acquire(suggestion_id)
-        await lock.run()
-
         if member_id in suggestion.up_voted_by:
             suggestion.up_voted_by.discard(member_id)
             suggestion.down_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
-            # await suggestion.update_vote_count(self.bot, inter)
-            lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await inter.send(
                 self.bot.get_locale(
                     "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE",
@@ -145,19 +135,18 @@ class SuggestionsCog(commands.Cog):
             #     member_id,
             #     suggestion_id,
             # )
-            return
+        else:
+            suggestion.down_voted_by.add(member_id)
+            await self.state.suggestions_db.upsert(suggestion, suggestion)
+            await inter.send(
+                self.bot.get_locale(
+                    "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE",
+                    inter.locale,
+                ),
+                ephemeral=True,
+            )
 
-        suggestion.down_voted_by.add(member_id)
-        await self.state.suggestions_db.upsert(suggestion, suggestion)
-        # await suggestion.update_vote_count(self.bot, inter)
-        lock.enqueue(suggestion.update_vote_count(self.bot, inter))
-        await inter.send(
-            self.bot.get_locale(
-                "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE",
-                inter.locale,
-            ),
-            ephemeral=True,
-        )
+        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
         # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(dm_permission=False)

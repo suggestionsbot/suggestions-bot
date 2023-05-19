@@ -1,0 +1,21 @@
+def bytesto(bytes, to, bsize=1024):|    a = {'k' : 1, 'm': 2, 'g' : 3, 't' : 4, 'p' : 5, 'e' : 6 }|    r = float(bytes)|    return bytes / (bsize ** a[to])|from pympler import asizeof|return f"{round(bytesto(asizeof.asizeof(my_object), 'm'),3)}mb"
+
+def bytesto(bytes, to, bsize=1024):|    a = {'k' : 1, 'm': 2, 'g' : 3, 't' : 4, 'p' : 5, 'e' : 6 }|    r = float(bytes)|    return bytes / (bsize ** a[to])|from pympler import asizeof|import asyncio|a=asyncio.all_tasks()|return f"{round(bytesto(asizeof.asizeof(a), 'm'),3)}mb"
+
+from pympler import asizeof|return asizeof.asized(obj, detail=1).format()
+
+import io,contextlib|stdout = io.StringIO()|with contextlib.redirect_stdout(stdout):|    bot.tr.print_diff()|    result = stdout.getvalue()|await ctx.channel.send(result)
+
+import gc|gc.collect()
+
+import asyncio|import io|from pprint import pprint||import disnake|import objgraph||objgraph.show_growth(limit=3)|roots = objgraph.get_leaking_objects()|a = io.StringIO()|objgraph.show_refs(roots[:3], refcounts=True, output=a, shortnames=False)|# objgraph.show_refs(bot, refcounts=True, output=a, max_depth=15, shortnames=False)|await asyncio.sleep(1)|file = disnake.File(io.StringIO(a.getvalue()), filename="x.dot")|await interaction.channel.send(file=file)|
+
+from cooldowns import utils|return utils.shared_cooldown_refs
+
+import asyncio|import contextlib|import io|from collections import OrderedDict|from pprint import pprint||import disnake|||def show_coro(c):|    data = OrderedDict(|        [|            ("txt", str(c)),|            ("type", str(type(c))),|            ("done", c.done()),|            ("cancelled", False),|            ("stack", None),|            ("exception", None),|        ]|    )|    if not c.done():|        data["stack"] = [format_frame(x) for x in c.get_stack()]|    else:|        if c.cancelled():|            data["cancelled"] = True|        else:|            data["exception"] = str(c.exception())|    return data|||def format_frame(f):|    keys = ["f_code", "f_lineno"]|    return OrderedDict([(k, str(getattr(f, k))) for k in keys])|||stdout = io.StringIO()|with contextlib.redirect_stdout(stdout):|    pprint([show_coro(a) for a in asyncio.all_tasks()])|    result = stdout.getvalue()|file = disnake.File(io.StringIO(result), filename="stack.txt")|await interaction.channel.send(file=file)|
+
+import tracemalloc||import objgraph||from suggestions.stats import StatsEnum||objgraph.show_growth(limit=5)|snapshot1 = tracemalloc.take_snapshot()|await bot.stats.log_stats(|    271612318947868673, 601219766258106399, StatsEnum.ACTIVATE_BETA|)|snapshot2 = tracemalloc.take_snapshot()|print("")|objgraph.show_growth(limit=5)|top_stats = snapshot2.compare_to(snapshot1, "lineno")|print("[ Top 10 differences ]")|for stat in top_stats[:10]:|    print(stat)|
+
+import objgraph|objgraph.show_growth(limit=25)
+
+import objgraph|objgraph.show_most_common_types(limit=25)
