@@ -381,10 +381,11 @@ class Suggestion:
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
-        if self.resolved_by:
-            return await self._as_resolved_embed(bot)
-
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
+
+        if self.resolved_by:
+            return await self._as_resolved_embed(bot, user)
+
         if self.is_anonymous:
             submitter = "Anonymous"
         else:
@@ -416,7 +417,9 @@ class Suggestion:
 
         return embed
 
-    async def _as_resolved_embed(self, bot: SuggestionsBot) -> Embed:
+    async def _as_resolved_embed(
+        self, bot: SuggestionsBot, user: disnake.User
+    ) -> Embed:
         results = (
             f"**Results**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
             f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
@@ -433,7 +436,15 @@ class Suggestion:
             f"**{text} By**\n<@{self.resolved_by}>\n\n",
             colour=self.color,
             timestamp=bot.state.now,
-        ).set_footer(text=f"sID: {self.suggestion_id}")
+        )
+
+        if not self.is_anonymous:
+            embed.set_thumbnail(user.display_avatar)
+            embed.set_footer(
+                text=f"User ID: {self.suggestion_author_id} | sID: {self.suggestion_id}"
+            )
+        else:
+            embed.set_footer(text=f"sID: {self.suggestion_id}")
 
         icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
