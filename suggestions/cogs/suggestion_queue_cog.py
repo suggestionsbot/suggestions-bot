@@ -18,7 +18,7 @@ from disnake.ext import commands, components
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import ErrorHandled
-from suggestions.objects import GuildConfig, UserConfig
+from suggestions.objects import GuildConfig, UserConfig, QueuedSuggestion
 from suggestions.qs_paginator import QueuedSuggestionsPaginator
 
 if TYPE_CHECKING:
@@ -99,26 +99,44 @@ class SuggestionsQueueCog(commands.Cog):
     async def approve_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await inter.response.defer(ephemeral=True, with_message=True)
         paginator = await self.get_paginator_for(pid, inter)
-        current_suggestion = await paginator.get_current_queued_suggestion()
-        await paginator.remove_current_page()
-        suggestion: Suggestion = await current_suggestion.resolve(
-            was_approved=True, state=self.bot.state, resolved_by=inter.author.id
+        current_suggestion: QueuedSuggestion = (
+            await paginator.get_current_queued_suggestion()
         )
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            inter.guild_id, self.state
-        )
-        icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
-        guild = self.state.guild_cache.get_entry(inter.guild_id)
-        await suggestion.setup_initial_messages(
-            guild_config=guild_config,
-            interaction=inter,
-            state=self.state,
-            bot=self.bot,
-            cog=self.bot.get_cog("SuggestionsCog"),
-            guild=guild,
-            icon_url=icon_url,
-            comes_from_queue=True,
-        )
+        suggestion: None = None
+        try:
+            await paginator.remove_current_page()
+            suggestion: Suggestion = await current_suggestion.resolve(
+                was_approved=True, state=self.bot.state, resolved_by=inter.author.id
+            )
+            guild_config: GuildConfig = await GuildConfig.from_id(
+                inter.guild_id, self.state
+            )
+            icon_url = await Guild.try_fetch_icon_url(inter.guild_id, self.state)
+            guild = self.state.guild_cache.get_entry(inter.guild_id)
+            await suggestion.setup_initial_messages(
+                guild_config=guild_config,
+                interaction=inter,
+                state=self.state,
+                bot=self.bot,
+                cog=self.bot.get_cog("SuggestionsCog"),
+                guild=guild,
+                icon_url=icon_url,
+                comes_from_queue=True,
+            )
+        except:
+            # Throw it back in the queue on error
+            current_suggestion.resolved_by = None
+            current_suggestion.resolved_at = self.bot.state.now
+            current_suggestion.still_in_queue = True
+            await self.bot.state.queued_suggestions_db.update(
+                current_suggestion, current_suggestion
+            )
+
+            if suggestion is not None:
+                await self.bot.state.suggestions_db.delete(suggestion)
+
+            raise
+
         await inter.send(
             self.bot.get_localized_string("PAGINATION_INNER_QUEUE_ACCEPTED", inter),
             ephemeral=True,
@@ -161,7 +179,7 @@ class SuggestionsQueueCog(commands.Cog):
                 await inter.author.send(embed=embed)
         except disnake.HTTPException:
             log.debug(
-                "Failed to DM %s regarding there queued suggestion",
+                "Failed to DM %s regarding their queued suggestion",
                 inter.author.id,
             )
 
