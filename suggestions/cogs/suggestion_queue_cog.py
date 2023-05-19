@@ -169,18 +169,21 @@ class SuggestionsQueueCog(commands.Cog):
                 icon_url=icon_url,
             )
             embed.set_footer(text=f"Guild ID {inter.guild_id}")
+            user = await self.bot.get_or_fetch_user(
+                current_suggestion.suggestion_author_id
+            )
             user_config: UserConfig = await UserConfig.from_id(
-                inter.author.id, self.bot.state
+                current_suggestion.suggestion_author_id, self.bot.state
             )
             if (
                 not user_config.dm_messages_disabled
                 and not guild_config.dm_messages_disabled
             ):
-                await inter.author.send(embed=embed)
+                await user.send(embed=embed)
         except disnake.HTTPException:
             log.debug(
                 "Failed to DM %s regarding their queued suggestion",
-                inter.author.id,
+                current_suggestion.suggestion_author_id,
             )
 
         await inter.send(
