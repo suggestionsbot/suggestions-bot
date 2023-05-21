@@ -613,7 +613,7 @@ class GuildConfigCog(commands.Cog):
                 "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE", interaction
             ),
             "Enabled images on suggestions for guild %s",
-            self.stats.type.GUILD_SUGGESTIONS_QUEUE_ENABLE,
+            self.stats.type.GUILD_IMAGES_IN_SUGGESTIONS_ENABLE,
         )
 
     @images_in_suggestions.sub_command(name="disable")
@@ -629,7 +629,7 @@ class GuildConfigCog(commands.Cog):
                 "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE", interaction
             ),
             "Disabled images on suggestions for guild %s",
-            self.stats.type.GUILD_SUGGESTIONS_QUEUE_DISABLE,
+            self.stats.type.GUILD_IMAGES_IN_SUGGESTIONS_DISABLE,
         )
 
     async def modify_guild_config(
