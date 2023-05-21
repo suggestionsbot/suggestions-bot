@@ -190,7 +190,7 @@ class ViewVotersCog(commands.Cog):
         suggestion_id: str = commands.Param(
             description="The suggestion you want to view voters for"
         ),
-        to_view: str = commands.Param(
+        filter: str = commands.Param(
             choices=["All voters", "Up voters", "Down voters"],
             default="All voters",
             description="The voters to view for this suggestion",
@@ -206,12 +206,12 @@ class ViewVotersCog(commands.Cog):
         data = []
         up_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_up_vote()
         down_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_down_vote()
-        if to_view in ("All voters", "Up voters"):
+        if filter in ("All voters", "Up voters"):
             for voter in suggestion.up_voted_by:
                 data.append(f"{up_vote} <@{voter}>")
             data.append("")
 
-        if to_view in ("All voters", "Down voters"):
+        if filter in ("All voters", "Down voters"):
             for voter in suggestion.down_voted_by:
                 data.append(f"{down_vote} <@{voter}>")
 
