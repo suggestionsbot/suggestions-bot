@@ -182,6 +182,15 @@ class SuggestionsCog(commands.Cog):
             raise ErrorHandled
 
         image_url = image.url if isinstance(image, disnake.Attachment) else None
+        if image_url and not guild_config.can_have_images_in_suggestions:
+            await interaction.send(
+                self.bot.get_locale(
+                    "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
+                ),
+                ephemeral=True,
+            )
+            raise ErrorHandled
+
         if guild_config.uses_suggestion_queue:
             await QueuedSuggestion.new(
                 suggestion=suggestion,

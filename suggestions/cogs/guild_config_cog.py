@@ -122,6 +122,7 @@ class GuildConfigCog(commands.Cog):
                 "Anonymous suggestions",
                 "Auto archive threads",
                 "Suggestions queue",
+                "Images in suggestions",
             ],
             default=None,
         ),
@@ -219,6 +220,20 @@ class GuildConfigCog(commands.Cog):
             )
             embed.description += self.bot.get_locale(
                 "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_MESSAGE", interaction.locale
+            ).format(text)
+
+        elif config == "Images in suggestions":
+            text = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_SET", interaction.locale
+                )
+                if guild_config.can_have_images_in_suggestions
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_NOT_SET", interaction.locale
+                )
+            )
+            embed.description += self.bot.get_locale(
+                "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE", interaction.locale
             ).format(text)
 
         elif config == "Auto archive threads":
@@ -329,6 +344,19 @@ class GuildConfigCog(commands.Cog):
             "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_MESSAGE", interaction.locale
         ).format(anon_text)
 
+        image_text = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_SET", interaction.locale
+            )
+            if guild_config.can_have_images_in_suggestions
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_NOT_SET", interaction.locale
+            )
+        )
+        images = self.bot.get_locale(
+            "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE", interaction.locale
+        ).format(image_text)
+
         auto_archive_threads_text = (
             self.bot.get_locale(
                 "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_SET", interaction.locale
@@ -355,7 +383,8 @@ class GuildConfigCog(commands.Cog):
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
-            f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}",
+            f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}\n"
+            f"Images in suggestions: {images}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -564,6 +593,42 @@ class GuildConfigCog(commands.Cog):
                 "CONFIG_SUGGESTIONS_QUEUE_DISABLE_INNER_MESSAGE", interaction
             ),
             "Disabled suggestions queue on suggestions for guild %s",
+            self.stats.type.GUILD_SUGGESTIONS_QUEUE_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def images_in_suggestions(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @images_in_suggestions.sub_command(name="enable")
+    async def images_in_suggestions_enable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Allow images in suggestions for this guild."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_images_in_suggestions",
+            True,
+            self.bot.get_localized_string(
+                "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE", interaction
+            ),
+            "Enabled images on suggestions for guild %s",
+            self.stats.type.GUILD_SUGGESTIONS_QUEUE_ENABLE,
+        )
+
+    @images_in_suggestions.sub_command(name="disable")
+    async def images_in_suggestions_disable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Do not allow images in suggestions for this guild."""
+        await self.modify_guild_config(
+            interaction,
+            "can_have_images_in_suggestions",
+            False,
+            self.bot.get_localized_string(
+                "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE", interaction
+            ),
+            "Disabled images on suggestions for guild %s",
             self.stats.type.GUILD_SUGGESTIONS_QUEUE_DISABLE,
         )
 
