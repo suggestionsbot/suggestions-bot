@@ -104,5 +104,6 @@
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_NOT_SET": "cannot",
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE": "This guild {} have images in suggestions.",
   "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE": "All new suggestions can include images.",
-  "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE": "All new suggestions cannot include images."
+  "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE": "All new suggestions cannot include images.",
+  "VIEW_VOTERS_INNER_EMBED_TITLE": "Viewing voters"
 }
