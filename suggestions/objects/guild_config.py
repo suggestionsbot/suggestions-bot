@@ -25,6 +25,7 @@ class GuildConfig:
         can_have_anonymous_suggestions: bool = False,
         auto_archive_threads: bool = False,
         uses_suggestion_queue: bool = False,
+        can_have_images_in_suggestions: bool = True,
         **kwargs,
     ):
         self._id: int = _id
@@ -36,6 +37,7 @@ class GuildConfig:
         self.threads_for_suggestions: bool = threads_for_suggestions
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
         self.can_have_anonymous_suggestions: bool = can_have_anonymous_suggestions
+        self.can_have_images_in_suggestions: bool = can_have_images_in_suggestions
 
     @property
     def guild_id(self) -> int:
@@ -70,12 +72,6 @@ class GuildConfig:
         if not guild_config:
             log.info("Created new GuildConfig for %s", guild_id)
             guild_config = cls(_id=guild_id)
-        else:
-            log.debug(
-                "Fetched GuildConfig %s from database for guild %s",
-                guild_config,
-                guild_id,
-            )
 
         state.refresh_guild_config(guild_config)
         return guild_config
@@ -91,6 +87,7 @@ class GuildConfig:
             "uses_suggestion_queue": self.uses_suggestion_queue,
             "threads_for_suggestions": self.threads_for_suggestions,
             "can_have_anonymous_suggestions": self.can_have_anonymous_suggestions,
+            "can_have_images_in_suggestions": self.can_have_images_in_suggestions,
         }
 
     def as_filter(self) -> Dict:

@@ -52,6 +52,7 @@
   "SUGGEST_INNER_THANKS": "Thanks for your suggestion!",
   "SUGGEST_INNER_SENT_TO_QUEUE": "Your suggestion has been sent to the queue for processing.",
   "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Your guild does not allow anonymous suggestions.",
+  "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS": "Your guild does not allow images in suggestions.",
   "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "I have enabled anonymous suggestions for this guild.",
   "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild.",
   "SUGGESTION_OBJECT_LOCK_THREAD": "Locking this thread as the suggestion has reached a resolution.",
@@ -98,5 +99,10 @@
   "PAGINATION_INNER_QUEUE_REJECTED": "I have removed that suggestion from the queue.",
   "QUEUE_VIEW_INNER_NOTHING_QUEUED": "Your guild has no suggestions in the queue.",
   "QUEUE_VIEW_INNER_PRIOR_QUEUE": "These suggestions were queued before your guild disabled the suggestions queue.",
-  "QUEUE_INNER_USER_REJECTED": "Your queued suggestion was rejected."
+  "QUEUE_INNER_USER_REJECTED": "Your queued suggestion was rejected.",
+  "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_SET": "can",
+  "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_NOT_SET": "cannot",
+  "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE": "This guild {} have images in suggestions.",
+  "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE": "All new suggestions can include images.",
+  "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE": "All new suggestions cannot include images."
 }
