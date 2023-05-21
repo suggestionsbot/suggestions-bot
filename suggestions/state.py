@@ -43,6 +43,9 @@ class State:
         self.guild_cache: TimedCache[int, disnake.Guild] = TimedCache(
             global_ttl=self.guild_cache_ttl, lazy_eviction=False
         )
+        self.view_voters_cache: TimedCache[int, list[str]] = TimedCache(
+            global_ttl=self.autocomplete_cache_ttl, lazy_eviction=False
+        )
 
         self.guild_configs: TimedCache = TimedCache(
             global_ttl=timedelta(minutes=30), lazy_eviction=False
@@ -158,6 +161,18 @@ class State:
         data: List[str] = [d["_id"] for d in data]
         self.autocomplete_cache.add_entry(guild_id, data, override=True)
         log.debug("Populated sid cache for guild %s", guild_id)
+        return data
+
+    async def populate_view_voters_cache(self, guild_id: int) -> list:
+        self.view_voters_cache.delete_entry(guild_id)
+        data: List[Dict] = await self.database.suggestions.find_many(
+            AQ(EQ("guild_id", guild_id)),
+            projections=PROJECTION(SHOW("_id")),
+            try_convert=False,
+        )
+        data: List[str] = [d["_id"] for d in data]
+        self.view_voters_cache.add_entry(guild_id, data, override=True)
+        log.debug("Populated view voter cache for guild %s", guild_id)
         return data
 
     def add_sid_to_cache(self, guild_id: int, suggestion_id: str) -> None:
