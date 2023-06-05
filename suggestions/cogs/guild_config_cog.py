@@ -123,6 +123,7 @@ class GuildConfigCog(commands.Cog):
                 "Auto archive threads",
                 "Suggestions queue",
                 "Images in suggestions",
+                "Anonymous resolutions",
             ],
             default=None,
         ),
@@ -264,6 +265,16 @@ class GuildConfigCog(commands.Cog):
                 extras={"TEXT": text.lower()},
             )
 
+        elif config == "Anonymous resolutions":
+            locale_string = (
+                "CONFIG_GET_INNER_ANONYMOUS_RESOLUTION_SET"
+                if guild_config.anonymous_resolutions
+                else "CONFIG_GET_INNER_ANONYMOUS_RESOLUTION_NOT_SET"
+            )
+            text = self.bot.get_localized_string(locale_string, interaction)
+
+            embed.description += text
+
         else:
             raise InvalidGuildConfigOption
 
@@ -377,6 +388,15 @@ class GuildConfigCog(commands.Cog):
         )
         suggestions_queue = self.bot.get_localized_string(locale_string, interaction)
 
+        locale_string = (
+            "CONFIG_GET_INNER_ANONYMOUS_RESOLUTION_SET"
+            if guild_config.anonymous_resolutions
+            else "CONFIG_GET_INNER_ANONYMOUS_RESOLUTION_NOT_SET"
+        )
+        anonymous_resolutions = self.bot.get_localized_string(
+            locale_string, interaction
+        )
+
         icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
@@ -384,7 +404,7 @@ class GuildConfigCog(commands.Cog):
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
             f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}\n"
-            f"Images in suggestions: {images}",
+            f"Images in suggestions: {images}\nAnonymous resolutions: {anonymous_resolutions}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
@@ -594,6 +614,42 @@ class GuildConfigCog(commands.Cog):
             ),
             "Disabled suggestions queue on suggestions for guild %s",
             self.stats.type.GUILD_SUGGESTIONS_QUEUE_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def anonymous_resolutions(self, interaction: disnake.GuildCommandInteraction):
+        pass
+
+    @anonymous_resolutions.sub_command(name="enable")
+    async def anonymous_resolutions_enable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Suggesters no longer see who approved or rejected their suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "anonymous_resolutions",
+            True,
+            self.bot.get_localized_string(
+                "CONFIG_ANONYMOUS_RESOLUTION_ENABLE_INNER_MESSAGE", interaction
+            ),
+            "Enabled anonymous resolutions on suggestions for guild %s",
+            self.stats.type.GUILD_ANONYMOUS_RESOLUTIONS_ENABLE,
+        )
+
+    @anonymous_resolutions.sub_command(name="disable")
+    async def anonymous_resolutions_disable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Suggesters see who approved or rejected their suggestions."""
+        await self.modify_guild_config(
+            interaction,
+            "anonymous_resolutions",
+            False,
+            self.bot.get_localized_string(
+                "CONFIG_ANONYMOUS_RESOLUTION_DISABLE_INNER_MESSAGE", interaction
+            ),
+            "Disabled anonymous resolutions on suggestions for guild %s",
+            self.stats.type.GUILD_ANONYMOUS_RESOLUTIONS_DISABLE,
         )
 
     @config.sub_command_group()

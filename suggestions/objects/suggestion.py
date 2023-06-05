@@ -80,6 +80,7 @@ class Suggestion:
         image_url: Optional[str] = None,
         uses_views_for_votes: bool = False,
         is_anonymous: bool = False,
+        anonymous_resolution: Optional[bool] = None,
         **kwargs,
     ):
         """
@@ -142,6 +143,9 @@ class Suggestion:
         is_anonymous: bool
             Whether or not this suggestion
             should be displayed anonymous
+        anonymous_resolution: Optional[bool]
+            Whether or not to show who resolved this suggestion
+            to the end suggester
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -166,6 +170,7 @@ class Suggestion:
         self.down_voted_by: set[int] = set(down_voted_by) if down_voted_by else set()
         self.image_url: Optional[str] = image_url
         self.is_anonymous: bool = is_anonymous
+        self.anonymous_resolution: Optional[bool] = anonymous_resolution
 
     @property
     def total_up_votes(self) -> Optional[int]:
@@ -354,6 +359,7 @@ class Suggestion:
             "created_at": self.created_at,
             "uses_views_for_votes": self.uses_views_for_votes,
             "is_anonymous": self.is_anonymous,
+            "anonymous_resolution": self.anonymous_resolution,
         }
 
         if self.resolved_by:
@@ -430,10 +436,13 @@ class Suggestion:
         else:
             submitter = f"<@{self.suggestion_author_id}>"
         text = "Approved" if self.state == SuggestionState.approved else "Rejected"
+        resolved_by_text = (
+            "Anonymous" if self.anonymous_resolution else f"<@{self.resolved_by}>"
+        )
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
             f"**Submitter**\n{submitter}\n\n"
-            f"**{text} By**\n<@{self.resolved_by}>\n\n",
+            f"**{text} By**\n{resolved_by_text}\n\n",
             colour=self.color,
             timestamp=bot.state.now,
         )
@@ -627,6 +636,9 @@ class Suggestion:
         icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
+        resolved_by_text = (
+            "" if self.anonymous_resolution else f" by <@{self.resolved_by}>"
+        )
         response = (
             f"**Staff Response:** {self.resolution_note}\n\n"
             if self.resolution_note
@@ -636,7 +648,7 @@ class Suggestion:
         embed: Embed = (
             Embed(
                 description=f"Hey, {user.mention}. Your suggestion has been "
-                f"{text} by <@{self.resolved_by}>!\n\n{response}Your suggestion ID (sID) for reference "
+                f"{text}{resolved_by_text}!\n\n{response}Your suggestion ID (sID) for reference "
                 f"was **{self.suggestion_id}**.",
                 timestamp=bot.state.now,
                 color=self.color,
@@ -803,6 +815,7 @@ class Suggestion:
         resolution_note: Optional[str] = None,
     ):
         log.debug("Attempting to resolve suggestion %s", self.suggestion_id)
+        self.anonymous_resolution = guild_config.anonymous_resolutions
         # https://github.com/suggestionsbot/suggestions-bot/issues/36
         if resolution_type is SuggestionState.approved:
             await self.mark_approved_by(state, interaction.author.id, resolution_note)
