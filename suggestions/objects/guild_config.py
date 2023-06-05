@@ -26,6 +26,7 @@ class GuildConfig:
         auto_archive_threads: bool = False,
         uses_suggestion_queue: bool = False,
         can_have_images_in_suggestions: bool = True,
+        anonymous_resolutions: bool = False,
         **kwargs,
     ):
         self._id: int = _id
@@ -33,6 +34,7 @@ class GuildConfig:
         self.log_channel_id: Optional[int] = log_channel_id
         self.auto_archive_threads: bool = auto_archive_threads
         self.dm_messages_disabled: bool = dm_messages_disabled
+        self.anonymous_resolutions: bool = anonymous_resolutions
         self.uses_suggestion_queue: bool = uses_suggestion_queue
         self.threads_for_suggestions: bool = threads_for_suggestions
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
@@ -85,6 +87,7 @@ class GuildConfig:
             "dm_messages_disabled": self.dm_messages_disabled,
             "suggestions_channel_id": self.suggestions_channel_id,
             "uses_suggestion_queue": self.uses_suggestion_queue,
+            "anonymous_resolutions": self.anonymous_resolutions,
             "threads_for_suggestions": self.threads_for_suggestions,
             "can_have_anonymous_suggestions": self.can_have_anonymous_suggestions,
             "can_have_images_in_suggestions": self.can_have_images_in_suggestions,

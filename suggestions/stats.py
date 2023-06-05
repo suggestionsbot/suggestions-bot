@@ -43,6 +43,8 @@ class StatsEnum(Enum):
     GUILD_AUTO_ARCHIVE_THREADS_DISABLE = "guild_auto_archive_threads_disable"
     GUILD_SUGGESTIONS_QUEUE_ENABLE = "guild_suggestions_queue_enable"
     GUILD_SUGGESTIONS_QUEUE_DISABLE = "guild_suggestions_queue_disable"
+    GUILD_ANONYMOUS_RESOLUTIONS_ENABLE = "guild_anonymous_resolutions_enable"
+    GUILD_ANONYMOUS_RESOLUTIONS_DISABLE = "guild_anonymous_resolutions_disable"
     GUILD_IMAGES_IN_SUGGESTIONS_ENABLE = "guild_images_in_suggestions_enable"
     GUILD_IMAGES_IN_SUGGESTIONS_DISABLE = "guild_images_in_suggestions_disable"
     GUILD_KEEPLOGS_ENABLE = "guild_keeplogs_enable"
@@ -83,6 +85,8 @@ class StatsEnum(Enum):
                 "config auto_archive_threads disable": cls.GUILD_AUTO_ARCHIVE_THREADS_DISABLE,
                 "config images_in_suggestions enable": cls.GUILD_IMAGES_IN_SUGGESTIONS_ENABLE,
                 "config images_in_suggestions disable": cls.GUILD_IMAGES_IN_SUGGESTIONS_DISABLE,
+                "config anonymous_resolutions enable": cls.GUILD_ANONYMOUS_RESOLUTIONS_ENABLE,
+                "config anonymous_resolutions disable": cls.GUILD_ANONYMOUS_RESOLUTIONS_DISABLE,
                 "Approve suggestion": cls.APPROVE_BY_MESSAGE_COMMAND,
                 "Reject suggestion": cls.REJECT_BY_MESSAGE_COMMAND,
                 "View up voters": cls.VIEW_UP_VOTERS,
