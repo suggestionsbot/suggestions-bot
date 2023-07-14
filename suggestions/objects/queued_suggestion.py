@@ -130,22 +130,22 @@ class QueuedSuggestion:
 
         return data
 
-    async def as_embed(self, bot: SuggestionsBot, locale: disnake.Locale) -> Embed:
+    async def as_embed(self, bot: SuggestionsBot, interaction: disnake.Interaction) -> Embed:
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
         if self.is_anonymous:
-            submitter = "Anonymous"
+            submitter = bot.get_localized_string("SUBMITTER_ANONYMOUS", interaction)
         else:
             submitter = user.display_name
 
         embed: Embed = Embed(
-            description=f"**Submitter**\n{submitter}\n\n"
-            f"**Suggestion**\n{self.suggestion}",
+            description=f"**{bot.get_localized_string('SUBMITTER_NAME', interaction)}**\n{submitter}\n\n"
+            f"**{bot.get_localized_string('SUGGESTION', interaction)}**\n{self.suggestion}",
             colour=bot.colors.embed_color,
             timestamp=self.created_at,
         )
         if not self.is_anonymous:
             embed.set_thumbnail(user.display_avatar)
-            embed.set_footer(text=f"Submitter ID: {self.suggestion_author_id}")
+            embed.set_footer(text=f"{bot.get_localized_string('SUBMITTER_ID', interaction)}: {self.suggestion_author_id}")
 
         if self.image_url:
             embed.set_image(self.image_url)

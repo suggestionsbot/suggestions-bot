@@ -386,20 +386,20 @@ class Suggestion:
 
         return data
 
-    async def as_embed(self, bot: SuggestionsBot, locale: disnake.Locale) -> Embed:
+    async def as_embed(self, bot: SuggestionsBot, interaction: disnake.Interaction) -> Embed:
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
 
         if self.resolved_by:
-            return await self._as_resolved_embed(bot, user, locale)
+            return await self._as_resolved_embed(bot, user, interaction)
 
         if self.is_anonymous:
-            submitter = bot.get_locale("SUBMITTER_ANONYMOUS", locale)
+            submitter = bot.get_localized_string("SUBMITTER_ANONYMOUS", interaction)
         else:
             submitter = user.display_name
 
         embed: Embed = Embed(
-            description=f"**{bot.get_locale('SUBMITTER_NAME', locale)}**\n{submitter}\n\n"
-            f"**{bot.get_locale('SUGGESTION', locale)}**\n{self.suggestion}",
+            description=f"**{bot.get_localized_string('SUBMITTER_NAME', interaction)}**\n{submitter}\n\n"
+            f"**{bot.get_localized_string('SUGGESTION', interaction)}**\n{self.suggestion}",
             colour=self.color,
             timestamp=bot.state.now,
         )
@@ -416,7 +416,7 @@ class Suggestion:
 
         if self.uses_views_for_votes:
             results = (
-                f"**{bot.get_locale('RESULTS_SO_FAR', locale)}**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+                f"**{bot.get_localized_string('RESULTS_SO_FAR', interaction)}**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
                 f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
             )
             embed.description += f"\n\n{results}"
@@ -424,25 +424,25 @@ class Suggestion:
         return embed
 
     async def _as_resolved_embed(
-        self, bot: SuggestionsBot, user: disnake.User, locale: disnake.Locale
+        self, bot: SuggestionsBot, user: disnake.User, interaction: disnake.Interaction
     ) -> Embed:
         results = (
-            f"**{bot.get_locale('EMBED_RESULTS', locale)}**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
+            f"**{bot.get_localized_string('EMBED_RESULTS', interaction)}**\n{await bot.suggestion_emojis.default_up_vote()}: **{self.total_up_votes}**\n"
             f"{await bot.suggestion_emojis.default_down_vote()}: **{self.total_down_votes}**"
         )
         
         if self.is_anonymous:
-            submitter = bot.get_locale('SUBMITTER_ANONYMOUS', locale)
+            submitter = bot.get_localized_string('SUBMITTER_ANONYMOUS', interaction)
         else:
             submitter = f"<@{self.suggestion_author_id}>"
-        text = bot.get_locale('SUGGESTION_STATUS_APPROVED', locale) if self.state == SuggestionState.approved else bot.get_locale('SUGGESTION_STATUS_REJECTED', locale)
+        text = bot.get_localized_string('SUGGESTION_STATUS_APPROVED', interaction) if self.state == SuggestionState.approved else bot.get_localized_string('SUGGESTION_STATUS_REJECTED', interaction)
         resolved_by_text = (
-            bot.get_locale('SUBMITTER_ANONYMOUS', locale) if self.anonymous_resolution else f"<@{self.resolved_by}>"
+            bot.get_localized_string('SUBMITTER_ANONYMOUS', interaction) if self.anonymous_resolution else f"<@{self.resolved_by}>"
         )
         embed = Embed(
-            description=f"{results}\n\n**{bot.get_locale('SUGGESTION', locale)}**\n{self.suggestion}\n\n"
-            f"**{bot.get_locale('SUBMITTER_NAME', locale)}**\n{submitter}\n\n"
-            f"**{text} {bot.get_locale('SUGGESTION_STATUS_CHANGED_BY', locale)}**\n{resolved_by_text}\n\n",
+            description=f"{results}\n\n**{bot.get_localized_string('SUGGESTION', interaction)}**\n{self.suggestion}\n\n"
+            f"**{bot.get_localized_string('SUBMITTER_NAME', interaction)}**\n{submitter}\n\n"
+            f"**{text} {bot.get_localized_string('SUGGESTION_STATUS_CHANGED_BY', interaction)}**\n{resolved_by_text}\n\n",
             colour=self.color,
             timestamp=bot.state.now,
         )
@@ -688,7 +688,7 @@ class Suggestion:
         try:
             await MessageEditing(
                 bot, channel_id=self.channel_id, message_id=self.message_id
-            ).edit(embed=await self.as_embed(bot, interaction.locale))
+            ).edit(embed=await self.as_embed(bot, interaction))
         except (disnake.HTTPException, disnake.NotFound):
             await interaction.send(
                 embed=bot.error_embed(
@@ -722,7 +722,7 @@ class Suggestion:
             message: disnake.Message = await channel.fetch_message(self.message_id)
 
             try:
-                await message.edit(embed=await self.as_embed(bot, interaction.locale), components=None)
+                await message.edit(embed=await self.as_embed(bot, interaction), components=None)
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
                     missing_permissions=[
@@ -749,7 +749,7 @@ class Suggestion:
             )
             try:
                 message: disnake.Message = await channel.send(
-                    embed=await self.as_embed(bot, interaction.locale)
+                    embed=await self.as_embed(bot, interaction)
                 )
             except disnake.Forbidden:
                 raise commands.MissingPermissions(
@@ -866,7 +866,7 @@ class Suggestion:
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
-                embed=await self.as_embed(bot, interaction.locale),
+                embed=await self.as_embed(bot, interaction),
                 components=[
                     disnake.ui.Button(
                         emoji=await bot.suggestion_emojis.default_up_vote(),

@@ -22,7 +22,7 @@ async def update_suggestion_message(
     suggestion: Suggestion,
     bot: SuggestionsBot,
     time_after: float = 10,
-    locale : disnake.Locale
+    interaction : disnake.Interaction
 ):
     if suggestion.suggestion_id in pending_edits:
         log.debug("Ignoring already existing item %s", suggestion.suggestion_id)
@@ -33,7 +33,7 @@ async def update_suggestion_message(
     try:
         await MessageEditing(
             bot, channel_id=suggestion.channel_id, message_id=suggestion.message_id
-        ).edit(embed=await suggestion.as_embed(bot, locale))
+        ).edit(embed=await suggestion.as_embed(bot, interaction))
     except (disnake.HTTPException, disnake.NotFound):
         log.error("Failed to update suggestion %s", suggestion.suggestion_id)
 
