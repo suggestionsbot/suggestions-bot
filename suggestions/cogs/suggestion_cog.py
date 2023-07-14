@@ -7,7 +7,7 @@ import cooldowns
 import disnake
 from bot_base import NonExistentEntry
 from bot_base.wraps import WrappedChannel
-from disnake import Guild
+from disnake import Guild, Localized
 from disnake.ext import commands, components
 
 from suggestions import checks, Stats, ErrorCode
@@ -149,21 +149,31 @@ class SuggestionsCog(commands.Cog):
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
         # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
-    @commands.slash_command(dm_permission=False)
+    @commands.slash_command(
+        dm_permission=False,
+    )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_suggestions_channel()
     async def suggest(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion: str = commands.Param(description="Your suggestion"),
+        suggestion: str = commands.Param(),
         image: disnake.Attachment = commands.Param(
-            default=None, description="An image to add to your suggestion."
+            default=None,
         ),
         anonymously: bool = commands.Param(
             default=False, description="Submit your suggestion anonymously."
         ),
     ):
-        """Create a new suggestion."""
+        """
+        {{SUGGEST}}
+
+        Parameters
+        ----------
+        suggestion: {{SUGGEST_ARG_SUGGESTION}}
+        image: {{SUGGEST_ARG_IMAGE}}
+        anonymously: {{SUGGEST_ARG_ANONYMOUSLY}}
+        """
         if len(suggestion) > 1000:
             raise SuggestionTooLong
 
@@ -255,12 +265,19 @@ class SuggestionsCog(commands.Cog):
     async def approve(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion_id: str = commands.Param(description="The sID you wish to approve"),
+        suggestion_id: str = commands.Param(),
         response: Optional[str] = commands.Param(
-            description="An optional response to add to the suggestion", default=None
+            default=None,
         ),
     ):
-        """Approve a suggestion."""
+        """
+        {{APPROVE}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{APPROVE_ARG_SUGGESTION_ID}}
+        response: str {{APPROVE_ARG_RESPONSE}}
+        """
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
@@ -308,12 +325,19 @@ class SuggestionsCog(commands.Cog):
     async def reject(
         self,
         interaction: disnake.GuildCommandInteraction,
-        suggestion_id: str = commands.Param(description="The sID you wish to reject"),
+        suggestion_id: str = commands.Param(),
         response: Optional[str] = commands.Param(
-            description="An optional response to add to the suggestion", default=None
+            default=None,
         ),
     ):
-        """Reject a suggestion."""
+        """
+        {{REJECT}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{REJECT_ARG_SUGGESTION_ID}}
+        response: str {{REJECT_ARG_RESPONSE}}
+        """
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
@@ -366,7 +390,14 @@ class SuggestionsCog(commands.Cog):
             default=None,
         ),
     ):
-        """Remove a suggestion and any associated messages."""
+        """
+        {{CLEAR}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{CLEAR_ARG_SUGGESTION_ID}}
+        response: str {{CLEAR_ARG_RESPONSE}}
+        """
         await interaction.response.defer(ephemeral=True)
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, interaction.guild_id, self.state
