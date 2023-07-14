@@ -1,8 +1,8 @@
 {
   "SUGGEST_NAME": "suggérer",
-  "SUGGESTION_DESCRIPTION": "Créer une nouvelle suggestion.",
-  "SUGGESTION_ARG_SUGGESTION_DESCRIPTION": "Votre suggestion.",
-  "SUGGESTION_ARG_IMAGE_DESCRIPTION": "Une image à ajouter à votre suggestion.",
+  "SUGGEST_DESCRIPTION": "Créer une nouvelle suggestion.",
+  "SUGGEST_ARG_SUGGESTION_DESCRIPTION": "Votre suggestion.",
+  "SUGGEST_ARG_IMAGE_DESCRIPTION": "Une image à ajouter à votre suggestion.",
   "APPROVE_NAME": "approuver",
   "APPROVE_DESCRIPTION": "Approuver une suggestion",
   "APPROVE_ARG_SUGGESTION_ID_NAME": "suggestion_id",
