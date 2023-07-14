@@ -87,7 +87,7 @@ class SuggestionsCog(commands.Cog):
                 ephemeral=True,
             )
 
-        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
+        await update_suggestion_message(suggestion=suggestion, bot=self.bot, locale=inter.locale)
 
     @components.button_listener()
     async def suggestion_down_vote(
@@ -146,7 +146,7 @@ class SuggestionsCog(commands.Cog):
                 ephemeral=True,
             )
 
-        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
+        await update_suggestion_message(suggestion=suggestion, bot=self.bot, locale=inter.locale)
         # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
     @commands.slash_command(

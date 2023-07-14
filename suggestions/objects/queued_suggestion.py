@@ -5,6 +5,7 @@ import logging
 from typing import Optional, TYPE_CHECKING, overload
 
 from disnake import Embed
+import disnake
 
 from suggestions.exceptions import UnhandledError
 from suggestions.objects import Suggestion
@@ -129,7 +130,7 @@ class QueuedSuggestion:
 
         return data
 
-    async def as_embed(self, bot: SuggestionsBot) -> Embed:
+    async def as_embed(self, bot: SuggestionsBot, locale: disnake.Locale) -> Embed:
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
         if self.is_anonymous:
             submitter = "Anonymous"

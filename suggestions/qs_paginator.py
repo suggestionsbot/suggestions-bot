@@ -80,7 +80,7 @@ class QueuedSuggestionsPaginator:
             await self.remove_current_page()
             log.debug("Hit QueueImbalance")
         else:
-            embed: disnake.Embed = await suggestion.as_embed(self.bot)
+            embed: disnake.Embed = await suggestion.as_embed(self.bot, self.original_interaction.locale)
             if suggestion.is_anonymous:
                 embed.set_footer(text=f"Page {self.current_page}/{self.total_pages}")
             else:
