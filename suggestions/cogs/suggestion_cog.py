@@ -165,6 +165,15 @@ class SuggestionsCog(commands.Cog):
             default=False, description="Submit your suggestion anonymously."
         ),
     ):
+        """
+        {{SUGGEST}}
+
+        Parameters
+        ----------
+        suggestion: {{SUGGEST_ARG_SUGGESTION}}
+        image: {{SUGGEST_ARG_IMAGE}}
+        anonymously: {{SUGGEST_ARG_ANONYMOUSLY}}
+        """
         if len(suggestion) > 1000:
             raise SuggestionTooLong
 
@@ -261,6 +270,14 @@ class SuggestionsCog(commands.Cog):
             default=None,
         ),
     ):
+        """
+        {{APPROVE}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{APPROVE_ARG_SUGGESTION_ID}}
+        response: str {{APPROVE_ARG_RESPONSE}}
+        """
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
@@ -313,6 +330,14 @@ class SuggestionsCog(commands.Cog):
             default=None,
         ),
     ):
+        """
+        {{REJECT}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{REJECT_ARG_SUGGESTION_ID}}
+        response: str {{REJECT_ARG_RESPONSE}}
+        """
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
@@ -365,6 +390,14 @@ class SuggestionsCog(commands.Cog):
             default=None,
         ),
     ):
+        """
+        {{CLEAR}}
+
+        Parameters
+        ----------
+        suggestion_id: str {{CLEAR_ARG_SUGGESTION_ID}}
+        response: str {{CLEAR_ARG_RESPONSE}}
+        """
         await interaction.response.defer(ephemeral=True)
         suggestion: Suggestion = await Suggestion.from_id(
             suggestion_id, interaction.guild_id, self.state

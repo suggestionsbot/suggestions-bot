@@ -115,6 +115,13 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             default=False,
         ),
     ):
+        """
+        {{INFO}}
+
+        Parameters
+        ----------
+        support: {{INFO_ARG_SUPPORT}}
+        """
         await interaction.response.defer()
         if support and bot.is_prod and interaction.guild_id:
             shard_id = bot.get_shard_id(interaction.guild_id)
@@ -152,6 +159,9 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     @bot.slash_command()
     @cooldowns.cooldown(1, 1, bucket=InteractionBucket.author)
     async def ping(interaction: disnake.CommandInteraction):
+        """
+        {{PING}}
+        """
         if bot.is_prod:
             shard_id = bot.get_shard_id(interaction.guild_id)
             shard = bot.get_shard(shard_id)
