@@ -41,10 +41,6 @@ class ZonisRoutes:
 
     async def start(self):
         self.client.load_routes()
-
-        log.warning("Cancelling zonis start up")
-        return
-
         await exception_aware_scheduler(
             self.client._connect,
             retry_count=100,  # Just over 4 hours of retries
