@@ -543,7 +543,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.debug("Loaded %s cogs", count)
 
     async def load(self):
-        self.i18n.load(Path("suggestions/locales"))
+        # self.i18n.load(Path("suggestions/locales"))
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
