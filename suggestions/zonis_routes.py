@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 import os
 from typing import TYPE_CHECKING
@@ -11,6 +12,8 @@ from suggestions.scheduler import exception_aware_scheduler
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
+
+log = logging.getLogger(__name__)
 
 
 class ZonisRoutes:
@@ -38,6 +41,10 @@ class ZonisRoutes:
 
     async def start(self):
         self.client.load_routes()
+
+        log.warning("Cancelling zonis start up")
+        return
+
         await exception_aware_scheduler(
             self.client._connect,
             retry_count=100,  # Just over 4 hours of retries
