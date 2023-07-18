@@ -622,6 +622,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.debug("I am not the primary cluster, disabling bot listing updates")
             return
 
+        log.warning("Cancelling bot listing updates while WS is down")
+        return
+
         state: State = self.state
         time_between_updates: datetime.timedelta = datetime.timedelta(minutes=30)
 
