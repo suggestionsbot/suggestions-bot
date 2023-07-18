@@ -143,7 +143,7 @@ class HelpGuildCog(commands.Cog):
         red_circle = "🔴"
         green_circle = "🟢"
         url = (
-            "http://garven.suggestions.gg/cluster/status"
+            "https://garven.suggestions.gg/cluster/status"
             if self.bot.is_prod
             else "https://garven.dev.suggestions.gg/cluster/status"
         )
