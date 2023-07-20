@@ -13,9 +13,7 @@ from suggestions.objects.stats import MemberStats
 
 class SuggestionsMongoManager(MongoManager):
     def __init__(self, connection_url):
-        super().__init__(
-            connection_url=connection_url, database_name="suggestions-rewrite"
-        )
+        super().__init__(connection_url=connection_url, database_name="suggestions_bot")
 
         self.suggestions: Document = Document(
             self.db, "suggestions", converter=Suggestion

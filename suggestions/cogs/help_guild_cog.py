@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import io
 import logging
 import os
@@ -149,11 +150,11 @@ class HelpGuildCog(commands.Cog):
         )
 
         embed = disnake.Embed(
-            timestamp=self.bot.state.now,
+            timestamp=datetime.datetime.utcnow(),
             title="Bot infrastructure status",
         )
-        down_shards: list[str] = []
-        down_clusters: list[str] = []
+        down_shards: list[str] = [str(i) for i in range(53)]
+        down_clusters: list[str] = [str(i) for i in range(1, 7)]
         avg_bot_latency: list[float] = []
         async with aiohttp.ClientSession(
             headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
@@ -161,25 +162,21 @@ class HelpGuildCog(commands.Cog):
             async with session.get(url) as resp:
                 data: dict[str, dict | bool] = await resp.json()
                 if resp.status != 200:
-                    return await interaction.send(
-                        f"Something went wrong: {data}", ephemeral=True
-                    )
+                    log.error("Something went wrong: %s", data)
 
-        if data.pop("partial_response"):
+        if data.pop("partial_response") is not None:
             embed.set_footer(text="Partial response")
 
         for cluster_id, v in data["clusters"].items():
             cluster_is_up = v.pop("cluster_is_up")
-            if not cluster_is_up:
-                down_clusters.append(cluster_id)
-                continue
+            if cluster_is_up:
+                down_clusters.remove(str(cluster_id))
 
             for shard_id, d in v["shards"].items():
                 latency = d["latency"]
                 is_currently_up = d["is_currently_up"]
-                if not is_currently_up:
-                    down_shards.append(shard_id)
-                    continue
+                if is_currently_up:
+                    down_shards.remove(str(shard_id))
 
                 if latency:
                     avg_bot_latency.append(latency)
@@ -203,9 +200,9 @@ class HelpGuildCog(commands.Cog):
         additional_cluster_info = calculate_extra(down_clusters)
 
         embed.description = (
-            f"{green_circle} **Shards:** `{self.bot.total_shards - len(down_shards)}`\n"
+            f"{green_circle} **Shards:** `{53 - len(down_shards)}`\n"
             f"{red_circle} **Shards:** `{len(down_shards)}`{additional_shard_info}\n\n"
-            f"{green_circle} **Clusters:** `{self.bot.total_cluster_count - len(down_clusters)}`\n"
+            f"{green_circle} **Clusters:** `{6 - len(down_clusters)}`\n"
             f"{red_circle} **Clusters:** `{len(down_clusters)}`{additional_cluster_info}\n\n"
             f"Average bot latency: `{round(bot_latency, 3)}ms`"
         )
