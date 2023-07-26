@@ -947,20 +947,41 @@ class Suggestion:
             user_config: UserConfig = await UserConfig.from_id(
                 interaction.author.id, bot.state
             )
-            if user_config.dm_messages_disabled or guild_config.dm_messages_disabled:
-                if comes_from_queue:
-                    # We can't do anything here, as it's a delayed message
-                    pass
-                else:
-                    await interaction.send(embed=embed, ephemeral=True)
-            else:
-                await interaction.send(
-                    bot.get_locale("SUGGEST_INNER_THANKS", interaction.locale),
-                    ephemeral=True,
+            if comes_from_queue:
+                # Send DM to author
+                # No need to tell person who in queue its good
+                author_config = await UserConfig.from_id(
+                    self.suggestion_author_id, bot.state
                 )
-                await interaction.author.send(embed=embed)
+                if (
+                    author_config.dm_messages_disabled
+                    or guild_config.dm_messages_disabled
+                ):
+                    # Nothing we can do
+                    log.debug(
+                        "Failed to DM %s regarding their suggestion being created from queue",
+                        self.suggestion_author_id,
+                    )
+                    return
+
+                user = await bot.get_or_fetch_user(self.suggestion_author_id)
+                await user.send(embed=embed)
+
+            else:
+                # Send everything to author as it is their suggestion
+                if (
+                    user_config.dm_messages_disabled
+                    or guild_config.dm_messages_disabled
+                ):
+                    await interaction.send(embed=embed, ephemeral=True)
+                else:
+                    await interaction.send(
+                        bot.get_locale("SUGGEST_INNER_THANKS", interaction.locale),
+                        ephemeral=True,
+                    )
+                    await interaction.author.send(embed=embed)
         except disnake.HTTPException:
             log.debug(
-                "Failed to DM %s regarding there suggestion",
+                "Failed to DM %s regarding their suggestion",
                 interaction.author.id,
             )

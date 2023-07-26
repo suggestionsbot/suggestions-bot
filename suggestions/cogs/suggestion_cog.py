@@ -158,12 +158,8 @@ class SuggestionsCog(commands.Cog):
         self,
         interaction: disnake.GuildCommandInteraction,
         suggestion: str = commands.Param(),
-        image: disnake.Attachment = commands.Param(
-            default=None,
-        ),
-        anonymously: bool = commands.Param(
-            default=False, description="Submit your suggestion anonymously."
-        ),
+        image: disnake.Attachment = commands.Param(default=None),
+        anonymously: bool = commands.Param(default=False),
     ):
         """
         {{SUGGEST}}
