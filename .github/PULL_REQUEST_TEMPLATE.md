@@ -14,3 +14,4 @@
 - [ ] New errors have been updated on ``stats.suggestions.gg``
 - [ ] Guild config method names aren't duplicated
 - [ ] New localizations have been added
+- [ ] Documentation on ``docs.suggestions.gg`` has been updated
