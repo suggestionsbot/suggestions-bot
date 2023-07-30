@@ -882,6 +882,7 @@ class Suggestion:
                     ),
                 ],
             )
+            log.debug("Sent suggestion %s to channel", self.suggestion_id)
         except disnake.Forbidden as e:
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
