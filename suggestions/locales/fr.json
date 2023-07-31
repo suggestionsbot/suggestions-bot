@@ -109,5 +109,16 @@
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE": "Cette guilde {} autoriser les images dans les suggestions.",
   "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE": "Toutes les nouvelles suggestions peuvent inclure des images.",
   "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE": "Toutes les nouvelles suggestions ne peuvent pas inclure d'images.",
-  "VIEW_VOTERS_INNER_EMBED_TITLE": "Affichage des votants"
+  "VIEW_VOTERS_INNER_EMBED_TITLE": "Affichage des votants",
+  "RESULTS_SO_FAR": "Résultats",
+  "EMBED_RESULTS": "Résultats",
+  "SUGGESTION": "Suggestion",
+  "SUBMITTER_NAME": "Créer par",
+  "SUBMITTER_ANONYMOUS": "Anonyme",
+  "SUBMITTER_ID": "ID du créateur",
+  "PAGE": "Page",
+  "THREAD_FOR_SUGGESTION": "Fil de suggestion",
+  "SUGGESTION_STATUS_APPROVED": "Approuvée",
+  "SUGGESTION_STATUS_REJECTED": "Rejetée",
+  "SUGGESTION_STATUS_CHANGED_BY": "Par"
 }
