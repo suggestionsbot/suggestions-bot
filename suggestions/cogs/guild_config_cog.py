@@ -47,11 +47,6 @@ class GuildConfigCog(commands.Cog):
         )
         guild_config.suggestions_channel_id = channel.id
         self.state.refresh_guild_config(guild_config)
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
             self.bot.get_locale(
@@ -83,11 +78,6 @@ class GuildConfigCog(commands.Cog):
         )
         guild_config.log_channel_id = channel.id
         self.state.refresh_guild_config(guild_config)
-        log.debug(
-            "Updating GuildConfig %s in database for guild %s",
-            guild_config,
-            interaction.guild_id,
-        )
         await self.state.guild_config_db.upsert(guild_config, guild_config)
         await interaction.send(
             self.bot.get_locale("CONFIG_LOGS_INNER_MESSAGE", interaction.locale).format(

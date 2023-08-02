@@ -126,7 +126,7 @@ class SuggestionsQueueCog(commands.Cog):
         except:
             # Throw it back in the queue on error
             current_suggestion.resolved_by = None
-            current_suggestion.resolved_at = self.bot.state.now
+            current_suggestion.resolved_at = None
             current_suggestion.still_in_queue = True
             await self.bot.state.queued_suggestions_db.update(
                 current_suggestion, current_suggestion

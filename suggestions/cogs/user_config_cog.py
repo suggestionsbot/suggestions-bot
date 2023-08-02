@@ -69,7 +69,7 @@ class UserConfigCog(commands.Cog):
         await interaction.send(
             f"I {text} DM you on actions such as suggest.", ephemeral=True
         )
-        log.debug("User %s viewed there DM configuration", interaction.author.id)
+        log.debug("User %s viewed their DM configuration", interaction.author.id)
         await self.stats.log_stats(
             interaction.author.id,
             interaction.guild_id,
