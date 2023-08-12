@@ -8,9 +8,9 @@ from alaric.comparison import EQ
 from disnake.ext import commands
 
 from suggestions.exceptions import (
-    BetaOnly,
     MissingSuggestionsChannel,
     MissingLogsChannel,
+    BlocklistedUser,
 )
 
 if TYPE_CHECKING:
@@ -58,6 +58,21 @@ def ensure_guild_has_logs_channel_or_keep_logs():
 
         if not guild_config.log_channel_id and not guild_config.keep_logs:
             raise MissingLogsChannel
+
+        return True
+
+    return commands.check(check)  # type: ignore
+
+
+def ensure_user_is_not_blocklisted():
+    async def check(interaction: disnake.Interaction):
+        guild_config: Optional[GuildConfig] = await fetch_guild_config(interaction)
+
+        if not bool(guild_config):
+            return True
+
+        if interaction.author.id in guild_config.blocked_users:
+            raise BlocklistedUser
 
         return True
 

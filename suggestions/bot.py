@@ -33,6 +33,7 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
     UnhandledError,
     QueueImbalance,
+    BlocklistedUser,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -409,6 +410,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command on Cooldown",
                     f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, BlocklistedUser):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Blocked Action",
+                    "Administrators from this guild have removed your ability to run this action.",
+                    error_code=ErrorCode.BLOCKLISTED_USER,
                     error=error,
                 ),
                 ephemeral=True,

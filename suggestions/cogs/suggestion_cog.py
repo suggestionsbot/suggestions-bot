@@ -153,6 +153,7 @@ class SuggestionsCog(commands.Cog):
         dm_permission=False,
     )
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
+    @checks.ensure_user_is_not_blocklisted()
     @checks.ensure_guild_has_suggestions_channel()
     async def suggest(
         self,
