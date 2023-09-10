@@ -112,5 +112,13 @@
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE": "Este servidor {} ter imagens em sugestões.",
   "CONFIG_SUGGESTIONS_IMAGES_ENABLE_INNER_MESSAGE": "Todas as novas sugestões podem incluir imagens.",
   "CONFIG_SUGGESTIONS_IMAGES_DISABLE_INNER_MESSAGE": "Todas as novas sugestões não podem incluir imagens.",
-  "VIEW_VOTERS_INNER_EMBED_TITLE": "Vendo votantes..."
+  "VIEW_VOTERS_INNER_EMBED_TITLE": "Vendo votantes...",
+  "USER_BLOCKLIST_ADD_NAME": "adicionar",
+  "USER_BLOCKLIST_ADD_DESCRIPTION": "Remova a habilidade de um usuário de criar sugestões",
+  "USER_BLOCKLIST_REMOVE_NAME": "remove",
+  "USER_BLOCKLIST_REMOVE_DESCRIPTION": "Readicione a habilidade de criar sugestões a um usuário.",
+  "SUGGESTION_ID_NAME": "suggestion_id",
+  "SUGGESTION_ID_DESCRIPTION": "O ID de sugestão que você deseja referenciar.",
+  "USER_ID_NAME": "user_id",
+  "USER_ID_DESCRIPTION": "O ID Discord do usuário."
 } 
