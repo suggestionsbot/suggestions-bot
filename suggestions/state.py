@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot
     from alaric import Document
     from suggestions.database import SuggestionsMongoManager
+    from suggestions.interaction_handler import InteractionHandler
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,10 @@ class State:
         self.existing_paginator_ids: Set[str] = set()
         self.existing_suggestion_ids: Set[str] = set()
         self._background_tasks: list[asyncio.Task] = []
+
+        self.interaction_handlers: TimedCache[int, InteractionHandler] = TimedCache(
+            global_ttl=timedelta(minutes=20), lazy_eviction=False
+        )
 
     @property
     def is_closing(self) -> bool:
