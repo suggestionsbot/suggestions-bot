@@ -18,7 +18,7 @@ async def mocked_database() -> MockedSuggestionsMongoManager:
 
 
 @pytest.fixture
-async def causar(monkeypatch, mocked_database) -> Causar:
+async def bot(monkeypatch):
     if "./suggestions" not in [x[0] for x in os.walk(".")]:
         monkeypatch.chdir("..")
 
@@ -36,6 +36,11 @@ async def causar(monkeypatch, mocked_database) -> Causar:
 
     bot = await suggestions.create_bot(mocked_database)
     await bot.load_cogs()
+    return bot
+
+
+@pytest.fixture
+async def causar(bot, mocked_database) -> Causar:
     return Causar(bot)  # type: ignore
 
 
