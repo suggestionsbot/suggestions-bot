@@ -46,6 +46,9 @@ class InteractionHandler:
         if components is not None:
             data["components"] = components
 
+        if not data:
+            raise ValueError("Expected at-least one value to send.")
+
         await self.interaction.send(ephemeral=self.ephemeral, **data)
         self.has_sent_something = True
 

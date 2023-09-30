@@ -9,6 +9,7 @@ from causar import Causar, InjectionMetadata
 import suggestions
 from suggestions.clunk import ClunkLock, Clunk
 from tests.mocks import MockedSuggestionsMongoManager
+from suggestions.interaction_handler import InteractionHandler
 
 
 @pytest.fixture
@@ -53,3 +54,8 @@ async def clunk_lock(causar: Causar) -> ClunkLock:
 @pytest.fixture
 async def clunk(causar: Causar) -> Clunk:
     return Clunk(causar.bot.state)  # type: ignore
+
+
+@pytest.fixture
+def interaction_handler() -> InteractionHandler:
+    return InteractionHandler(AsyncMock(), True, True)
