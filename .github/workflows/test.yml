@@ -1,6 +1,9 @@
 # This workflow will install Python dependencies and run tests
 name: "Pytest"
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+    branches: master
 
 jobs:
   run_tests:
