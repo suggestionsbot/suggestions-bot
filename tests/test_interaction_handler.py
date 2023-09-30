@@ -14,7 +14,7 @@ async def test_send(interaction_handler: InteractionHandler):
 
     await interaction_handler.send("Hello world")
     assert interaction_handler.has_sent_something is True
-    assert interaction_handler.interaction.assert_called_with(
+    assert interaction_handler.interaction.send.assert_called_with(
         content="Hello world", ephemeral=True
     )
 
@@ -22,7 +22,7 @@ async def test_send(interaction_handler: InteractionHandler):
     await interaction_handler.send(
         "Hello world", embed="Embed", file="File", components=["Test"]
     )
-    assert interaction_handler.interaction.assert_called_with(
+    assert interaction_handler.interaction.send.assert_called_with(
         content="Hello world",
         ephemeral=True,
         embed="Embed",
