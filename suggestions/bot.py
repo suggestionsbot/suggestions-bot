@@ -33,6 +33,7 @@ from suggestions.exceptions import (
     ConfiguredChannelNoLongerExists,
     UnhandledError,
     QueueImbalance,
+    BlocklistedUser,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -45,7 +46,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.17"
+        self.version: str = "Public Release 3.18"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -409,6 +410,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Command on Cooldown",
                     f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, BlocklistedUser):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Blocked Action",
+                    "Administrators from this guild have removed your ability to run this action.",
+                    error_code=ErrorCode.BLOCKLISTED_USER,
                     error=error,
                 ),
                 ephemeral=True,

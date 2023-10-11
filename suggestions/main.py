@@ -11,6 +11,7 @@ from traceback import format_exception
 
 import cooldowns
 import disnake
+from disnake import Locale
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 
@@ -154,6 +155,18 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         )
         embed.add_field("Version", bot.version)
         embed.set_footer(text=f"© {year} Anthony Collier")
+
+        translations = {
+            Locale.pt_BR: {
+                "author": 651386805043593237,
+                "language": "Portuguese, Brazilian",
+                "username": "Davi",
+            }
+        }
+        if interaction.locale in translations:
+            data = translations[interaction.locale]
+            embed.description += f"\n\n{data['language']} translations by {data['username']}(`{data['author']}`)"
+
         await interaction.send(embed=embed)
 
     @bot.slash_command()

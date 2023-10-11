@@ -45,3 +45,7 @@ class UnhandledError(Exception):
 
 class QueueImbalance(disnake.DiscordException):
     """This queued suggestion has already been dealt with in another queue."""
+
+
+class BlocklistedUser(CheckFailure):
+    """This user is blocked from taking this action in this guild."""

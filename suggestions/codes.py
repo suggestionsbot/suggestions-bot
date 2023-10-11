@@ -24,6 +24,8 @@ class ErrorCode(IntEnum):
     MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL = 18
     MISSING_THREAD_CREATE_PERMISSIONS = 19
     QUEUE_IMBALANCE = 20
+    MISSING_QUEUE_CHANNEL = 21
+    BLOCKLISTED_USER = 22
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
