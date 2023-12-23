@@ -76,26 +76,16 @@ class HelpGuildCog(commands.Cog):
         shard_id = self.bot.get_shard_id(guild_id)
         cluster_id = (
             1
-            if shard_id < 5
-            else 2
             if shard_id < 10
-            else 3
-            if shard_id < 15
-            else 4
+            else 2
             if shard_id < 20
-            else 5
-            if shard_id < 25
-            else 6
+            else 3
             if shard_id < 30
-            else 7
-            if shard_id < 35
-            else 8
+            else 4
             if shard_id < 40
-            else 9
-            if shard_id < 45
-            else 10
+            else 5
             if shard_id < 50
-            else 11
+            else 6
         )
 
         await interaction.send(
@@ -164,7 +154,7 @@ class HelpGuildCog(commands.Cog):
             title="Bot infrastructure status",
         )
         down_shards: list[str] = [str(i) for i in range(53)]
-        down_clusters: list[str] = [str(i) for i in range(1, 12)]
+        down_clusters: list[str] = [str(i) for i in range(1, 7)]
         avg_bot_latency: list[float] = []
         async with aiohttp.ClientSession(
             headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
