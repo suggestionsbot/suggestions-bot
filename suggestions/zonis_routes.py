@@ -37,7 +37,6 @@ class ZonisRoutes:
             "share_with_devs",
             "refresh_premium",
             "shared_guilds",
-            "cached_item_count",
         )
 
     async def start(self):
@@ -81,22 +80,10 @@ class ZonisRoutes:
         embed.set_footer(text=f"Sender: {sender}")
         await channel.send(embed=embed)
 
-    @client.route()
-    async def cached_item_count(self) -> dict[str, int]:
-        state = self.bot.state
-        stats = self.bot.stats
-        suggestions_queue_cog = self.bot.get_cog("SuggestionsQueueCog")
-        data = {
-            "state.autocomplete_cache": len(state.autocomplete_cache),
-            "state.guild_cache": len(state.guild_cache),
-            "state.view_voters_cache": len(state.view_voters_cache),
-            "state.guild_configs": len(state.guild_configs),
-            "state.user_configs": len(state.user_configs),
-            "stats.cluster_guild_cache": len(stats.cluster_guild_cache),
-            "stats.member_stats_cache": len(stats.member_stats_cache),
-            "suggestions_queue_cog.paginator_objects": len(
-                suggestions_queue_cog.paginator_objects  # noqa
-            ),
-        }
+    async def refresh_premium(self, user_id: int):
+        # TODO Implement the ability to refresh premium states for a user
+        return True
 
-        return data
+    @client.route()
+    async def shared_guilds(self, guild_ids: list[int]):
+        return [gid for gid in guild_ids if gid in self.bot.guild_ids]
