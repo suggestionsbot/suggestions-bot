@@ -12,6 +12,7 @@ from bot_base.paginators.disnake_paginator import DisnakePaginator
 from suggestions import Colors
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.objects import Suggestion
+from suggestions.objects.suggestion import SuggestionState
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -109,6 +110,13 @@ class ViewVotersCog(commands.Cog):
             channel_id=interaction.channel_id,
             state=self.state,
         )
+        if suggestion.state == SuggestionState.cleared:
+            return await interaction.send(
+                self.bot.get_locale(
+                    "VIEW_VOTERS_CLEARED_SUGGESTION", interaction.locale
+                ),
+                ephemeral=True,
+            )
 
         up_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_up_vote()
         down_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_down_vote()
@@ -140,6 +148,14 @@ class ViewVotersCog(commands.Cog):
             channel_id=interaction.channel_id,
             state=self.state,
         )
+        if suggestion.state == SuggestionState.cleared:
+            return await interaction.send(
+                self.bot.get_locale(
+                    "VIEW_VOTERS_CLEARED_SUGGESTION", interaction.locale
+                ),
+                ephemeral=True,
+            )
+
         data = []
         for voter in suggestion.up_voted_by:
             data.append(f"<@{voter}>")
@@ -165,6 +181,14 @@ class ViewVotersCog(commands.Cog):
             channel_id=interaction.channel_id,
             state=self.state,
         )
+        if suggestion.state == SuggestionState.cleared:
+            return await interaction.send(
+                self.bot.get_locale(
+                    "VIEW_VOTERS_CLEARED_SUGGESTION", interaction.locale
+                ),
+                ephemeral=True,
+            )
+
         data = []
         for voter in suggestion.down_voted_by:
             data.append(f"<@{voter}>")
@@ -203,6 +227,14 @@ class ViewVotersCog(commands.Cog):
             guild_id=interaction.guild_id,
             state=self.state,
         )
+        if suggestion.state == SuggestionState.cleared:
+            return await interaction.send(
+                self.bot.get_locale(
+                    "VIEW_VOTERS_CLEARED_SUGGESTION", interaction.locale
+                ),
+                ephemeral=True,
+            )
+
         data = []
         up_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_up_vote()
         down_vote: disnake.Emoji = await self.bot.suggestion_emojis.default_down_vote()
