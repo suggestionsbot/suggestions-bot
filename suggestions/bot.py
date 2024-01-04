@@ -110,6 +110,19 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         self.zonis: ZonisRoutes = ZonisRoutes(self)
 
+    async def launch_shard(
+        self, _gateway: str, shard_id: int, *, initial: bool = False
+    ) -> None:
+        # Use the proxy if set, else fall back to whatever is default
+        proxy: Optional[str] = os.environ.get("GW_PROXY", _gateway)
+        return await super().launch_shard(proxy, shard_id, initial=initial)
+
+    async def before_identify_hook(
+        self, _shard_id: int | None, *, initial: bool = False  # noqa: ARG002
+    ) -> None:
+        # gateway-proxy
+        return
+
     async def get_or_fetch_channel(self, channel_id: int) -> WrappedChannel:
         try:
             return await super().get_or_fetch_channel(channel_id)
