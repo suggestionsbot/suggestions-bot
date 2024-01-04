@@ -80,6 +80,7 @@ class ZonisRoutes:
         embed.set_footer(text=f"Sender: {sender}")
         await channel.send(embed=embed)
 
+    @client.route()
     async def refresh_premium(self, user_id: int):
         # TODO Implement the ability to refresh premium states for a user
         return True
