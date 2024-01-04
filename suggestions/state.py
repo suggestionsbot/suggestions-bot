@@ -12,6 +12,7 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
+from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
 from bot_base import NonExistentEntry
 from bot_base.caches import TimedCache
@@ -166,7 +167,7 @@ class State:
     async def populate_view_voters_cache(self, guild_id: int) -> list:
         self.view_voters_cache.delete_entry(guild_id)
         data: List[Dict] = await self.database.suggestions.find_many(
-            AQ(EQ("guild_id", guild_id)),
+            AQ(AND(EQ("guild_id", guild_id), Negate(EQ("state", "cleared")))),
             projections=PROJECTION(SHOW("_id")),
             try_convert=False,
         )
