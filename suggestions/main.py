@@ -28,8 +28,9 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
-        request = httpx.get("http://localhost:7878/shard-count")
-        total_shards = int(request.text)
+        # request = httpx.get("http://localhost:7878/shard-count")
+        # total_shards = int(request.text)
+        total_shards = 70
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1
         number_of_shards_per_cluster = 10
