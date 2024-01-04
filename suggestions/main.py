@@ -9,6 +9,7 @@ import sys
 import textwrap
 from traceback import format_exception
 
+import aiohttp
 import cooldowns
 import disnake
 from disnake import Locale
@@ -26,7 +27,9 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
-        total_shards = 53
+        async with aiohttp.ClientSession() as session:
+            async with session.get("http://localhost:7878/shard-count") as resp:
+                total_shards = int(await resp.text())
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1
         number_of_shards_per_cluster = 10
