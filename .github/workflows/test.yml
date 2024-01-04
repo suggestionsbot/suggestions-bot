@@ -2,9 +2,8 @@
 name: "Pytest"
 on:
   pull_request:
-    branches: [ master ]
   push:
-    branches: [ master ]
+    branches: master
 
 jobs:
   run_tests:

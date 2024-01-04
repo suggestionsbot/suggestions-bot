@@ -9,6 +9,7 @@ from causar import Causar, InjectionMetadata
 import suggestions
 from suggestions.clunk import ClunkLock, Clunk
 from tests.mocks import MockedSuggestionsMongoManager
+from suggestions.interaction_handler import InteractionHandler
 
 
 @pytest.fixture
@@ -17,7 +18,7 @@ async def mocked_database() -> MockedSuggestionsMongoManager:
 
 
 @pytest.fixture
-async def causar(monkeypatch, mocked_database) -> Causar:
+async def bot(monkeypatch):
     if "./suggestions" not in [x[0] for x in os.walk(".")]:
         monkeypatch.chdir("..")
 
@@ -35,6 +36,11 @@ async def causar(monkeypatch, mocked_database) -> Causar:
 
     bot = await suggestions.create_bot(mocked_database)
     await bot.load_cogs()
+    return bot
+
+
+@pytest.fixture
+async def causar(bot, mocked_database) -> Causar:
     return Causar(bot)  # type: ignore
 
 
@@ -53,3 +59,8 @@ async def clunk_lock(causar: Causar) -> ClunkLock:
 @pytest.fixture
 async def clunk(causar: Causar) -> Clunk:
     return Clunk(causar.bot.state)  # type: ignore
+
+
+@pytest.fixture
+def interaction_handler() -> InteractionHandler:
+    return InteractionHandler(AsyncMock(), True, True)
