@@ -12,6 +12,7 @@ from traceback import format_exception
 import aiohttp
 import cooldowns
 import disnake
+import httpx
 from disnake import Locale
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
@@ -27,9 +28,8 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
-        async with aiohttp.ClientSession() as session:
-            async with session.get("http://localhost:7878/shard-count") as resp:
-                total_shards = int(await resp.text())
+        request = httpx.get("http://localhost:7878/shard-count")
+        total_shards = int(request.text)
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1
         number_of_shards_per_cluster = 10
