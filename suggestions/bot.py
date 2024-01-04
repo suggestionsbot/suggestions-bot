@@ -143,10 +143,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def total_cluster_count(self) -> int:
         return math.ceil(self.total_shards / 10)
 
-    @property
-    def is_primary_cluster(self) -> bool:
-        return bool(os.environ.get("IS_PRIMARY_CLUSTER", False))
-
     def error_embed(
         self,
         title: str,
@@ -700,6 +696,24 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
         log.info("Setup bot list updates")
+
+    @property
+    def is_primary_cluster(self) -> bool:
+        if not self.is_prod:
+            # Non-prod is always single cluster
+            return True
+
+        shard_id = self.get_shard_id(self.main_guild_id)
+        return shard_id in self.shard_ids
+
+    async def _sync_application_commands(self) -> None:
+        # In order to reduce getting rate-limited because every cluster
+        # decided it wants to sync application commands when it aint required
+        if not self.is_primary_cluster:
+            log.warning("Not syncing application commands as not primary cluster")
+            return
+
+        await super()._sync_application_commands()
 
     def get_shard_id(self, guild_id: Optional[int]) -> int:
         # DM's go to shard 0
