@@ -31,7 +31,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         # TODO Fix this
         # request = httpx.get("http://localhost:7878/shard-count")
         # total_shards = int(request.text)
-        total_shards = 70
+        total_shards = int(os.environ["TOTAL_SHARDS"])
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1
         number_of_shards_per_cluster = 5
