@@ -12,22 +12,22 @@ import suggestions
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(levelname)-8s | %(asctime)s | %(filename)19s:%(funcName)-27s | %(message)s",
     datefmt="%d/%m/%Y %I:%M:%S %p",
 )
 # logging.getLogger("asyncio").setLevel(logging.DEBUG)
 
-disnake_logger = logging.getLogger("disnake")
-disnake_logger.setLevel(logging.INFO)
-gateway_logger = logging.getLogger("disnake.gateway")
-gateway_logger.setLevel(logging.WARNING)
-client_logger = logging.getLogger("disnake.client")
-client_logger.setLevel(logging.WARNING)
-http_logger = logging.getLogger("disnake.http")
-http_logger.setLevel(logging.WARNING)
-shard_logger = logging.getLogger("disnake.shard")
-shard_logger.setLevel(logging.WARNING)
+# disnake_logger = logging.getLogger("disnake")
+# disnake_logger.setLevel(logging.INFO)
+# gateway_logger = logging.getLogger("disnake.gateway")
+# gateway_logger.setLevel(logging.WARNING)
+# client_logger = logging.getLogger("disnake.client")
+# client_logger.setLevel(logging.WARNING)
+# http_logger = logging.getLogger("disnake.http")
+# http_logger.setLevel(logging.WARNING)
+# shard_logger = logging.getLogger("disnake.shard")
+# shard_logger.setLevel(logging.WARNING)
 
 suggestions_logger = logging.getLogger("suggestions")
 suggestions_logger.setLevel(logging.DEBUG)
