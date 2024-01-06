@@ -66,7 +66,8 @@ class Garven:
         ) as resp:
             await self._handle_status(resp)
             data = await resp.json()
-            return data
+
+        return data
 
     async def get_total_guilds(self) -> int:
         async with self._session.get("/aggregate/guilds/count") as resp:
@@ -76,4 +77,11 @@ class Garven:
                 log.warning("get_total_guilds returned a partial response")
                 raise PartialResponse
 
-            return data["statistic"]
+        return data["statistic"]
+
+    async def cluster_status(self) -> dict:
+        async with self._session.get("/cluster/status") as resp:
+            await self._handle_status(resp)
+            data = await resp.json()
+
+        return data
