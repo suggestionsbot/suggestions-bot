@@ -143,11 +143,6 @@ class HelpGuildCog(commands.Cog):
 
         red_circle = "🔴"
         green_circle = "🟢"
-        url = (
-            "https://garven.suggestions.gg/cluster/status"
-            if self.bot.is_prod
-            else "https://garven.dev.suggestions.gg/cluster/status"
-        )
 
         embed = disnake.Embed(
             timestamp=datetime.datetime.utcnow(),
@@ -156,13 +151,7 @@ class HelpGuildCog(commands.Cog):
         down_shards: list[str] = [str(i) for i in range(53)]
         down_clusters: list[str] = [str(i) for i in range(1, 7)]
         avg_bot_latency: list[float] = []
-        async with aiohttp.ClientSession(
-            headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-        ) as session:
-            async with session.get(url) as resp:
-                data: dict[str, dict | bool] = await resp.json()
-                if resp.status != 200:
-                    log.error("Something went wrong: %s", data)
+        data = await self.bot.garven.cluster_status()
 
         if data.pop("partial_response") is not None:
             embed.set_footer(text="Partial response")

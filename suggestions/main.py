@@ -9,10 +9,8 @@ import sys
 import textwrap
 from traceback import format_exception
 
-import aiohttp
 import cooldowns
 import disnake
-import httpx
 from disnake import Locale
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
@@ -28,9 +26,6 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
-        # TODO Fix this
-        # request = httpx.get("http://localhost:7878/shard-count")
-        # total_shards = int(request.text)
         total_shards = int(os.environ["TOTAL_SHARDS"])
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1

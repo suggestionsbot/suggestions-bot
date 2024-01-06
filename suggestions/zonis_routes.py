@@ -19,13 +19,8 @@ log = logging.getLogger(__name__)
 class ZonisRoutes:
     def __init__(self, bot: SuggestionsBot):
         self.bot: SuggestionsBot = bot
-        url = (
-            "wss://garven.suggestions.gg/ws"
-            if self.bot.is_prod
-            else "wss://garven.dev.suggestions.gg/ws"
-        )
         self.client: client.Client = client.Client(
-            url=url,
+            url=bot.garven.ws_url,
             identifier=str(bot.cluster_id),
             secret_key=os.environ["ZONIS_SECRET_KEY"],
             override_key=os.environ.get("ZONIS_OVERRIDE_KEY"),
