@@ -103,7 +103,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 name="suggestions",
                 type=disnake.ActivityType.watching,
             ),
-            gateway_params=GatewayParams(zlib=False),
+            # gateway_params=GatewayParams(zlib=False),
         )
 
         self._has_dispatched_initial_ready: bool = False
