@@ -34,6 +34,7 @@ from suggestions.exceptions import (
     UnhandledError,
     QueueImbalance,
     BlocklistedUser,
+    PartialResponse,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -652,25 +653,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
             headers = {"Authorization": os.environ["SUGGESTIONS_API_KEY"]}
             while not state.is_closing:
-                url = (
-                    "https://garven.suggestions.gg/aggregate/guilds/count"
-                    if self.is_prod
-                    else "https://garven.dev.suggestions.gg/aggregate/guilds/count"
-                )
-                async with aiohttp.ClientSession(
-                    headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-                ) as session:
-                    async with session.get(url) as resp:
-                        data: dict = await resp.json()
-                        if resp.status != 200:
-                            log.error("Stopping bot list updates")
-                            log.error("%s", data)
-                            break
-
-                if data["partial_response"]:
-                    log.warning(
-                        "Skipping bot list updates as IPC returned a partial responses"
-                    )
+                try:
+                    total_guilds = await self.garven.get_total_guilds()
+                except PartialResponse:
                     await self.sleep_with_condition(
                         time_between_updates.total_seconds(),
                         lambda: self.state.is_closing,
@@ -678,12 +663,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     continue
 
                 body = {
-                    "guild_count": int(data["statistic"]),
+                    "guild_count": int(total_guilds),
                     "shard_count": int(self.shard_count),
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
-                        os.environ["SUGGESTIONS_STATS_API_URL"], json=body
+                        os.environ[
+                            "SUGGESTIONS_STATS_API_URL"
+                        ],  # This is the bot list API # lists.suggestions.gg
+                        json=body,
                     ) as r:
                         if r.status != 200:
                             log.warning("%s", r.text)
@@ -834,13 +822,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         log.error("Borked it")
                         return
 
+                    tb = "".join(traceback.format_exception(e))
                     log.error(
                         "Status update failed: %s",
-                        "".join(traceback.format_exception(e)),
+                        tb,
                     )
                     await self.garven.notify_devs(
                         title="Status page ping error",
-                        description=str(e),
+                        description=tb,
                         sender=f"Cluster {self.cluster_id}, shard {self.shard_id}",
                     )
 
