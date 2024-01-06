@@ -12,7 +12,7 @@ import suggestions
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(levelname)-8s | %(asctime)s | %(filename)19s:%(funcName)-27s | %(message)s",
     datefmt="%d/%m/%Y %I:%M:%S %p",
 )
