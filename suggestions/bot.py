@@ -16,7 +16,7 @@ import disnake
 from alaric import Cursor
 from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError
+from disnake import Locale, LocalizationKeyError, GatewayParams
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
@@ -103,6 +103,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 name="suggestions",
                 type=disnake.ActivityType.watching,
             ),
+            gateway_params=GatewayParams(zlib=False),
         )
 
         self._has_dispatched_initial_ready: bool = False
