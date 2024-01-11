@@ -21,11 +21,13 @@ class Garven:
             if bot.is_prod
             else "https://garven.dev.suggestions.gg"
         )
+        # self._url = "http://127.0.0.1:8002"
         self._ws_url = (
             "wss://garven.suggestions.gg/ws"
             if bot.is_prod
             else "wss://garven.dev.suggestions.gg/ws"
         )
+        # self._ws_url = "ws://127.0.0.1:8002/ws"
         self._session: aiohttp.ClientSession = aiohttp.ClientSession(
             base_url=self._url,
             headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]},
@@ -81,6 +83,13 @@ class Garven:
 
     async def cluster_status(self) -> dict:
         async with self._session.get("/cluster/status") as resp:
+            await self._handle_status(resp)
+            data = await resp.json()
+
+        return data
+
+    async def get_bot_ws_latency(self):
+        async with self._session.get("/cluster/latency/ws") as resp:
             await self._handle_status(resp)
             data = await resp.json()
 

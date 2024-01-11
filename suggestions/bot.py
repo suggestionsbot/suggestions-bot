@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import io
 import logging
 import math
 import os
@@ -571,6 +572,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.stats.load()
         await self.update_bot_listings()
         await self.push_status()
+        await self.update_dev_channel()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
         await self.zonis.start()
@@ -630,6 +632,61 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 break
 
             asyncio.create_task(self.graceful_shutdown())
+
+        task_1 = asyncio.create_task(process_watch_for_shutdown())
+        process_watch_for_shutdown.__task = task_1
+        state.add_background_task(task_1)
+
+    async def update_dev_channel(self):
+        if not self.is_prod:
+            log.info("Not watching for debug info as not on prod")
+            return
+
+        state: State = self.state
+
+        async def process_watch_for_shutdown():
+            await self.wait_until_ready()
+            log.debug("Started tracking bot latency")
+
+            while not state.is_closing:
+                # Update once an hour
+                await self.sleep_with_condition(
+                    datetime.timedelta(minutes=5).total_seconds(),
+                    lambda: self.state.is_closing,
+                )
+
+                await self.garven.notify_devs(
+                    title=f"WS latency as follows",
+                    description=f"Timestamped for {datetime.datetime.utcnow().isoformat()}",
+                    sender=f"N/A",
+                )
+
+                data = await self.garven.get_bot_ws_latency()
+                shard_data = data["shards"]
+                for i in range(0, 75, 5):
+                    description = io.StringIO()
+                    for o in range(0, 6):
+                        shard = str(i + o)
+                        try:
+                            description.write(
+                                f"**Shard {shard}**\nWS latency: `{shard_data[shard]['ws']}`\n"
+                                f"Keep Alive latency: `{shard_data[shard]['keepalive']}`\n\n"
+                            )
+                        except KeyError:
+                            # My lazy way of not doing env checks n math right
+                            continue
+
+                    if description.getvalue():
+                        await self.garven.notify_devs(
+                            title=f"WS latency",
+                            description=description.getvalue(),
+                            sender=f"Partial response: {data['partial_response']}",
+                        )
+
+                await self.sleep_with_condition(
+                    datetime.timedelta(hours=1).total_seconds(),
+                    lambda: self.state.is_closing,
+                )
 
         task_1 = asyncio.create_task(process_watch_for_shutdown())
         process_watch_for_shutdown.__task = task_1

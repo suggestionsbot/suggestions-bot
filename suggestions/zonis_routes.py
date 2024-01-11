@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import disnake
 from zonis import client
@@ -33,6 +33,7 @@ class ZonisRoutes:
             "refresh_premium",
             "shared_guilds",
             "cached_item_count",
+            "cluster_ws_status",
         )
 
     async def start(self):
@@ -62,6 +63,25 @@ class ZonisRoutes:
             data["cluster_is_up"] = False
         else:
             data["cluster_is_up"] = True
+
+        return data
+
+    @client.route()
+    async def cluster_ws_status(
+        self,
+    ) -> dict[str, dict[Literal["ws", "keepalive"], str]]:
+        data: dict[str, dict[Literal["ws", "keepalive"], str]] = {}
+        for shard_id, shard_info in self.bot.shards.items():
+            shard_data: dict[Literal["ws", "keepalive"], str] = {
+                "ws": str(round(shard_info.latency, 5))
+            }
+            wsc = shard_info._parent.ws._keep_alive
+            if wsc is None:
+                shard_data["keepalive"] = "None"
+            else:
+                shard_data["keepalive"] = str(round(wsc.latency, 5))
+
+            data[str(shard_id)] = shard_data
 
         return data
 
