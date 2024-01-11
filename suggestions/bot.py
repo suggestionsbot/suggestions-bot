@@ -642,6 +642,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             log.info("Not watching for debug info as not on prod")
             return
 
+        if not self.is_primary_cluster:
+            log.info("Not watching for debug info as not primary cluster")
+            return
+
         state: State = self.state
 
         async def process_watch_for_shutdown():
