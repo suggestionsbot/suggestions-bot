@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import gc
 import io
 import logging
 import math
@@ -91,6 +92,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             "vote",
         }
         self.converted_prefix_commands: set[str] = {"suggest", "approve", "reject"}
+        self.gc_lock: asyncio.Lock = asyncio.Lock()
 
         # Sharding info
         self.cluster_id: int = kwargs.pop("cluster", 0)
@@ -141,6 +143,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.info("Suggestions main: Ready")
         log.info("Startup took: %s", self.get_uptime())
         await self.suggestion_emojis.populate_emojis()
+
+    async def on_resumed(self):
+        if self.gc_lock.locked():
+            return
+
+        async with self.gc_lock:
+            await asyncio.sleep(2.0)
+            collected = gc.collect()
+            log.info(f"Garbage collector: collected {collected} objects.")
 
     @property
     def total_cluster_count(self) -> int:
