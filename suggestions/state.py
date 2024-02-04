@@ -41,17 +41,25 @@ class State:
         )
         self.guild_cache_ttl: timedelta = timedelta(minutes=15)
         self.guild_cache: TimedCache[int, disnake.Guild] = TimedCache(
-            global_ttl=self.guild_cache_ttl, lazy_eviction=False
+            global_ttl=self.guild_cache_ttl,
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
         self.view_voters_cache: TimedCache[int, list[str]] = TimedCache(
-            global_ttl=self.autocomplete_cache_ttl, lazy_eviction=False
+            global_ttl=self.autocomplete_cache_ttl,
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
 
         self.guild_configs: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=30), lazy_eviction=False
+            global_ttl=timedelta(minutes=30),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
         self.user_configs: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=30), lazy_eviction=False
+            global_ttl=timedelta(minutes=30),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
 
         self.existing_error_ids: Set[str] = set()
