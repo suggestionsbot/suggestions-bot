@@ -23,7 +23,6 @@ from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
 from suggestions import State, Colors, Emojis, ErrorCode, Garven
-from suggestions.clunk import Clunk
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
@@ -49,7 +48,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.20"
+        self.version: str = "Public Release 3.21"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -75,7 +74,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
         self.garven: Garven = Garven(self)
-        self.clunk: Clunk = Clunk(self.state)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",
@@ -595,7 +593,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         """
         log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
-        await self.clunk.kill_all()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")

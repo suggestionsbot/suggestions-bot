@@ -14,8 +14,7 @@ from alaric.comparison import EQ
 from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
-from bot_base import NonExistentEntry
-from bot_base.caches import TimedCache
+from commons.caching import NonExistentEntry, TimedCache
 
 from suggestions.objects import GuildConfig, UserConfig
 
