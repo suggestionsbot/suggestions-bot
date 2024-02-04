@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 
 from alaric import AQ
 from alaric.comparison import EQ
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 
 if TYPE_CHECKING:
     from suggestions import State

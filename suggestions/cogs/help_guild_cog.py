@@ -3,11 +3,8 @@ from __future__ import annotations
 import datetime
 import io
 import logging
-import os
-import typing
 from typing import TYPE_CHECKING, Optional
 
-import aiohttp
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ

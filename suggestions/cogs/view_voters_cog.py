@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Type
 
 import cooldowns
 import disnake
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 
