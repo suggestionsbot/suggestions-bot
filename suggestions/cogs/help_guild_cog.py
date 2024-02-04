@@ -71,7 +71,12 @@ class HelpGuildCog(commands.Cog):
             description="The ID of the guild you want info on."
         ),
     ):
-        """Retrieve information about what instance a given guild sees."""
+        """Retrieve information about what instance a given guild sees. This is currently wrong."""
+        await interaction.send(
+            ephemeral=True, content="This command currently does not work correctly."
+        )
+        return
+
         guild_id = int(guild_id)
         shard_id = self.bot.get_shard_id(guild_id)
         cluster_id = (
