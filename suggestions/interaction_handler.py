@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import cast
 
-if TYPE_CHECKING:
-    from suggestions import SuggestionsBot
+import disnake
+
+from suggestions import SuggestionsBot
 
 
 class InteractionHandler:
@@ -56,7 +57,6 @@ class InteractionHandler:
     async def new_handler(
         cls,
         interaction: disnake.Interaction,
-        bot: SuggestionsBot,
         *,
         ephemeral: bool = True,
         with_message: bool = True,
@@ -68,6 +68,7 @@ class InteractionHandler:
 
         # Register this on the bot instance so other areas can
         # request the interaction handler, such as error handlers
+        bot = cast(SuggestionsBot, interaction.client)
         bot.state.interaction_handlers.add_entry(interaction.application_id, instance)
 
         return instance

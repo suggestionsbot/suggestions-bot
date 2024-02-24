@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Optional
 
 import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
 from bot_base.wraps import WrappedChannel
-from disnake import Guild, Localized
+from disnake import Guild
 from disnake.ext import commands, components
 
 from suggestions import checks, Stats, ErrorCode

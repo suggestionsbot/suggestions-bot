@@ -13,7 +13,7 @@ from suggestions.objects.stats import MemberStats
 
 class MockedSuggestionsMongoManager:
     def __init__(self):
-        self.database_name = "suggestions-rewrite"
+        self.database_name = "suggestions-rewrite-testing"
 
         self.__mongo = AsyncMongoMockClient()
         self.db = self.__mongo[self.database_name]
