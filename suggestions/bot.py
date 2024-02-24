@@ -38,6 +38,7 @@ from suggestions.exceptions import (
     PartialResponse,
 )
 from suggestions.http_error_parser import try_parse_http_error
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
@@ -830,11 +831,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def get_localized_string(
         self,
         key: str,
-        interaction: disnake.Interaction,
+        interaction: disnake.Interaction | InteractionHandler,
         *,
         extras: Optional[dict] = None,
         guild_config: Optional[GuildConfig] = None,
     ):
+        if isinstance(interaction, InteractionHandler):
+            # Support this so easier going forward
+            interaction = interaction.interaction
+
         content = self.get_locale(key, interaction.locale)
         return self.inject_locale_values(
             content, interaction=interaction, guild_config=guild_config, extras=extras

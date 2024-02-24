@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 import disnake
 
-from suggestions import SuggestionsBot
+from suggestions.exceptions import ConflictingHandlerInformation
+
+if TYPE_CHECKING:
+    from suggestions import SuggestionsBot
 
 
 class InteractionHandler:
@@ -17,9 +20,14 @@ class InteractionHandler:
     """
 
     def __init__(
-        self, interaction: disnake.Interaction, ephemeral: bool, with_message: bool
+        self,
+        interaction: disnake.Interaction | disnake.GuildCommandInteraction,
+        ephemeral: bool,
+        with_message: bool,
     ):
-        self.interaction: disnake.Interaction = interaction
+        self.interaction: disnake.Interaction | disnake.GuildCommandInteraction = (
+            interaction
+        )
         self.ephemeral: bool = ephemeral
         self.with_message: bool = with_message
         self.is_deferred: bool = False
@@ -29,6 +37,10 @@ class InteractionHandler:
         # errors if we haven't yet sent anything
         self.has_sent_something: bool = False
 
+    @property
+    def bot(self) -> SuggestionsBot:
+        return self.interaction.client  # type: ignore
+
     async def send(
         self,
         content: str | None = None,
@@ -36,7 +48,14 @@ class InteractionHandler:
         embed: disnake.Embed | None = None,
         file: disnake.File | None = None,
         components: list | None = None,
+        translation_key: str | None = None,
     ):
+        if translation_key is not None:
+            if content is not None:
+                raise ConflictingHandlerInformation
+
+            content = self.bot.get_localized_string(translation_key, self.interaction)
+
         data = {}
         if content is not None:
             data["content"] = content
@@ -50,8 +69,9 @@ class InteractionHandler:
         if not data:
             raise ValueError("Expected at-least one value to send.")
 
-        await self.interaction.send(ephemeral=self.ephemeral, **data)
+        value = await self.interaction.send(ephemeral=self.ephemeral, **data)
         self.has_sent_something = True
+        return value
 
     @classmethod
     async def new_handler(
@@ -68,8 +88,10 @@ class InteractionHandler:
 
         # Register this on the bot instance so other areas can
         # request the interaction handler, such as error handlers
-        bot = cast(SuggestionsBot, interaction.client)
-        bot.state.interaction_handlers.add_entry(interaction.application_id, instance)
+        bot = interaction.client
+        if TYPE_CHECKING:
+            bot = cast(SuggestionsBot, bot)
+        bot.state.interaction_handlers.add_entry(interaction.id, instance)
 
         return instance
 

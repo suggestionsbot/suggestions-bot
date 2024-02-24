@@ -4,6 +4,7 @@ import pytest
 from commons.caching import NonExistentEntry
 
 from suggestions import SuggestionsBot
+from suggestions.exceptions import ConflictingHandlerInformation
 from suggestions.interaction_handler import InteractionHandler
 
 
@@ -39,14 +40,14 @@ async def test_send(interaction_handler: InteractionHandler):
 async def test_new_handler(bot: SuggestionsBot):
     mock = AsyncMock()
     mock.client = bot
-    mock.application_id = 1
+    mock.id = 1
     assert bot.state.interaction_handlers.cache == {}
     handler: InteractionHandler = await InteractionHandler.new_handler(mock)
     assert bot.state.interaction_handlers.cache != {}
     assert handler.has_sent_something is False
     assert handler.is_deferred is True
 
-    mock.application_id = 2
+    mock.id = 2
     handler_2: InteractionHandler = await InteractionHandler.new_handler(
         mock, ephemeral=False, with_message=False
     )
@@ -54,17 +55,22 @@ async def test_new_handler(bot: SuggestionsBot):
     assert handler_2.with_message is False
 
 
-async def test_fetch_handler(bot):
+async def test_fetch_handler(bot: SuggestionsBot):
     application_id = 123456789
     with pytest.raises(NonExistentEntry):
         await InteractionHandler.fetch_handler(application_id, bot)
 
     mock = AsyncMock()
     mock.client = bot
-    mock.application_id = application_id
+    mock.id = application_id
     await InteractionHandler.new_handler(mock, with_message=False)
     handler: InteractionHandler = await InteractionHandler.fetch_handler(
         application_id, bot
     )
     assert handler.with_message is False
     assert handler.ephemeral is True
+
+
+async def test_dual_raises(interaction_handler: InteractionHandler):
+    with pytest.raises(ConflictingHandlerInformation):
+        await interaction_handler.send("Test", translation_key="Blah")

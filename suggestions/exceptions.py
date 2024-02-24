@@ -53,3 +53,7 @@ class BlocklistedUser(CheckFailure):
 
 class PartialResponse(Exception):
     """A garven route returned a partial response when we require a full response"""
+
+
+class ConflictingHandlerInformation(disnake.DiscordException):
+    """Raised when an InteractionHandler class gets both content and a translation key"""
