@@ -17,6 +17,7 @@ async def test_cogs_loaded(causar: Causar):
         "ViewVotersCog",
         "SuggestionsMessageCommands",
         "SuggestionsQueueCog",
+        "BlacklistCog",
     ]
     assert len(bot.cogs) == len(cog_names)
     for cog_name in cog_names:

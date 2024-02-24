@@ -121,6 +121,5 @@
   "SUGGESTION_ID_NAME": "suggestion_id",
   "SUGGESTION_ID_DESCRIPTION": "The suggestions ID you wish to reference.",
   "USER_ID_NAME": "user_id",
-  "USER_ID_DESCRIPTION": "The users discord id.",
-  "VIEW_VOTERS_CLEARED_SUGGESTION": "Cannot view a cleared suggestion."
+  "USER_ID_DESCRIPTION": "The users discord id."
 }

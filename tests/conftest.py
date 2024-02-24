@@ -1,13 +1,11 @@
 import os
 from unittest.mock import AsyncMock
 
-import disnake
 import pytest
 
 from causar import Causar, InjectionMetadata
 
 import suggestions
-from suggestions.clunk import ClunkLock, Clunk
 from tests.mocks import MockedSuggestionsMongoManager
 from suggestions.interaction_handler import InteractionHandler
 
@@ -50,17 +48,3 @@ async def injection_metadata(causar: Causar) -> InjectionMetadata:
         guild_id=881118111967883295, channel_id=causar.faker.generate_snowflake()
     )
 
-
-@pytest.fixture
-async def clunk_lock(causar: Causar) -> ClunkLock:
-    return ClunkLock(causar.bot.state)  # type: ignore
-
-
-@pytest.fixture
-async def clunk(causar: Causar) -> Clunk:
-    return Clunk(causar.bot.state)  # type: ignore
-
-
-@pytest.fixture
-def interaction_handler() -> InteractionHandler:
-    return InteractionHandler(AsyncMock(), True, True)

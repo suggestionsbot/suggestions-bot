@@ -3,11 +3,8 @@ from __future__ import annotations
 import datetime
 import io
 import logging
-import os
-import typing
 from typing import TYPE_CHECKING, Optional
 
-import aiohttp
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
@@ -71,7 +68,12 @@ class HelpGuildCog(commands.Cog):
             description="The ID of the guild you want info on."
         ),
     ):
-        """Retrieve information about what instance a given guild sees."""
+        """Retrieve information about what instance a given guild sees. This is currently wrong."""
+        await interaction.send(
+            ephemeral=True, content="This command currently does not work correctly."
+        )
+        return
+
         guild_id = int(guild_id)
         shard_id = self.bot.get_shard_id(guild_id)
         cluster_id = (
@@ -143,11 +145,6 @@ class HelpGuildCog(commands.Cog):
 
         red_circle = "🔴"
         green_circle = "🟢"
-        url = (
-            "https://garven.suggestions.gg/cluster/status"
-            if self.bot.is_prod
-            else "https://garven.dev.suggestions.gg/cluster/status"
-        )
 
         embed = disnake.Embed(
             timestamp=datetime.datetime.utcnow(),
@@ -156,13 +153,7 @@ class HelpGuildCog(commands.Cog):
         down_shards: list[str] = [str(i) for i in range(53)]
         down_clusters: list[str] = [str(i) for i in range(1, 7)]
         avg_bot_latency: list[float] = []
-        async with aiohttp.ClientSession(
-            headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-        ) as session:
-            async with session.get(url) as resp:
-                data: dict[str, dict | bool] = await resp.json()
-                if resp.status != 200:
-                    log.error("Something went wrong: %s", data)
+        data = await self.bot.garven.cluster_status()
 
         if data.pop("partial_response") is not None:
             embed.set_footer(text="Partial response")

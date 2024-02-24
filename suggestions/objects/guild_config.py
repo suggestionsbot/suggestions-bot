@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 
 from alaric import AQ
 from alaric.comparison import EQ
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 
 if TYPE_CHECKING:
     from suggestions import State
@@ -27,6 +27,7 @@ class GuildConfig:
         uses_suggestion_queue: bool = False,
         can_have_images_in_suggestions: bool = True,
         anonymous_resolutions: bool = False,
+        blocked_users: Optional[list[int]] = None,
         **kwargs,
     ):
         self._id: int = _id
@@ -40,6 +41,10 @@ class GuildConfig:
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
         self.can_have_anonymous_suggestions: bool = can_have_anonymous_suggestions
         self.can_have_images_in_suggestions: bool = can_have_images_in_suggestions
+
+        if blocked_users is None:
+            blocked_users = set()
+        self.blocked_users: set[int] = set(blocked_users)
 
     @property
     def guild_id(self) -> int:
@@ -82,6 +87,7 @@ class GuildConfig:
         return {
             "_id": self.guild_id,
             "keep_logs": self.keep_logs,
+            "blocked_users": list(self.blocked_users),
             "log_channel_id": self.log_channel_id,
             "auto_archive_threads": self.auto_archive_threads,
             "dm_messages_disabled": self.dm_messages_disabled,
