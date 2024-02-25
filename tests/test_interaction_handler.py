@@ -57,8 +57,8 @@ async def test_new_handler(bot: SuggestionsBot):
 
 async def test_fetch_handler(bot: SuggestionsBot):
     application_id = 123456789
-    with pytest.raises(NonExistentEntry):
-        await InteractionHandler.fetch_handler(application_id, bot)
+    r_1 = await InteractionHandler.fetch_handler(application_id, bot)
+    assert r_1 is None
 
     mock = AsyncMock()
     mock.client = bot
