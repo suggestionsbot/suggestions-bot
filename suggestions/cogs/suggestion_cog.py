@@ -13,7 +13,14 @@ from disnake.ext import commands, components
 from suggestions import checks, Stats, ErrorCode
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
-from suggestions.exceptions import SuggestionTooLong, ErrorHandled
+from suggestions.core import SuggestionsQueue
+from suggestions.exceptions import (
+    SuggestionTooLong,
+    ErrorHandled,
+    MissingPermissionsToAccessQueueChannel,
+    MissingQueueLogsChannel,
+)
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 
@@ -30,6 +37,8 @@ class SuggestionsCog(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
+
+        self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
 
     @components.button_listener()
     async def suggestion_up_vote(
@@ -149,6 +158,28 @@ class SuggestionsCog(commands.Cog):
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
         # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
 
+    @components.button_listener()
+    async def queue_approve(self, inter: disnake.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, self.state
+        )
+        await self.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=True
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
+
+    @components.button_listener()
+    async def queue_reject(self, inter: disnake.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, self.state
+        )
+        await self.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=False
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
+
     @commands.slash_command(
         dm_permission=False,
     )
@@ -199,7 +230,7 @@ class SuggestionsCog(commands.Cog):
             raise ErrorHandled
 
         if guild_config.uses_suggestion_queue:
-            await QueuedSuggestion.new(
+            qs = await QueuedSuggestion.new(
                 suggestion=suggestion,
                 guild_id=interaction.guild_id,
                 state=self.state,
@@ -207,6 +238,36 @@ class SuggestionsCog(commands.Cog):
                 image_url=image_url,
                 is_anonymous=anonymously,
             )
+            if not guild_config.virtual_suggestion_queue:
+                # Need to send to a channel
+                if guild_config.queued_channel_id is None:
+                    raise MissingQueueLogsChannel
+
+                try:
+                    queue_channel = await self.bot.state.fetch_channel(
+                        guild_config.queued_channel_id
+                    )
+                except disnake.Forbidden as e:
+                    raise MissingPermissionsToAccessQueueChannel from e
+
+                qs_embed: disnake.Embed = await qs.as_embed(self.bot)
+                msg = await queue_channel.send(
+                    embed=qs_embed,
+                    components=[
+                        disnake.ui.Button(
+                            label="Approve queued suggestion",
+                            custom_id=await self.queue_approve.build_custom_id(),
+                        ),
+                        disnake.ui.Button(
+                            label="Reject queued suggestion",
+                            custom_id=await self.queue_reject.build_custom_id(),
+                        ),
+                    ],
+                )
+                qs.message_id = msg.id
+                qs.channel_id = msg.channel.id
+                await self.bot.db.queued_suggestions.upsert(qs, qs)
+
             log.debug(
                 "User %s created new queued suggestion in guild %s",
                 interaction.author.id,

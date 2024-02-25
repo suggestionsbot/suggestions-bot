@@ -23,6 +23,10 @@ class MissingQueueLogsChannel(CheckFailure):
     """This command requires a queue logs channel to run."""
 
 
+class MissingPermissionsToAccessQueueChannel(disnake.DiscordException):
+    """The bot does not have permissions to interact with the queue channel."""
+
+
 class ErrorHandled(disnake.DiscordException):
     """This tells error handlers the error was already handled, and can be ignored."""
 

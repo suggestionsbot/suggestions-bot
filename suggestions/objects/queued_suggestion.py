@@ -60,6 +60,10 @@ class QueuedSuggestion:
     def is_resolved(self) -> bool:
         return self.resolved_by is not None
 
+    @property
+    def is_in_virtual_queue(self) -> bool:
+        return self.message_id is None
+
     @classmethod
     async def from_message_id(
         cls, message_id: int, channel_id: int, state: State
@@ -144,7 +148,9 @@ class QueuedSuggestion:
             is_anonymous=is_anonymous,
         )
         await state.queued_suggestions_db.insert(suggestion)
-        return suggestion
+
+        # Try to populate id on returned object
+        return await state.queued_suggestions_db.find(suggestion.as_dict())
 
     def as_filter(self) -> dict:
         if not self._id:

@@ -50,12 +50,20 @@ class SuggestionsQueueCog(commands.Cog):
         await self.core.stop_button(await InteractionHandler.new_handler(inter), pid)
 
     @components.button_listener()
-    async def approve_button(self, inter: disnake.MessageInteraction, *, pid: str):
-        await self.core.approve_button(await InteractionHandler.new_handler(inter), pid)
+    async def virtual_approve_button(
+        self, inter: disnake.MessageInteraction, *, pid: str
+    ):
+        await self.core.virtual_approve_button(
+            await InteractionHandler.new_handler(inter), pid
+        )
 
     @components.button_listener()
-    async def reject_button(self, inter: disnake.MessageInteraction, *, pid: str):
-        await self.core.reject_button(await InteractionHandler.new_handler(inter), pid)
+    async def virtual_reject_button(
+        self, inter: disnake.MessageInteraction, *, pid: str
+    ):
+        await self.core.virtual_reject_button(
+            await InteractionHandler.new_handler(inter), pid
+        )
 
     @components.button_listener()
     async def accept_queued_suggestion(self, inter: disnake.MessageInteraction):
@@ -91,8 +99,8 @@ class SuggestionsQueueCog(commands.Cog):
             self.previous_button,
             self.next_button,
             self.stop_button,
-            self.approve_button,
-            self.reject_button,
+            self.virtual_approve_button,
+            self.virtual_reject_button,
         )
 
 

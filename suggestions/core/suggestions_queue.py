@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Callable
 
 import disnake
 from alaric import AQ
-from alaric.comparison import EQ
+from alaric.comparison import EQ, Exists
 from alaric.logical import AND
+from alaric.meta import Negate
 from alaric.projections import Projection, SHOW
 from commons.caching import NonExistentEntry, TimedCache
 from disnake import Guild
@@ -115,6 +116,13 @@ class SuggestionsQueue:
         suggestion: Suggestion | None = None
         try:
             guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
+
+            # If sent to physical queue, delete it
+            if not queued_suggestion.is_in_virtual_queue:
+                chan = await self.state.fetch_channel(queued_suggestion.channel_id)
+                msg = await chan.fetch_message(queued_suggestion.message_id)
+                await msg.delete()
+
             # Send the message to the relevant channel if required
             if was_approved:
                 # Send this message through to the guilds suggestion channel
@@ -201,7 +209,7 @@ class SuggestionsQueue:
             )
 
     @wrap_with_error_handler()
-    async def approve_button(self, ih: InteractionHandler, pid: str):
+    async def virtual_approve_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion: QueuedSuggestion = (
             await paginator.get_current_queued_suggestion()
@@ -213,7 +221,7 @@ class SuggestionsQueue:
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
 
     @wrap_with_error_handler()
-    async def reject_button(self, ih: InteractionHandler, pid: str):
+    async def virtual_reject_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion = await paginator.get_current_queued_suggestion()
         await self.resolve_queued_suggestion(
@@ -257,7 +265,13 @@ class SuggestionsQueue:
         guild_id = ih.interaction.guild_id
         guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
         data: list = await self.queued_suggestions_db.find_many(
-            AQ(AND(EQ("guild_id", guild_id), EQ("still_in_queue", True))),
+            AQ(
+                AND(
+                    EQ("guild_id", guild_id),
+                    EQ("still_in_queue", True),
+                    Negate(Exists("message_id")),
+                )
+            ),
             projections=Projection(SHOW("_id")),
             try_convert=False,
         )

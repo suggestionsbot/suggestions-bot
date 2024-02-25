@@ -37,6 +37,7 @@ from suggestions.exceptions import (
     BlocklistedUser,
     PartialResponse,
     MissingQueueLogsChannel,
+    MissingPermissionsToAccessQueueChannel,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.interaction_handler import InteractionHandler
@@ -397,6 +398,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     error=error,
                 ),
                 ephemeral=True,
+            )
+
+        elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    title="Missing permissions within queue logs channel",
+                    description="The bot does not have the required permissions in your queue channel. "
+                    "Please contact an administrator and ask them to fix this.",
+                    error=error,
+                    error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
+                )
             )
 
         elif isinstance(exception, commands.MissingPermissions):

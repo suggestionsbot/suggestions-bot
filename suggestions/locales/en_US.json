@@ -62,6 +62,8 @@
   "SUGGESTION_OBJECT_LOCK_THREAD": "Locking this thread as the suggestion has reached a resolution.",
   "CONFIG_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion channel to {}",
   "CONFIG_LOGS_INNER_MESSAGE": "I have set this guilds log channel to {}",
+  "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion queue channel to $CHANNEL",
+  "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE_REMOVED": "I have disabled sending rejected queue suggestions to a channel.",
   "CONFIG_GET_INNER_BASE_EMBED_DESCRIPTION": "Configuration for {}\n",
   "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_SET": "Log channel: <#{}>",
   "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_NOT_SET": "Not set",
@@ -122,5 +124,7 @@
   "SUGGESTION_ID_NAME": "suggestion_id",
   "SUGGESTION_ID_DESCRIPTION": "The suggestions ID you wish to reference.",
   "USER_ID_NAME": "user_id",
-  "USER_ID_DESCRIPTION": "The users discord id."
+  "USER_ID_DESCRIPTION": "The users discord id.",
+  "CONFIG_USE_PHYSICAL_QUEUE_ENABLE_INNER_MESSAGE": "If the suggestions queue is enabled, all new suggestions will go to a physical queue.",
+  "CONFIG_USE_PHYSICAL_QUEUE_DISABLE_INNER_MESSAGE": "If the suggestions queue is enabled, all new suggestions will go to a virtual queue."
 }
