@@ -241,11 +241,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.invoke(ctx)
 
     async def _push_slash_error_stats(
-        self, interaction: disnake.ApplicationCommandInteraction
+        self,
+        interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
     ):
-        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(
+        name = (
             interaction.application_command.qualified_name
+            if isinstance(interaction, disnake.ApplicationCommandInteraction)
+            else interaction.data["custom_id"].split(":")[0]  # Button name
         )
+
+        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(name)
         if not stat_type:
             return
 
@@ -545,7 +550,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 )
                 return
 
-        if interaction.deferred_without_send:
+        ih: InteractionHandler = await InteractionHandler.fetch_handler(
+            interaction.id, self
+        )
+        if interaction.deferred_without_send or (
+            ih is not None and not ih.has_sent_something
+        ):
             gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(

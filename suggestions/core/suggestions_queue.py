@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import functools
 import logging
 from datetime import timedelta
-from typing import TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Callable
 
 import disnake
 from alaric import AQ
@@ -24,6 +24,20 @@ if TYPE_CHECKING:
     from suggestions.objects import Suggestion
 
 log = logging.getLogger(__name__)
+
+
+def wrap_with_error_handler():
+    def decorator(func: Callable):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as e:
+                await args[0].bot.on_slash_command_error(args[1].interaction, e)
+
+        return wrapper
+
+    return decorator
 
 
 class SuggestionsQueue:
@@ -100,10 +114,6 @@ class SuggestionsQueue:
         guild_id = ih.interaction.guild_id
         suggestion: Suggestion | None = None
         try:
-            queued_suggestion.resolved_by = ih.interaction.author.id
-            queued_suggestion.resolved_at = self.bot.state.now
-            queued_suggestion.still_in_queue = False
-
             guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
             # Send the message to the relevant channel if required
             if was_approved:
@@ -123,9 +133,8 @@ class SuggestionsQueue:
                     icon_url=icon_url,
                     comes_from_queue=True,
                 )
-                # We dont send the user a message here because setup_initial_messages
-                # does this for us
-
+                # We dont send the user a message here because
+                # setup_initial_messages does this for us
             else:
                 # We may need to send this rejected suggestion to a logs channel
                 if guild_config.queued_log_channel_id:
@@ -169,19 +178,29 @@ class SuggestionsQueue:
                 await user.send(
                     embeds=[embed, await queued_suggestion.as_embed(self.bot)]
                 )
-
         except:
             # Don't remove from queue on failure
             if suggestion is not None:
                 await self.bot.state.suggestions_db.delete(suggestion)
 
+                if suggestion.message_id is not None:
+                    channel: disnake.TextChannel = await self.state.fetch_channel(
+                        suggestion.channel_id
+                    )
+                    message = await channel.fetch_message(suggestion.message_id)
+                    await message.delete()
+
             # Re-raise for the bot handler
             raise
         else:
+            queued_suggestion.resolved_by = ih.interaction.author.id
+            queued_suggestion.resolved_at = self.bot.state.now
+            queued_suggestion.still_in_queue = False
             await self.bot.state.queued_suggestions_db.update(
                 queued_suggestion, queued_suggestion
             )
 
+    @wrap_with_error_handler()
     async def approve_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion: QueuedSuggestion = (
@@ -193,6 +212,7 @@ class SuggestionsQueue:
         await paginator.remove_current_page()
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
 
+    @wrap_with_error_handler()
     async def reject_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion = await paginator.get_current_queued_suggestion()

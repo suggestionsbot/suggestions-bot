@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import cast, TYPE_CHECKING
 
 import disnake
+from commons.caching import NonExistentEntry
 
 from suggestions.exceptions import ConflictingHandlerInformation
 
@@ -100,6 +101,9 @@ class InteractionHandler:
     @classmethod
     async def fetch_handler(
         cls, application_id: int, bot: SuggestionsBot
-    ) -> InteractionHandler:
+    ) -> InteractionHandler | None:
         """Fetch a registered handler for the given interaction."""
-        return bot.state.interaction_handlers.get_entry(application_id)
+        try:
+            return bot.state.interaction_handlers.get_entry(application_id)
+        except NonExistentEntry:
+            return None
