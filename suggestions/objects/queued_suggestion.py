@@ -207,7 +207,9 @@ class QueuedSuggestion:
         )
         if not self.is_anonymous:
             embed.set_thumbnail(user.display_avatar)
-            embed.set_footer(text=f"Submitter ID: {self.suggestion_author_id}")
+            embed.set_footer(
+                text=f"Queued suggestion | Submitter ID: {self.suggestion_author_id}"
+            )
 
         if self.image_url:
             embed.set_image(self.image_url)

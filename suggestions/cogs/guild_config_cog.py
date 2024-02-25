@@ -157,7 +157,7 @@ class GuildConfigCog(commands.Cog):
         key = (
             "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE_REMOVED"
             if channel is None
-            else "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE"
+            else "CONFIG_QUEUE_LOG_CHANNEL_INNER_MESSAGE"
         )
         msg = self.bot.get_locale(key, interaction.locale)
         if channel is not None:

@@ -63,6 +63,7 @@
   "CONFIG_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion channel to {}",
   "CONFIG_LOGS_INNER_MESSAGE": "I have set this guilds log channel to {}",
   "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion queue channel to $CHANNEL",
+  "CONFIG_QUEUE_LOG_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion queue channel to {}",
   "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE_REMOVED": "I have disabled sending rejected queue suggestions to a channel.",
   "CONFIG_GET_INNER_BASE_EMBED_DESCRIPTION": "Configuration for {}\n",
   "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_SET": "Log channel: <#{}>",
