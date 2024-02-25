@@ -20,6 +20,7 @@ class GuildConfig:
         keep_logs: bool = False,
         dm_messages_disabled: bool = False,
         log_channel_id: Optional[int] = None,
+        queued_log_channel_id: Optional[int] = None,
         threads_for_suggestions: bool = True,
         suggestions_channel_id: Optional[int] = None,
         can_have_anonymous_suggestions: bool = False,
@@ -33,6 +34,7 @@ class GuildConfig:
         self._id: int = _id
         self.keep_logs: bool = keep_logs
         self.log_channel_id: Optional[int] = log_channel_id
+        self.queued_log_channel_id: Optional[int] = queued_log_channel_id
         self.auto_archive_threads: bool = auto_archive_threads
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.anonymous_resolutions: bool = anonymous_resolutions
@@ -89,6 +91,7 @@ class GuildConfig:
             "keep_logs": self.keep_logs,
             "blocked_users": list(self.blocked_users),
             "log_channel_id": self.log_channel_id,
+            "queued_log_channel_id": self.queued_log_channel_id,
             "auto_archive_threads": self.auto_archive_threads,
             "dm_messages_disabled": self.dm_messages_disabled,
             "suggestions_channel_id": self.suggestions_channel_id,

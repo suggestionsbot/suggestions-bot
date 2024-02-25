@@ -57,6 +57,18 @@ class SuggestionsQueueCog(commands.Cog):
     async def reject_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await self.core.reject_button(await InteractionHandler.new_handler(inter), pid)
 
+    @components.button_listener()
+    async def accept_queued_suggestion(self, inter: disnake.MessageInteraction):
+        if inter.message is None:
+            raise ValueError("Unhandled exception, expected a message")
+
+        await self.core.accept_queued_suggestion(
+            await InteractionHandler.new_handler(inter),
+            inter.message.id,
+            inter.message.channel.id,
+            self.accept_queued_suggestion,
+        )
+
     @commands.slash_command(
         dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),

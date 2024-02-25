@@ -13,7 +13,7 @@ from alaric.projections import Projection, SHOW
 from commons.caching import NonExistentEntry, TimedCache
 from disnake import Guild
 
-from suggestions.exceptions import ErrorHandled
+from suggestions.exceptions import ErrorHandled, MissingQueueLogsChannel
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig, UserConfig, QueuedSuggestion
 from suggestions.qs_paginator import QueuedSuggestionsPaginator
@@ -27,6 +27,15 @@ log = logging.getLogger(__name__)
 
 
 class SuggestionsQueue:
+    """
+    Approach to suggestions queue.
+
+    If it gets put in the virtual queue, it's always in said queue.
+    If its put in a channel, it's always in the channel.
+    Although we do track it under the same db table, this just
+    saves needing to transition everything between them
+    """
+
     def __init__(self, bot):
         self.bot: SuggestionsBot = bot
         self.paginator_objects: TimedCache = TimedCache(
@@ -80,93 +89,117 @@ class SuggestionsQueue:
         )
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_CANCELLED")
 
+    async def resolve_queued_suggestion(
+        self,
+        ih: InteractionHandler,
+        queued_suggestion: QueuedSuggestion,
+        *,
+        was_approved: bool,
+    ):
+        """Resolve a queued item, doing all the relevant actions"""
+        guild_id = ih.interaction.guild_id
+        suggestion: Suggestion | None = None
+        try:
+            queued_suggestion.resolved_by = ih.interaction.author.id
+            queued_suggestion.resolved_at = self.bot.state.now
+            queued_suggestion.still_in_queue = False
+
+            guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
+            # Send the message to the relevant channel if required
+            if was_approved:
+                # Send this message through to the guilds suggestion channel
+                suggestion = await queued_suggestion.convert_to_suggestion(
+                    self.bot.state
+                )
+                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                guild = await self.state.fetch_guild(guild_id)
+                await suggestion.setup_initial_messages(
+                    guild_config=guild_config,
+                    interaction=ih.interaction,
+                    state=self.state,
+                    bot=self.bot,
+                    cog=self.bot.get_cog("SuggestionsCog"),
+                    guild=guild,
+                    icon_url=icon_url,
+                    comes_from_queue=True,
+                )
+                # We dont send the user a message here because setup_initial_messages
+                # does this for us
+
+            else:
+                # We may need to send this rejected suggestion to a logs channel
+                if guild_config.queued_log_channel_id:
+                    embed: disnake.Embed = await queued_suggestion.as_embed(self.bot)
+                    channel: disnake.TextChannel = await self.bot.state.fetch_channel(
+                        guild_config.queued_log_channel_id
+                    )
+                    try:
+                        await channel.send(embed=embed)
+                    except disnake.Forbidden as e:
+                        raise MissingQueueLogsChannel from e
+
+                # message the user the outcome
+                user = await self.bot.state.fetch_user(
+                    queued_suggestion.suggestion_author_id
+                )
+                user_config: UserConfig = await UserConfig.from_id(
+                    queued_suggestion.suggestion_author_id, self.bot.state
+                )
+                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                guild = self.state.guild_cache.get_entry(guild_id)
+                if (
+                    user_config.dm_messages_disabled
+                    or guild_config.dm_messages_disabled
+                ):
+                    # Set up not to message users
+                    return
+
+                embed: disnake.Embed = disnake.Embed(
+                    description=self.bot.get_localized_string(
+                        "QUEUE_INNER_USER_REJECTED", ih
+                    ),
+                    colour=self.bot.colors.embed_color,
+                    timestamp=self.state.now,
+                )
+                embed.set_author(
+                    name=guild.name,
+                    icon_url=icon_url,
+                )
+                embed.set_footer(text=f"Guild ID {guild_id}")
+                await user.send(
+                    embeds=[embed, await queued_suggestion.as_embed(self.bot)]
+                )
+
+        except:
+            # Don't remove from queue on failure
+            if suggestion is not None:
+                await self.bot.state.suggestions_db.delete(suggestion)
+
+            # Re-raise for the bot handler
+            raise
+        else:
+            await self.bot.state.queued_suggestions_db.update(
+                queued_suggestion, queued_suggestion
+            )
+
     async def approve_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion: QueuedSuggestion = (
             await paginator.get_current_queued_suggestion()
         )
-        suggestion: None = None
-        guild_id = ih.interaction.guild_id
-        try:
-            await paginator.remove_current_page()
-            suggestion: Suggestion = await current_suggestion.resolve(
-                was_approved=True,
-                state=self.bot.state,
-                resolved_by=ih.interaction.author.id,
-            )
-            guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
-            icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
-            guild = self.state.guild_cache.get_entry(guild_id)
-            await suggestion.setup_initial_messages(
-                guild_config=guild_config,
-                interaction=ih.interaction,
-                state=self.state,
-                bot=self.bot,
-                cog=self.bot.get_cog("SuggestionsCog"),
-                guild=guild,
-                icon_url=icon_url,
-                comes_from_queue=True,
-            )
-        except:
-            # Throw it back in the queue on error
-            current_suggestion.resolved_by = None
-            current_suggestion.resolved_at = None
-            current_suggestion.still_in_queue = True
-            await self.bot.state.queued_suggestions_db.update(
-                current_suggestion, current_suggestion
-            )
-
-            if suggestion is not None:
-                await self.bot.state.suggestions_db.delete(suggestion)
-
-            raise
-
+        await self.resolve_queued_suggestion(
+            ih, queued_suggestion=current_suggestion, was_approved=True
+        )
+        await paginator.remove_current_page()
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
 
     async def reject_button(self, ih: InteractionHandler, pid: str):
         paginator = await self.get_paginator_for(pid, ih)
         current_suggestion = await paginator.get_current_queued_suggestion()
-        await paginator.remove_current_page()
-        await current_suggestion.resolve(
-            was_approved=False,
-            state=self.bot.state,
-            resolved_by=ih.interaction.author.id,
+        await self.resolve_queued_suggestion(
+            ih, queued_suggestion=current_suggestion, was_approved=False
         )
-
-        guild_id = ih.interaction.guild_id
-        try:
-            guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
-            icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
-            guild = self.state.guild_cache.get_entry(guild_id)
-            embed: disnake.Embed = disnake.Embed(
-                description=self.bot.get_localized_string(
-                    "QUEUE_INNER_USER_REJECTED", ih
-                ),
-                colour=self.bot.colors.embed_color,
-                timestamp=self.state.now,
-            )
-            embed.set_author(
-                name=guild.name,
-                icon_url=icon_url,
-            )
-            embed.set_footer(text=f"Guild ID {guild_id}")
-            user = await self.bot.get_or_fetch_user(
-                current_suggestion.suggestion_author_id
-            )
-            user_config: UserConfig = await UserConfig.from_id(
-                current_suggestion.suggestion_author_id, self.bot.state
-            )
-            if (
-                not user_config.dm_messages_disabled
-                and not guild_config.dm_messages_disabled
-            ):
-                await user.send(embed=embed)
-        except disnake.HTTPException:
-            log.debug(
-                "Failed to DM %s regarding their queued suggestion",
-                current_suggestion.suggestion_author_id,
-            )
-
+        await paginator.remove_current_page()
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
 
     async def info(self, ih: InteractionHandler):
@@ -253,3 +286,51 @@ class SuggestionsQueue:
             ],
         )
         self.paginator_objects.add_entry(pid, paginator)
+
+    async def accept_queued_suggestion(
+        self, ih: InteractionHandler, message_id: int, channel_id: int, button
+    ):
+        current_suggestion: QueuedSuggestion = await QueuedSuggestion.from_message_id(
+            message_id, channel_id, self.state
+        )
+        if current_suggestion.is_resolved:
+            return await ih.send(translation_key="QUEUE_INNER_ALREADY_RESOLVED")
+
+        # By here we need to do something about resolving it
+        suggestion: None = None
+        guild_id = ih.interaction.guild_id
+        try:
+            await paginator.remove_current_page()
+            suggestion: Suggestion = await current_suggestion.resolve(
+                was_approved=True,
+                state=self.bot.state,
+                resolved_by=ih.interaction.author.id,
+            )
+            guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
+            icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+            guild = self.state.guild_cache.get_entry(guild_id)
+            await suggestion.setup_initial_messages(
+                guild_config=guild_config,
+                interaction=ih.interaction,
+                state=self.state,
+                bot=self.bot,
+                cog=self.bot.get_cog("SuggestionsCog"),
+                guild=guild,
+                icon_url=icon_url,
+                comes_from_queue=True,
+            )
+        except:
+            # Throw it back in the queue on error
+            current_suggestion.resolved_by = None
+            current_suggestion.resolved_at = None
+            current_suggestion.still_in_queue = True
+            await self.bot.state.queued_suggestions_db.update(
+                current_suggestion, current_suggestion
+            )
+
+            if suggestion is not None:
+                await self.bot.state.suggestions_db.delete(suggestion)
+
+            raise
+
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")

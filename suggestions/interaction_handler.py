@@ -21,11 +21,13 @@ class InteractionHandler:
 
     def __init__(
         self,
-        interaction: disnake.Interaction | disnake.GuildCommandInteraction,
+        interaction: disnake.Interaction
+        | disnake.GuildCommandInteraction
+        | disnake.MessageInteraction,
         ephemeral: bool,
         with_message: bool,
     ):
-        self.interaction: disnake.Interaction | disnake.GuildCommandInteraction = (
+        self.interaction: disnake.Interaction | disnake.GuildCommandInteraction | disnake.MessageInteraction = (
             interaction
         )
         self.ephemeral: bool = ephemeral

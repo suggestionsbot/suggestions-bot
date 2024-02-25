@@ -36,6 +36,7 @@ from suggestions.exceptions import (
     QueueImbalance,
     BlocklistedUser,
     PartialResponse,
+    MissingQueueLogsChannel,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.interaction_handler import InteractionHandler
@@ -375,6 +376,19 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Please contact an administrator and ask them to set one up "
                     "using the following command.\n`/config logs`",
                     error_code=ErrorCode.MISSING_LOG_CHANNEL,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, MissingQueueLogsChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Queue Logs Channel",
+                    "This command requires a queue log channel to use.\n"
+                    "Please contact an administrator and ask them to set one up "
+                    "using the following command.\n`/config queue_logs`",
+                    error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
                     error=error,
                 ),
                 ephemeral=True,
@@ -791,7 +805,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return values[str(locale)]
         except KeyError:
             # Default to known translations if not set
-            return values["en-GB"]
+            return values.get("en-GB", values["en-US"])
 
     @staticmethod
     def inject_locale_values(

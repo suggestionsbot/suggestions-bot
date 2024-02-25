@@ -6,7 +6,7 @@ import logging
 import random
 import string
 from datetime import timedelta
-from typing import TYPE_CHECKING, List, Dict, Set
+from typing import TYPE_CHECKING, List, Dict, Set, Any
 
 import disnake
 from alaric import AQ
@@ -15,6 +15,8 @@ from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
 from commons.caching import NonExistentEntry, TimedCache
+from disnake import Thread
+from disnake.abc import GuildChannel, PrivateChannel
 
 from suggestions.objects import GuildConfig, UserConfig
 
@@ -50,6 +52,9 @@ class State:
             global_ttl=self.autocomplete_cache_ttl,
             lazy_eviction=False,
             ttl_from_last_access=True,
+        )
+        self.object_cache: TimedCache[int, Any] = TimedCache(
+            global_ttl=timedelta(hours=1), lazy_eviction=False
         )
 
         self.guild_configs: TimedCache = TimedCache(
@@ -248,6 +253,31 @@ class State:
         )
         for entry in error_ids:
             self.existing_error_ids.add(entry["_id"])
+
+    async def fetch_channel(self, channel_id: int) -> disnake.TextChannel:
+        try:
+            return self.object_cache.get_entry(channel_id)
+        except NonExistentEntry:
+            chan = await self.bot.fetch_channel(channel_id)
+            self.object_cache.add_entry(channel_id, chan)
+            return chan  # type: ignore
+
+    async def fetch_user(self, user_id: int) -> disnake.User:
+        try:
+            return self.object_cache.get_entry(user_id)
+        except NonExistentEntry:
+            user = await self.bot.fetch_user(user_id)
+            self.object_cache.add_entry(user_id, user)
+            return user
+
+    async def fetch_guild(self, guild_id: int) -> disnake.Guild:
+        # Need guild cache instead of object as used else where
+        try:
+            return self.guild_cache.get_entry(guild_id)
+        except NonExistentEntry:
+            guild = await self.bot.fetch_guild(guild_id)
+            self.guild_cache.add_entry(guild_id, guild)
+            return guild
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""
