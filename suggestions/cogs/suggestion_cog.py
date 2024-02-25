@@ -7,7 +7,7 @@ import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
 from bot_base.wraps import WrappedChannel
-from disnake import Guild
+from disnake import Guild, ButtonStyle
 from disnake.ext import commands, components
 
 from suggestions import checks, Stats, ErrorCode
@@ -257,10 +257,12 @@ class SuggestionsCog(commands.Cog):
                         disnake.ui.Button(
                             label="Approve queued suggestion",
                             custom_id=await self.queue_approve.build_custom_id(),
+                            style=ButtonStyle.green,
                         ),
                         disnake.ui.Button(
                             label="Reject queued suggestion",
                             custom_id=await self.queue_reject.build_custom_id(),
+                            style=ButtonStyle.danger,
                         ),
                     ],
                 )
