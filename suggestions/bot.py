@@ -393,7 +393,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Missing Queue Logs Channel",
                     "This command requires a queue log channel to use.\n"
                     "Please contact an administrator and ask them to set one up "
-                    "using the following command.\n`/config queue_logs`",
+                    "using the following command.\n`/config queue_channel`",
                     error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
                     error=error,
                 ),
