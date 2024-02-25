@@ -192,6 +192,9 @@ class GuildConfigCog(commands.Cog):
                 "Suggestions queue",
                 "Images in suggestions",
                 "Anonymous resolutions",
+                "Using physical queue",
+                "Queue channel",
+                "Queue rejection channel",
             ],
             default=None,
         ),
@@ -221,6 +224,33 @@ class GuildConfigCog(commands.Cog):
                 if guild_config.log_channel_id
                 else self.bot.get_locale(
                     "CONFIG_GET_INNER_PARTIAL_LOG_CHANNEL_NOT_SET", interaction.locale
+                )
+            )
+            embed.description += log_channel
+
+        elif config == "Queue channel":
+            log_channel = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_QUEUE_LOG_CHANNEL_SET", interaction.locale
+                ).format(guild_config.queued_channel_id)
+                if guild_config.queued_channel_id
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_QUEUE_LOG_CHANNEL_NOT_SET",
+                    interaction.locale,
+                )
+            )
+            embed.description += log_channel
+
+        elif config == "Queue rejection channel":
+            log_channel = (
+                self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_QUEUE_REJECTION_LOG_CHANNEL_SET",
+                    interaction.locale,
+                ).format(guild_config.queued_log_channel_id)
+                if guild_config.queued_log_channel_id
+                else self.bot.get_locale(
+                    "CONFIG_GET_INNER_PARTIAL_QUEUE_REJECTION_LOG_CHANNEL_NOT_SET",
+                    interaction.locale,
                 )
             )
             embed.description += log_channel
@@ -378,6 +408,22 @@ class GuildConfigCog(commands.Cog):
                 interaction.locale,
             )
         )
+        queue_channel = (
+            f"<#{guild_config.queued_channel_id}>"
+            if guild_config.queued_channel_id
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_QUEUE_LOG_CHANNEL_NOT_SET",
+                interaction.locale,
+            )
+        )
+        queue_rejection_channel = (
+            f"<#{guild_config.queued_log_channel_id}>"
+            if guild_config.queued_log_channel_id
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_PARTIAL_QUEUE_REJECTION_LOG_CHANNEL_NOT_SET",
+                interaction.locale,
+            )
+        )
         dm_responses = (
             self.bot.get_locale(
                 "CONFIG_GET_INNER_PARTIAL_DM_RESPONSES_NOT_SET", interaction.locale
@@ -422,6 +468,16 @@ class GuildConfigCog(commands.Cog):
         anon = self.bot.get_locale(
             "CONFIG_GET_INNER_ANONYMOUS_SUGGESTIONS_MESSAGE", interaction.locale
         ).format(anon_text)
+
+        physical_queue = (
+            self.bot.get_locale(
+                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET", interaction.locale
+            )
+            if guild_config.virtual_suggestion_queue
+            else self.bot.get_locale(
+                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET", interaction.locale
+            )
+        )
 
         image_text = (
             self.bot.get_locale(
@@ -472,7 +528,9 @@ class GuildConfigCog(commands.Cog):
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
             f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}\n"
-            f"Images in suggestions: {images}\nAnonymous resolutions: {anonymous_resolutions}",
+            f"Physical queue: {physical_queue}\nImages in suggestions: {images}\n"
+            f"Anonymous resolutions: {anonymous_resolutions}\n"
+            f"Queue channel: {queue_channel}\nQueue rejection channel: {queue_rejection_channel}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
