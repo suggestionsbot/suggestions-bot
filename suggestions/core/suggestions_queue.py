@@ -117,7 +117,7 @@ class SuggestionsQueue:
         try:
             guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
 
-            # If sent to physical queue, delete it
+            # If sent to channel queue, delete it
             if not queued_suggestion.is_in_virtual_queue:
                 chan = await self.state.fetch_channel(queued_suggestion.channel_id)
                 msg = await chan.fetch_message(queued_suggestion.message_id)

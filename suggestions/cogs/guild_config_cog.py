@@ -192,7 +192,7 @@ class GuildConfigCog(commands.Cog):
                 "Suggestions queue",
                 "Images in suggestions",
                 "Anonymous resolutions",
-                "Using physical queue",
+                "Using channel queue",
                 "Queue channel",
                 "Queue rejection channel",
             ],
@@ -373,6 +373,17 @@ class GuildConfigCog(commands.Cog):
 
             embed.description += text
 
+        elif config == "Using channel queue":
+            locale_string = (
+                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET"
+                if guild_config.virtual_suggestion_queue
+                else "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET"
+            )
+
+            text = self.bot.get_localized_string(locale_string, interaction)
+
+            embed.description += text
+
         else:
             raise InvalidGuildConfigOption
 
@@ -471,11 +482,11 @@ class GuildConfigCog(commands.Cog):
 
         physical_queue = (
             self.bot.get_locale(
-                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET", interaction.locale
+                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET", interaction.locale
             )
             if guild_config.virtual_suggestion_queue
             else self.bot.get_locale(
-                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET", interaction.locale
+                "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET", interaction.locale
             )
         )
 
@@ -528,7 +539,7 @@ class GuildConfigCog(commands.Cog):
             f"Log channel: {log_channel}\nDm responses: I {dm_responses} DM users on actions such as suggest\n"
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
             f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}\n"
-            f"Physical queue: {physical_queue}\nImages in suggestions: {images}\n"
+            f"Channel queue: {physical_queue}\nImages in suggestions: {images}\n"
             f"Anonymous resolutions: {anonymous_resolutions}\n"
             f"Queue channel: {queue_channel}\nQueue rejection channel: {queue_rejection_channel}",
             color=self.bot.colors.embed_color,
@@ -779,10 +790,10 @@ class GuildConfigCog(commands.Cog):
         )
 
     @config.sub_command_group()
-    async def use_physical_queue(self, interaction: disnake.GuildCommandInteraction):
+    async def use_channel_queue(self, interaction: disnake.GuildCommandInteraction):
         pass
 
-    @use_physical_queue.sub_command(name="enable")
+    @use_channel_queue.sub_command(name="enable")
     async def use_physical_queue_enable(
         self, interaction: disnake.GuildCommandInteraction
     ):
@@ -798,7 +809,7 @@ class GuildConfigCog(commands.Cog):
             self.stats.type.GUILD_PHYSICAL_QUEUE_ENABLE,
         )
 
-    @use_physical_queue.sub_command(name="disable")
+    @use_channel_queue.sub_command(name="disable")
     async def use_physical_queue_disable(
         self, interaction: disnake.GuildCommandInteraction
     ):
