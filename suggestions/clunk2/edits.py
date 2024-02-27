@@ -39,10 +39,16 @@ async def update_suggestion_message(
         pending_edits.discard(suggestion.suggestion_id)
         return
 
+    # We do this to avoid a race condition where the suggestion may have
+    # had a value modified between when it was added to the edit queue
+    # and the time at which it was actually edited
+    up_to_date_suggestion = await bot.state.suggestions_db.find(suggestion)
     try:
         await MessageEditing(
-            bot, channel_id=suggestion.channel_id, message_id=suggestion.message_id
-        ).edit(embed=await suggestion.as_embed(bot))
+            bot,
+            channel_id=up_to_date_suggestion.channel_id,
+            message_id=up_to_date_suggestion.message_id,
+        ).edit(embed=await up_to_date_suggestion.as_embed(bot))
     except (disnake.HTTPException, disnake.NotFound):
         log.error("Failed to update suggestion %s", suggestion.suggestion_id)
 
