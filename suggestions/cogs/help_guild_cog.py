@@ -3,11 +3,8 @@ from __future__ import annotations
 import datetime
 import io
 import logging
-import os
-import typing
 from typing import TYPE_CHECKING, Optional
 
-import aiohttp
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
@@ -71,31 +68,26 @@ class HelpGuildCog(commands.Cog):
             description="The ID of the guild you want info on."
         ),
     ):
-        """Retrieve information about what instance a given guild sees."""
+        """Retrieve information about what instance a given guild sees. This is currently wrong."""
+        await interaction.send(
+            ephemeral=True, content="This command currently does not work correctly."
+        )
+        return
+
         guild_id = int(guild_id)
         shard_id = self.bot.get_shard_id(guild_id)
         cluster_id = (
             1
-            if shard_id < 5
-            else 2
             if shard_id < 10
-            else 3
-            if shard_id < 15
-            else 4
+            else 2
             if shard_id < 20
-            else 5
-            if shard_id < 25
-            else 6
+            else 3
             if shard_id < 30
-            else 7
-            if shard_id < 35
-            else 8
+            else 4
             if shard_id < 40
-            else 9
-            if shard_id < 45
-            else 10
+            else 5
             if shard_id < 50
-            else 11
+            else 6
         )
 
         await interaction.send(
@@ -153,26 +145,15 @@ class HelpGuildCog(commands.Cog):
 
         red_circle = "🔴"
         green_circle = "🟢"
-        url = (
-            "https://garven.suggestions.gg/cluster/status"
-            if self.bot.is_prod
-            else "https://garven.dev.suggestions.gg/cluster/status"
-        )
 
         embed = disnake.Embed(
             timestamp=datetime.datetime.utcnow(),
             title="Bot infrastructure status",
         )
         down_shards: list[str] = [str(i) for i in range(53)]
-        down_clusters: list[str] = [str(i) for i in range(1, 12)]
+        down_clusters: list[str] = [str(i) for i in range(1, 7)]
         avg_bot_latency: list[float] = []
-        async with aiohttp.ClientSession(
-            headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-        ) as session:
-            async with session.get(url) as resp:
-                data: dict[str, dict | bool] = await resp.json()
-                if resp.status != 200:
-                    log.error("Something went wrong: %s", data)
+        data = await self.bot.garven.cluster_status()
 
         if data.pop("partial_response") is not None:
             embed.set_footer(text="Partial response")

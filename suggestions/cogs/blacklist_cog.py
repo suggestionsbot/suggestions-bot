@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import disnake
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 from disnake.ext import commands
 
 from suggestions.objects import GuildConfig, Suggestion

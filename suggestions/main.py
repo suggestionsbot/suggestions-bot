@@ -26,10 +26,10 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     is_prod: bool = True if os.environ.get("PROD", None) else False
 
     if is_prod:
-        total_shards = 53
+        total_shards = int(os.environ["TOTAL_SHARDS"])
         cluster_id = int(os.environ["CLUSTER"])
         offset = cluster_id - 1
-        number_of_shards_per_cluster = 5
+        number_of_shards_per_cluster = int(os.environ["SHARDS_PER_CLUSTER"])
         shard_ids = [
             i
             for i in range(

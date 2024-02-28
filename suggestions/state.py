@@ -12,9 +12,9 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
+from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
-from bot_base import NonExistentEntry
-from bot_base.caches import TimedCache
+from commons.caching import NonExistentEntry, TimedCache
 
 from suggestions.objects import GuildConfig, UserConfig
 
@@ -41,17 +41,25 @@ class State:
         )
         self.guild_cache_ttl: timedelta = timedelta(minutes=15)
         self.guild_cache: TimedCache[int, disnake.Guild] = TimedCache(
-            global_ttl=self.guild_cache_ttl, lazy_eviction=False
+            global_ttl=self.guild_cache_ttl,
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
         self.view_voters_cache: TimedCache[int, list[str]] = TimedCache(
-            global_ttl=self.autocomplete_cache_ttl, lazy_eviction=False
+            global_ttl=self.autocomplete_cache_ttl,
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
 
         self.guild_configs: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=30), lazy_eviction=False
+            global_ttl=timedelta(minutes=30),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
         self.user_configs: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=30), lazy_eviction=False
+            global_ttl=timedelta(minutes=30),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
 
         self.existing_error_ids: Set[str] = set()
@@ -166,7 +174,7 @@ class State:
     async def populate_view_voters_cache(self, guild_id: int) -> list:
         self.view_voters_cache.delete_entry(guild_id)
         data: List[Dict] = await self.database.suggestions.find_many(
-            AQ(EQ("guild_id", guild_id)),
+            AQ(AND(EQ("guild_id", guild_id), Negate(EQ("state", "cleared")))),
             projections=PROJECTION(SHOW("_id")),
             try_convert=False,
         )

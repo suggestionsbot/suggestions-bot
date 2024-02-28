@@ -29,6 +29,16 @@ async def update_suggestion_message(
 
     pending_edits.add(suggestion.suggestion_id)
     await asyncio.sleep(time_after)
+    if suggestion.channel_id is None or suggestion.message_id is None:
+        log.debug(
+            "Suggestion %s had a NoneType by the time it was to be edited channel_id=%s, message_id=%s",
+            suggestion.suggestion_id,
+            suggestion.channel_id,
+            suggestion.message_id,
+        )
+        pending_edits.discard(suggestion.suggestion_id)
+        return
+
     try:
         await MessageEditing(
             bot, channel_id=suggestion.channel_id, message_id=suggestion.message_id

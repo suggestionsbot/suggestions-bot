@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 import cooldowns
 import disnake
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 from bot_base.wraps import WrappedChannel
 from disnake import Guild, Localized
 from disnake.ext import commands, components

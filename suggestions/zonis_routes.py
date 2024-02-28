@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import disnake
 from zonis import client
@@ -19,13 +19,8 @@ log = logging.getLogger(__name__)
 class ZonisRoutes:
     def __init__(self, bot: SuggestionsBot):
         self.bot: SuggestionsBot = bot
-        url = (
-            "wss://garven.suggestions.gg/ws"
-            if self.bot.is_prod
-            else "wss://garven.dev.suggestions.gg/ws"
-        )
         self.client: client.Client = client.Client(
-            url=url,
+            url=bot.garven.ws_url,
             identifier=str(bot.cluster_id),
             secret_key=os.environ["ZONIS_SECRET_KEY"],
             override_key=os.environ.get("ZONIS_OVERRIDE_KEY"),
@@ -37,6 +32,8 @@ class ZonisRoutes:
             "share_with_devs",
             "refresh_premium",
             "shared_guilds",
+            "cached_item_count",
+            "cluster_ws_status",
         )
 
     async def start(self):
@@ -70,6 +67,25 @@ class ZonisRoutes:
         return data
 
     @client.route()
+    async def cluster_ws_status(
+        self,
+    ) -> dict[str, dict[Literal["ws", "keepalive"], str]]:
+        data: dict[str, dict[Literal["ws", "keepalive"], str]] = {}
+        for shard_id, shard_info in self.bot.shards.items():
+            shard_data: dict[Literal["ws", "keepalive"], str] = {
+                "ws": str(round(shard_info.latency, 5))
+            }
+            wsc = shard_info._parent.ws._keep_alive
+            if wsc is None:
+                shard_data["keepalive"] = "None"
+            else:
+                shard_data["keepalive"] = str(round(wsc.latency, 5))
+
+            data[str(shard_id)] = shard_data
+
+        return data
+
+    @client.route()
     async def share_with_devs(self, title, description, sender):
         channel: disnake.TextChannel = await self.bot.get_or_fetch_channel(  # type: ignore
             602332642456764426
@@ -79,3 +95,23 @@ class ZonisRoutes:
         )
         embed.set_footer(text=f"Sender: {sender}")
         await channel.send(embed=embed)
+
+    @client.route()
+    async def cached_item_count(self) -> dict[str, int]:
+        state = self.bot.state
+        stats = self.bot.stats
+        suggestions_queue_cog = self.bot.get_cog("SuggestionsQueueCog")
+        data = {
+            "state.autocomplete_cache": len(state.autocomplete_cache),
+            "state.guild_cache": len(state.guild_cache),
+            "state.view_voters_cache": len(state.view_voters_cache),
+            "state.guild_configs": len(state.guild_configs),
+            "state.user_configs": len(state.user_configs),
+            "stats.cluster_guild_cache": len(stats.cluster_guild_cache),
+            "stats.member_stats_cache": len(stats.member_stats_cache),
+            "suggestions_queue_cog.paginator_objects": len(
+                suggestions_queue_cog.paginator_objects  # noqa
+            ),
+        }
+
+        return data

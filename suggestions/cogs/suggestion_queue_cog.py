@@ -10,8 +10,7 @@ from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from alaric.projections import Projection, SHOW
-from bot_base import NonExistentEntry
-from bot_base.caches import TimedCache
+from commons.caching import NonExistentEntry, TimedCache
 from disnake import Guild
 from disnake.ext import commands, components
 
@@ -35,7 +34,9 @@ class SuggestionsQueueCog(commands.Cog):
         self.state = self.bot.state
         self.queued_suggestions_db: Document = self.bot.db.queued_suggestions
         self.paginator_objects: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=15), lazy_eviction=False
+            global_ttl=timedelta(minutes=15),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
         )
 
     async def get_paginator_for(

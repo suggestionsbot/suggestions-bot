@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import gc
+import io
 import logging
 import math
 import os
@@ -16,12 +18,11 @@ import disnake
 from alaric import Cursor
 from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError
+from disnake import Locale, LocalizationKeyError, GatewayParams
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
 
 from suggestions import State, Colors, Emojis, ErrorCode, Garven
-from suggestions.clunk import Clunk
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
@@ -34,6 +35,7 @@ from suggestions.exceptions import (
     UnhandledError,
     QueueImbalance,
     BlocklistedUser,
+    PartialResponse,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -46,7 +48,7 @@ log = logging.getLogger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.19"
+        self.version: str = "Public Release 3.21"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -72,7 +74,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
         self.garven: Garven = Garven(self)
-        self.clunk: Clunk = Clunk(self.state)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",
@@ -89,6 +90,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             "vote",
         }
         self.converted_prefix_commands: set[str] = {"suggest", "approve", "reject"}
+        self.gc_lock: asyncio.Lock = asyncio.Lock()
 
         # Sharding info
         self.cluster_id: int = kwargs.pop("cluster", 0)
@@ -103,12 +105,26 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 name="suggestions",
                 type=disnake.ActivityType.watching,
             ),
+            # gateway_params=GatewayParams(zlib=False),
         )
 
         self._has_dispatched_initial_ready: bool = False
         self._initial_ready_future: asyncio.Future = asyncio.Future()
 
         self.zonis: ZonisRoutes = ZonisRoutes(self)
+
+    async def launch_shard(
+        self, _gateway: str, shard_id: int, *, initial: bool = False
+    ) -> None:
+        # Use the proxy if set, else fall back to whatever is default
+        proxy: Optional[str] = os.environ.get("GW_PROXY", _gateway)
+        return await super().launch_shard(proxy, shard_id, initial=initial)
+
+    async def before_identify_hook(
+        self, _shard_id: int | None, *, initial: bool = False  # noqa: ARG002
+    ) -> None:
+        # gateway-proxy
+        return
 
     async def get_or_fetch_channel(self, channel_id: int) -> WrappedChannel:
         try:
@@ -126,13 +142,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.info("Startup took: %s", self.get_uptime())
         await self.suggestion_emojis.populate_emojis()
 
+    async def on_resumed(self):
+        if self.gc_lock.locked():
+            return
+
+        async with self.gc_lock:
+            await asyncio.sleep(2.0)
+            collected = gc.collect()
+            log.info(f"Garbage collector: collected {collected} objects.")
+
     @property
     def total_cluster_count(self) -> int:
         return math.ceil(self.total_shards / 10)
-
-    @property
-    def is_primary_cluster(self) -> bool:
-        return bool(os.environ.get("IS_PRIMARY_CLUSTER", False))
 
     def error_embed(
         self,
@@ -560,6 +581,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.stats.load()
         await self.update_bot_listings()
         await self.push_status()
+        await self.update_dev_channel()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
         await self.zonis.start()
@@ -571,7 +593,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         """
         log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
-        await self.clunk.kill_all()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
         log.info("Shutting down")
@@ -624,6 +645,65 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         process_watch_for_shutdown.__task = task_1
         state.add_background_task(task_1)
 
+    async def update_dev_channel(self):
+        if not self.is_prod:
+            log.info("Not watching for debug info as not on prod")
+            return
+
+        if not self.is_primary_cluster:
+            log.info("Not watching for debug info as not primary cluster")
+            return
+
+        state: State = self.state
+
+        async def process_watch_for_shutdown():
+            await self.wait_until_ready()
+            log.debug("Started tracking bot latency")
+
+            while not state.is_closing:
+                # Update once an hour
+                await self.sleep_with_condition(
+                    datetime.timedelta(minutes=5).total_seconds(),
+                    lambda: self.state.is_closing,
+                )
+
+                await self.garven.notify_devs(
+                    title=f"WS latency as follows",
+                    description=f"Timestamped for {datetime.datetime.utcnow().isoformat()}",
+                    sender=f"N/A",
+                )
+
+                data = await self.garven.get_bot_ws_latency()
+                shard_data = data["shards"]
+                for i in range(0, 75, 5):
+                    description = io.StringIO()
+                    for o in range(0, 6):
+                        shard = str(i + o)
+                        try:
+                            description.write(
+                                f"**Shard {shard}**\nWS latency: `{shard_data[shard]['ws']}`\n"
+                                f"Keep Alive latency: `{shard_data[shard]['keepalive']}`\n\n"
+                            )
+                        except KeyError:
+                            # My lazy way of not doing env checks n math right
+                            continue
+
+                    if description.getvalue():
+                        await self.garven.notify_devs(
+                            title=f"WS latency",
+                            description=description.getvalue(),
+                            sender=f"Partial response: {data['partial_response']}",
+                        )
+
+                await self.sleep_with_condition(
+                    datetime.timedelta(hours=1).total_seconds(),
+                    lambda: self.state.is_closing,
+                )
+
+        task_1 = asyncio.create_task(process_watch_for_shutdown())
+        process_watch_for_shutdown.__task = task_1
+        state.add_background_task(task_1)
+
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
         if not self.is_prod:
@@ -642,25 +722,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
             headers = {"Authorization": os.environ["SUGGESTIONS_API_KEY"]}
             while not state.is_closing:
-                url = (
-                    "https://garven.suggestions.gg/aggregate/guilds/count"
-                    if self.is_prod
-                    else "https://garven.dev.suggestions.gg/aggregate/guilds/count"
-                )
-                async with aiohttp.ClientSession(
-                    headers={"X-API-KEY": os.environ["GARVEN_API_KEY"]}
-                ) as session:
-                    async with session.get(url) as resp:
-                        data: dict = await resp.json()
-                        if resp.status != 200:
-                            log.error("Stopping bot list updates")
-                            log.error("%s", data)
-                            break
-
-                if data["partial_response"]:
-                    log.warning(
-                        "Skipping bot list updates as IPC returned a partial responses"
-                    )
+                try:
+                    total_guilds = await self.garven.get_total_guilds()
+                except PartialResponse:
                     await self.sleep_with_condition(
                         time_between_updates.total_seconds(),
                         lambda: self.state.is_closing,
@@ -668,12 +732,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     continue
 
                 body = {
-                    "guild_count": int(data["statistic"]),
+                    "guild_count": int(total_guilds),
                     "shard_count": int(self.shard_count),
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
-                        os.environ["SUGGESTIONS_STATS_API_URL"], json=body
+                        os.environ[
+                            "SUGGESTIONS_STATS_API_URL"
+                        ],  # This is the bot list API # lists.suggestions.gg
+                        json=body,
                     ) as r:
                         if r.status != 200:
                             log.warning("%s", r.text)
@@ -687,6 +754,24 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
         log.info("Setup bot list updates")
+
+    @property
+    def is_primary_cluster(self) -> bool:
+        if not self.is_prod:
+            # Non-prod is always single cluster
+            return True
+
+        shard_id = self.get_shard_id(self.main_guild_id)
+        return shard_id in self.shard_ids
+
+    async def _sync_application_commands(self) -> None:
+        # In order to reduce getting rate-limited because every cluster
+        # decided it wants to sync application commands when it aint required
+        if not self.is_primary_cluster:
+            log.warning("Not syncing application commands as not primary cluster")
+            return
+
+        await super()._sync_application_commands()
 
     def get_shard_id(self, guild_id: Optional[int]) -> int:
         # DM's go to shard 0
@@ -806,13 +891,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         log.error("Borked it")
                         return
 
+                    tb = "".join(traceback.format_exception(e))
                     log.error(
                         "Status update failed: %s",
-                        "".join(traceback.format_exception(e)),
+                        tb,
                     )
                     await self.garven.notify_devs(
                         title="Status page ping error",
-                        description=str(e),
+                        description=tb,
                         sender=f"Cluster {self.cluster_id}, shard {self.shard_id}",
                     )
 

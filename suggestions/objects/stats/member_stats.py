@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
-from bot_base import NonExistentEntry
+from commons.caching import NonExistentEntry
 
 from .member_command_stats import MemberCommandStats
 
