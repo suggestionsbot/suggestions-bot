@@ -26,6 +26,7 @@ class ErrorCode(IntEnum):
     QUEUE_IMBALANCE = 20
     MISSING_QUEUE_CHANNEL = 21
     BLOCKLISTED_USER = 22
+    INVALID_FILE_TYPE = 23
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
