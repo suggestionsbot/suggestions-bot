@@ -36,6 +36,7 @@ from suggestions.exceptions import (
     QueueImbalance,
     BlocklistedUser,
     PartialResponse,
+    InvalidFileType,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.objects import Error, GuildConfig, UserConfig
@@ -442,6 +443,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     "Blocked Action",
                     "Administrators from this guild have removed your ability to run this action.",
                     error_code=ErrorCode.BLOCKLISTED_USER,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, InvalidFileType):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Invalid file type",
+                    "The file you attempted to upload is not an accepted type.\n\n"
+                    "If you believe this is an error please reach out to us via our support discord.",
+                    error_code=ErrorCode.INVALID_FILE_TYPE,
                     error=error,
                 ),
                 ephemeral=True,

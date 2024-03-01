@@ -53,3 +53,7 @@ class BlocklistedUser(CheckFailure):
 
 class PartialResponse(Exception):
     """A garven route returned a partial response when we require a full response"""
+
+
+class InvalidFileType(disnake.DiscordException):
+    """The file you attempted to upload is not allowed."""
