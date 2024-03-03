@@ -10,7 +10,7 @@ from bot_base.wraps import WrappedChannel
 from disnake import Guild, ButtonStyle
 from disnake.ext import commands, components
 
-from suggestions import checks, Stats, ErrorCode
+from suggestions import checks, Stats
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue
@@ -22,7 +22,9 @@ from suggestions.exceptions import (
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
+
 from suggestions.objects.suggestion import SuggestionState
+from suggestions.utility import r2
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -219,15 +221,23 @@ class SuggestionsCog(commands.Cog):
             )
             raise ErrorHandled
 
-        image_url = image.url if isinstance(image, disnake.Attachment) else None
-        if image_url and not guild_config.can_have_images_in_suggestions:
-            await interaction.send(
-                self.bot.get_locale(
-                    "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
-                ),
-                ephemeral=True,
+        image_url = None
+        if image is not None:
+            if not guild_config.can_have_images_in_suggestions:
+                await interaction.send(
+                    self.bot.get_locale(
+                        "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
+                    ),
+                    ephemeral=True,
+                )
+                raise ErrorHandled
+
+            image_url = await r2.upload_file_to_r2(
+                file_name=image.filename,
+                file_data=await image.read(use_cached=True),
+                guild_id=interaction.guild_id,
+                user_id=interaction.author.id,
             )
-            raise ErrorHandled
 
         if guild_config.uses_suggestion_queue:
             qs = await QueuedSuggestion.new(

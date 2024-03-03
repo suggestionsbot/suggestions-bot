@@ -28,6 +28,7 @@ class ErrorCode(IntEnum):
     BLOCKLISTED_USER = 22
     MISSING_QUEUE_LOG_CHANNEL = 23
     MISSING_PERMISSIONS_IN_QUEUE_CHANNEL = 24
+    INVALID_FILE_TYPE = 25
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:

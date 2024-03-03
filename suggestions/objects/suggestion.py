@@ -925,11 +925,16 @@ class Suggestion:
                 log.debug("Created a thread on suggestion %s", self.suggestion_id)
 
         try:
+            suggestion_author = (
+                f"<@{self.suggestion_author_id}>"
+                if comes_from_queue
+                else interaction.author.mention
+            )
             embed: disnake.Embed = disnake.Embed(
                 description=bot.get_locale(
                     "SUGGEST_INNER_SUGGESTION_SENT", interaction.locale
                 ).format(
-                    interaction.author.mention,
+                    suggestion_author,
                     channel.mention,
                     self.suggestion_id,
                 ),
