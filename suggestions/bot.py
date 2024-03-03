@@ -36,9 +36,12 @@ from suggestions.exceptions import (
     QueueImbalance,
     BlocklistedUser,
     PartialResponse,
+    MissingQueueLogsChannel,
+    MissingPermissionsToAccessQueueChannel,
     InvalidFileType,
 )
 from suggestions.http_error_parser import try_parse_http_error
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
@@ -240,11 +243,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.invoke(ctx)
 
     async def _push_slash_error_stats(
-        self, interaction: disnake.ApplicationCommandInteraction
+        self,
+        interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
     ):
-        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(
+        name = (
             interaction.application_command.qualified_name
+            if isinstance(interaction, disnake.ApplicationCommandInteraction)
+            else interaction.data["custom_id"].split(":")[0]  # Button name
         )
+
+        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(name)
         if not stat_type:
             return
 
@@ -378,6 +386,30 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     error=error,
                 ),
                 ephemeral=True,
+            )
+
+        elif isinstance(exception, MissingQueueLogsChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Queue Logs Channel",
+                    "This command requires a queue log channel to use.\n"
+                    "Please contact an administrator and ask them to set one up "
+                    "using the following command.\n`/config queue_channel`",
+                    error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    title="Missing permissions within queue logs channel",
+                    description="The bot does not have the required permissions in your queue channel. "
+                    "Please contact an administrator and ask them to fix this.",
+                    error=error,
+                    error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
+                )
             )
 
         elif isinstance(exception, commands.MissingPermissions):
@@ -543,7 +575,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 )
                 return
 
-        if interaction.deferred_without_send:
+        ih: InteractionHandler = await InteractionHandler.fetch_handler(
+            interaction.id, self
+        )
+        if interaction.deferred_without_send or (
+            ih is not None and not ih.has_sent_something
+        ):
             gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(
@@ -803,7 +840,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return values[str(locale)]
         except KeyError:
             # Default to known translations if not set
-            return values["en-GB"]
+            return values.get("en-GB", values["en-US"])
 
     @staticmethod
     def inject_locale_values(
@@ -843,11 +880,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def get_localized_string(
         self,
         key: str,
-        interaction: disnake.Interaction,
+        interaction: disnake.Interaction | InteractionHandler,
         *,
         extras: Optional[dict] = None,
         guild_config: Optional[GuildConfig] = None,
     ):
+        if isinstance(interaction, InteractionHandler):
+            # Support this so easier going forward
+            interaction = interaction.interaction
+
         content = self.get_locale(key, interaction.locale)
         return self.inject_locale_values(
             content, interaction=interaction, guild_config=guild_config, extras=extras

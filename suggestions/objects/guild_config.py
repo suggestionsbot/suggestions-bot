@@ -20,11 +20,14 @@ class GuildConfig:
         keep_logs: bool = False,
         dm_messages_disabled: bool = False,
         log_channel_id: Optional[int] = None,
+        queued_channel_id: Optional[int] = None,
+        queued_log_channel_id: Optional[int] = None,
         threads_for_suggestions: bool = True,
         suggestions_channel_id: Optional[int] = None,
         can_have_anonymous_suggestions: bool = False,
         auto_archive_threads: bool = False,
         uses_suggestion_queue: bool = False,
+        virtual_suggestion_queue: bool = True,
         can_have_images_in_suggestions: bool = True,
         anonymous_resolutions: bool = False,
         blocked_users: Optional[list[int]] = None,
@@ -33,10 +36,13 @@ class GuildConfig:
         self._id: int = _id
         self.keep_logs: bool = keep_logs
         self.log_channel_id: Optional[int] = log_channel_id
+        self.queued_channel_id: Optional[int] = queued_channel_id
+        self.queued_log_channel_id: Optional[int] = queued_log_channel_id
         self.auto_archive_threads: bool = auto_archive_threads
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.anonymous_resolutions: bool = anonymous_resolutions
         self.uses_suggestion_queue: bool = uses_suggestion_queue
+        self.virtual_suggestion_queue: bool = virtual_suggestion_queue
         self.threads_for_suggestions: bool = threads_for_suggestions
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
         self.can_have_anonymous_suggestions: bool = can_have_anonymous_suggestions
@@ -89,11 +95,14 @@ class GuildConfig:
             "keep_logs": self.keep_logs,
             "blocked_users": list(self.blocked_users),
             "log_channel_id": self.log_channel_id,
+            "queued_channel_id": self.queued_channel_id,
+            "queued_log_channel_id": self.queued_log_channel_id,
             "auto_archive_threads": self.auto_archive_threads,
             "dm_messages_disabled": self.dm_messages_disabled,
             "suggestions_channel_id": self.suggestions_channel_id,
             "uses_suggestion_queue": self.uses_suggestion_queue,
             "anonymous_resolutions": self.anonymous_resolutions,
+            "virtual_suggestion_queue": self.virtual_suggestion_queue,
             "threads_for_suggestions": self.threads_for_suggestions,
             "can_have_anonymous_suggestions": self.can_have_anonymous_suggestions,
             "can_have_images_in_suggestions": self.can_have_images_in_suggestions,

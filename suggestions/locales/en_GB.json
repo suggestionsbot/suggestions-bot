@@ -107,7 +107,7 @@
   "PAGINATION_INNER_QUEUE_REJECTED": "I have removed that suggestion from the queue.",
   "QUEUE_VIEW_INNER_NOTHING_QUEUED": "Your guild has no suggestions in the queue.",
   "QUEUE_VIEW_INNER_PRIOR_QUEUE": "These suggestions were queued before your guild disabled the suggestions queue.",
-  "QUEUE_INNER_USER_REJECTED": "Your queued suggestion was rejected.",
+  "QUEUE_INNER_USER_REJECTED": "Your queued suggestion was rejected. For your reference, I have included the rejected suggestion below.",
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_SET": "can",
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_NOT_SET": "cannot",
   "CONFIG_GET_INNER_IMAGES_IN_SUGGESTIONS_MESSAGE": "This guild {} have images in suggestions.",

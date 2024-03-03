@@ -16,7 +16,7 @@ async def mocked_database() -> MockedSuggestionsMongoManager:
 
 
 @pytest.fixture
-async def bot(monkeypatch):
+async def bot(monkeypatch, mocked_database):
     if "./suggestions" not in [x[0] for x in os.walk(".")]:
         monkeypatch.chdir("..")
 
@@ -48,3 +48,7 @@ async def injection_metadata(causar: Causar) -> InjectionMetadata:
         guild_id=881118111967883295, channel_id=causar.faker.generate_snowflake()
     )
 
+
+@pytest.fixture
+async def interaction_handler(bot) -> InteractionHandler:
+    return InteractionHandler(AsyncMock(), True, True)
