@@ -31,13 +31,7 @@ if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot, State
 
-logger = Logger(
-    __name__,
-    extra_metadata={
-        "file.name": "suggestion_cog.py",
-        "file.folder": "suggestions.cogs",
-    },
-)
+logger = Logger(__name__)
 
 
 class SuggestionsCog(commands.Cog):
