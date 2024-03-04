@@ -6,6 +6,7 @@ import tracemalloc
 import alaric
 from alaric import Cursor
 from dotenv import load_dotenv
+from logoo import PrimaryLogger
 
 import suggestions
 
@@ -39,6 +40,18 @@ async def run_bot():
     # tracemalloc.start()
     log = logging.getLogger(__name__)
     bot = await suggestions.create_bot()
+
+    logger: PrimaryLogger = PrimaryLogger(
+        __name__,
+        base_url="https://logs.suggestions.gg",
+        org="default",
+        stream="prod_bot" if bot.is_prod else "test_bot",
+        username=os.environ["LOGOO_USER"],
+        password=os.environ["LOGOO_PASSWORD"],
+        poll_time=5,
+        global_metadata={"cluster": bot.cluster_id},
+    )
+    await logger.start_consumer()
 
     # Make sure we don't shutdown due to a previous shutdown request
     cursor: Cursor = (
