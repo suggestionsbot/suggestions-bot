@@ -15,8 +15,7 @@ from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
 from commons.caching import NonExistentEntry, TimedCache
-from disnake import Thread
-from disnake.abc import GuildChannel, PrivateChannel
+from logoo import Logger
 
 from suggestions.objects import GuildConfig, UserConfig
 
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from suggestions.interaction_handler import InteractionHandler
 
 log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class State:
@@ -92,7 +92,7 @@ class State:
             error_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing error id")
+            logger.critical("Encountered an existing error id")
 
         self.existing_error_ids.add(error_id)
         return error_id
@@ -103,7 +103,7 @@ class State:
             pag_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing paginator id")
+            logger.critical("Encountered an existing paginator id")
 
         self.existing_paginator_ids.add(pag_id)
         return pag_id
@@ -117,7 +117,7 @@ class State:
             suggestion_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing SID")
+            logger.critical("Encountered an existing SID")
 
         self.existing_suggestion_ids.add(suggestion_id)
         return suggestion_id
@@ -178,7 +178,11 @@ class State:
         )
         data: List[str] = [d["_id"] for d in data]
         self.autocomplete_cache.add_entry(guild_id, data, override=True)
-        log.debug("Populated sid cache for guild %s", guild_id)
+        logger.debug(
+            "Populated sid cache for guild %s",
+            guild_id,
+            extra_metadata={"guild_id": guild_id},
+        )
         return data
 
     async def populate_view_voters_cache(self, guild_id: int) -> list:
@@ -190,7 +194,11 @@ class State:
         )
         data: List[str] = [d["_id"] for d in data]
         self.view_voters_cache.add_entry(guild_id, data, override=True)
-        log.debug("Populated view voter cache for guild %s", guild_id)
+        logger.debug(
+            "Populated view voter cache for guild %s",
+            guild_id,
+            extra_metadata={"guild_id": guild_id},
+        )
         return data
 
     def add_sid_to_cache(self, guild_id: int, suggestion_id: str) -> None:
@@ -208,7 +216,12 @@ class State:
         finally:
             self.autocomplete_cache.add_entry(guild_id, current_values, override=True)
 
-        log.debug("Added sid %s to cache for guild %s", suggestion_id, guild_id)
+        logger.debug(
+            "Added sid %s to cache for guild %s",
+            suggestion_id,
+            guild_id,
+            extra_metadata={"guild_id": guild_id, "suggestion_id": suggestion_id},
+        )
 
     def remove_sid_from_cache(self, guild_id: int, suggestion_id: str) -> None:
         """Removes a suggestion from the cache when it's state is no longer open."""
@@ -227,10 +240,14 @@ class State:
                     current_values,
                     override=True,
                 )
-                log.debug(
+                logger.debug(
                     "Removed sid %s from the cache for guild %s",
                     suggestion_id,
                     guild_id,
+                    extra_metadata={
+                        "guild_id": guild_id,
+                        "suggestion_id": suggestion_id,
+                    },
                 )
 
     async def load(self):

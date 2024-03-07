@@ -53,3 +53,4 @@ yarl==1.7.2
 zonis==1.2.5
 types-aiobotocore==2.11.2
 aiobotocore==2.11.2
+logoo==1.1.0

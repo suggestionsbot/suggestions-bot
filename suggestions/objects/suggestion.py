@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional, cast
 
@@ -12,6 +11,7 @@ from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
 from disnake import Embed, Guild
 from disnake.ext import commands
+from logoo import Logger
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
@@ -21,7 +21,7 @@ from suggestions.objects import UserConfig, GuildConfig
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class SuggestionState(Enum):
@@ -285,8 +285,10 @@ class Suggestion:
             )
 
         if suggestion.guild_id != guild_id:
-            log.critical(
-                "Someone in guild %s looked up a suggestion not from their guild"
+            logger.critical(
+                "Someone in guild %s looked up a suggestion not from their guild",
+                guild_id,
+                extra_metadata={"guild_id": guild_id, "suggestion_id": suggestion_id},
             )
             raise SuggestionNotFound(
                 f"No suggestion found with the id {suggestion_id} in this guild"
@@ -606,7 +608,11 @@ class Suggestion:
                 self._total_down_votes = reaction.count - 1
 
         if self.total_up_votes is None or self.total_down_votes is None:
-            log.error("Failed to find our emojis on suggestion %s", self.suggestion_id)
+            logger.error(
+                "Failed to find our emojis on suggestion %s",
+                self.suggestion_id,
+                extra_metadata={"suggestion_id": self.suggestion_id},
+            )
 
         await bot.db.suggestions.update(self, self)
 
@@ -615,20 +621,29 @@ class Suggestion:
             self.suggestion_author_id, bot.state
         )
         if user_config.dm_messages_disabled:
-            log.debug(
+            logger.debug(
                 "User %s has dm messages disabled, failed to notify change to suggestion %s",
                 self.suggestion_author_id,
                 self.suggestion_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "author_id": self.suggestion_author_id,
+                },
             )
             return
 
         guild_config: GuildConfig = await GuildConfig.from_id(self.guild_id, bot.state)
         if guild_config.dm_messages_disabled:
-            log.debug(
+            logger.debug(
                 "Guild %s has dm messages disabled, failed to notify user %s regarding changes to suggestion %s",
                 self.guild_id,
                 self.suggestion_author_id,
                 self.suggestion_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "author_id": self.suggestion_author_id,
+                    "guild_id": self.guild_id,
+                },
             )
             return
 
@@ -660,7 +675,14 @@ class Suggestion:
         try:
             await user.send(embed=embed)
         except disnake.HTTPException:
-            log.debug("Failed to dm %s to tell them about their suggestion", user.id)
+            logger.debug(
+                "Failed to dm %s to tell them about their suggestion",
+                user.id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "author_id": user.id,
+                },
+            )
 
     async def create_thread(self, message: disnake.Message):
         """Create a thread for this suggestion"""
@@ -677,11 +699,15 @@ class Suggestion:
         interaction: disnake.Interaction,
     ):
         if self.channel_id is None or self.message_id is None:
-            log.error(
+            logger.error(
                 "update_vote_count received a null value for SID %s, "
                 "channel_id=%s, message_id=%s",
                 self.channel_id,
                 self.message_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "author_id": self.suggestion_author_id,
+                },
             )
             return
 
@@ -767,35 +793,54 @@ class Suggestion:
         """Attempts to archive the attached thread if the feature is enabled."""
         if not guild_config.auto_archive_threads:
             # Guild does not want thread archived
-            log.debug("Guild %s does not want threads archived", guild_config.guild_id)
+            logger.debug(
+                "Guild %s does not want threads archived",
+                guild_config.guild_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
+            )
             return
 
         channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
         message: disnake.Message = await channel.fetch_message(self.message_id)
         if not message.thread:
             # Suggestion has no created thread
-            log.debug(
+            logger.debug(
                 "No thread for suggestion %s, should have one: %s",
                 self.suggestion_id,
                 "yes" if guild_config.threads_for_suggestions else "no",
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
             )
             return
 
         if message.thread.owner_id != bot.user.id:
             # I did not create this thread
-            log.debug(
+            logger.debug(
                 "Thread on suggestion %s is owned by %s",
                 self.suggestion_id,
                 message.thread.owner_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
             )
             return
 
         if message.thread.archived or message.thread.locked:
             # Thread is already archived or
             # locked so no need to redo the action
-            log.debug(
+            logger.debug(
                 "Thread on suggestion %s is already archived or locked",
                 self.suggestion_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
             )
             return
 
@@ -803,7 +848,14 @@ class Suggestion:
             bot.get_locale("SUGGESTION_OBJECT_LOCK_THREAD", locale),
         )
         await message.thread.edit(locked=True, archived=True)
-        log.debug("Locked thread for suggestion %s", self.suggestion_id)
+        logger.debug(
+            "Locked thread for suggestion %s",
+            self.suggestion_id,
+            extra_metadata={
+                "suggestion_id": self.suggestion_id,
+                "guild_id": self.guild_id,
+            },
+        )
 
     async def resolve(
         self,
@@ -814,7 +866,14 @@ class Suggestion:
         resolution_type: SuggestionState,
         resolution_note: Optional[str] = None,
     ):
-        log.debug("Attempting to resolve suggestion %s", self.suggestion_id)
+        logger.debug(
+            "Attempting to resolve suggestion %s",
+            self.suggestion_id,
+            extra_metadata={
+                "suggestion_id": self.suggestion_id,
+                "guild_id": self.guild_id,
+            },
+        )
         self.anonymous_resolution = guild_config.anonymous_resolutions
         # https://github.com/suggestionsbot/suggestions-bot/issues/36
         if resolution_type is SuggestionState.approved:
@@ -822,10 +881,14 @@ class Suggestion:
         elif resolution_type is SuggestionState.rejected:
             await self.mark_rejected_by(state, interaction.author.id, resolution_note)
         else:
-            log.error(
+            logger.error(
                 "Resolving suggestion %s received a resolution_type of %s",
                 self.suggestion_id,
                 resolution_type,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
             )
             await interaction.send(
                 embed=bot.error_embed(
@@ -882,7 +945,14 @@ class Suggestion:
                     ),
                 ],
             )
-            log.debug("Sent suggestion %s to channel", self.suggestion_id)
+            logger.debug(
+                "Sent suggestion %s to channel",
+                self.suggestion_id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                },
+            )
         except disnake.Forbidden as e:
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
@@ -896,9 +966,13 @@ class Suggestion:
             try:
                 await self.create_thread(message)
             except disnake.HTTPException:
-                log.debug(
+                logger.debug(
                     "Failed to create a thread on suggestion %s",
                     self.suggestion_id,
+                    extra_metadata={
+                        "suggestion_id": self.suggestion_id,
+                        "guild_id": self.guild_id,
+                    },
                 )
                 did_delete = await self.try_delete(
                     bot=bot, interaction=interaction, silently=True
@@ -922,7 +996,14 @@ class Suggestion:
                 raise ErrorHandled
 
             else:
-                log.debug("Created a thread on suggestion %s", self.suggestion_id)
+                logger.debug(
+                    "Created a thread on suggestion %s",
+                    self.suggestion_id,
+                    extra_metadata={
+                        "suggestion_id": self.suggestion_id,
+                        "guild_id": self.guild_id,
+                    },
+                )
 
         try:
             suggestion_author = (
@@ -964,9 +1045,14 @@ class Suggestion:
                     or guild_config.dm_messages_disabled
                 ):
                     # Nothing we can do
-                    log.debug(
+                    logger.debug(
                         "Failed to DM %s regarding their suggestion being created from queue",
                         self.suggestion_author_id,
+                        extra_metadata={
+                            "suggestion_id": self.suggestion_id,
+                            "guild_id": self.guild_id,
+                            "author_id": self.suggestion_author_id,
+                        },
                     )
                     return
 
@@ -987,7 +1073,12 @@ class Suggestion:
                     )
                     await interaction.author.send(embed=embed)
         except disnake.HTTPException:
-            log.debug(
+            logger.debug(
                 "Failed to DM %s regarding their suggestion",
                 interaction.author.id,
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "guild_id": self.guild_id,
+                    "author_id": interaction.author.id,
+                },
             )

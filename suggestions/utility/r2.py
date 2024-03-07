@@ -1,14 +1,14 @@
 import hashlib
-import logging
 import mimetypes
 import os
 import secrets
 
 from aiobotocore.session import get_session
+from logoo import Logger
 
 from suggestions.exceptions import InvalidFileType
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 async def upload_file_to_r2(
@@ -52,6 +52,16 @@ async def upload_file_to_r2(
         file_key = hashlib.sha256(file_data + secrets.token_bytes(16)).hexdigest()
         key = "{}/{}.{}".format(guild_id, file_key, ext)
         await client.put_object(Bucket=os.environ["BUCKET"], Key=key, Body=file_data)
-        log.debug("User %s in guild %s uploaded an image", user_id, guild_id)
+        logger.debug(
+            "User %s in guild %s uploaded an image",
+            user_id,
+            guild_id,
+            extra_metadata={
+                "author_id": user_id,
+                "guild_id": guild_id,
+                "original_image_name": file_name,
+                "uploaded_to": key,
+            },
+        )
 
     return f"https://cdn.suggestions.bot/{key}"

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
 from disnake import Guild
 from disnake.ext import commands
+from logoo import Logger
 
 from suggestions import Stats
 from suggestions.cooldown_bucket import InteractionBucket
@@ -18,7 +18,7 @@ from suggestions.stats import StatsEnum
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class GuildConfigCog(commands.Cog):
@@ -55,11 +55,15 @@ class GuildConfigCog(commands.Cog):
             ).format(channel.mention),
             ephemeral=True,
         )
-        log.debug(
+        logger.debug(
             "User %s changed suggestions channel to %s in guild %s",
             interaction.author.id,
             channel.id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -86,11 +90,15 @@ class GuildConfigCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
+        logger.debug(
             "User %s changed logs channel to %s in guild %s",
             interaction.author.id,
             channel.id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -128,11 +136,15 @@ class GuildConfigCog(commands.Cog):
                 extras={"CHANNEL": channel.mention},
             )
         )
-        log.debug(
+        logger.debug(
             "User %s changed physical queue channel to %s in guild %s",
             interaction.author.id,
             channel.id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -163,11 +175,15 @@ class GuildConfigCog(commands.Cog):
         if channel is not None:
             msg = msg.format(channel.mention)
         await ih.send(msg)
-        log.debug(
+        logger.debug(
             "User %s changed rejected queue log channel to %s in guild %s",
             interaction.author.id,
             channel.id if channel is not None else None,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -388,11 +404,15 @@ class GuildConfigCog(commands.Cog):
             raise InvalidGuildConfigOption
 
         await interaction.send(embed=embed, ephemeral=True)
-        log.debug(
+        logger.debug(
             "User %s viewed the %s config in guild %s",
             interaction.author.id,
             config,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -546,10 +566,14 @@ class GuildConfigCog(commands.Cog):
             timestamp=self.bot.state.now,
         ).set_author(name=guild.name, icon_url=icon_url)
         await interaction.send(embed=embed, ephemeral=True)
-        log.debug(
+        logger.debug(
             "User %s viewed the global config in guild %s",
             interaction.author.id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -879,9 +903,13 @@ class GuildConfigCog(commands.Cog):
             user_message,
             ephemeral=True,
         )
-        log.debug(
+        logger.debug(
             log_message,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,

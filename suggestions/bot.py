@@ -18,9 +18,10 @@ import disnake
 from alaric import Cursor
 from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError, GatewayParams
+from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
+from logoo import Logger
 
 from suggestions import State, Colors, Emojis, ErrorCode, Garven
 from suggestions.exceptions import (
@@ -48,6 +49,7 @@ from suggestions.database import SuggestionsMongoManager
 from suggestions.zonis_routes import ZonisRoutes
 
 log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
@@ -189,7 +191,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     text=f"Error code {error_code.value} | Cluster ID {self.cluster_id}"
                 )
 
-            log.debug("Encountered %s", error_code.name)
+            logger.debug("Encountered %s", error_code.name)
         elif error:
             embed.set_footer(text=f"Error ID {error.id}")
 
@@ -529,6 +531,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
+            logger.debug(
+                "disnake.NotFound: %s",
+                exception.text,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                },
+            )
             gid = interaction.guild_id if interaction.guild_id else None
             await interaction.send(
                 embed=self.error_embed(
@@ -544,6 +554,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.Forbidden):
             log.debug("disnake.Forbidden: %s", exception.text)
+            logger.debug(
+                "disnake.Forbidden: %s",
+                exception.text,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                },
+            )
             await interaction.send(
                 embed=self.error_embed(
                     exception.text,
@@ -571,6 +589,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         elif isinstance(exception, disnake.HTTPException):
             if exception.code == 40060:
                 log.debug(
+                    "disnake.HTTPException: Interaction has already been acknowledged"
+                )
+                logger.debug(
                     "disnake.HTTPException: Interaction has already been acknowledged"
                 )
                 return
@@ -793,7 +814,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         json=body,
                     ) as r:
                         if r.status != 200:
-                            log.warning("%s", r.text)
+                            logger.warning("%s", r.text)
 
                 log.debug("Updated bot listings")
                 await self.sleep_with_condition(
@@ -939,6 +960,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     await self.sleep_with_condition(60, lambda: self.state.is_closing)
                 except (aiohttp.ClientConnectorError, ConnectionRefusedError):
                     log.warning("push_status failed to connect, retrying in 10 seconds")
+                    logger.warning(
+                        "push_status failed to connect, retrying in 10 seconds"
+                    )
                     await self.sleep_with_condition(10, lambda: self.state.is_closing)
                 except Exception as e:
                     if not self.is_prod:
@@ -947,6 +971,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
                     tb = "".join(traceback.format_exception(e))
                     log.error(
+                        "Status update failed: %s",
+                        tb,
+                    )
+                    logger.error(
                         "Status update failed: %s",
                         tb,
                     )
