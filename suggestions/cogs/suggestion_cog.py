@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Optional
 
 import cooldowns
@@ -85,7 +84,7 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a up vote",
-                {"suggestion_id": suggestion_id},
+                extra_metadata={"suggestion_id": suggestion_id},
             )
         else:
             suggestion.up_voted_by.add(member_id)
@@ -99,7 +98,7 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} up voted {suggestion_id}",
-                {"suggestion_id": suggestion_id},
+                extra_metadata={"suggestion_id": suggestion_id},
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -147,7 +146,7 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a down vote",
-                {"suggestion_id": suggestion_id},
+                extra_metadata={"suggestion_id": suggestion_id},
             )
         else:
             suggestion.down_voted_by.add(member_id)
@@ -161,7 +160,7 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} down voted {suggestion_id}",
-                {"suggestion_id": suggestion_id},
+                extra_metadata={"suggestion_id": suggestion_id},
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -289,7 +288,10 @@ class SuggestionsCog(commands.Cog):
             logger.debug(
                 f"User {interaction.author.id} created new queued"
                 f" suggestion in guild {interaction.guild_id}",
-                {"author_id": interaction.author.id, "guild_id": interaction.guild_id},
+                extra_metadata={
+                    "author_id": interaction.author.id,
+                    "guild_id": interaction.guild_id,
+                },
             )
             return await interaction.send(
                 ephemeral=True,
@@ -323,7 +325,7 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.author.id} created new suggestion "
             f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
-            {
+            extra_metadata={
                 "author_id": interaction.author.id,
                 "guild_id": interaction.guild_id,
                 "suggestion_id": suggestion.suggestion_id,
@@ -382,7 +384,7 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.author.id} approved suggestion "
             f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
-            {
+            extra_metadata={
                 "author_id": interaction.author.id,
                 "guild_id": interaction.guild_id,
                 "suggestion_id": suggestion.suggestion_id,
@@ -445,7 +447,7 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.author} rejected suggestion {suggestion.suggestion_id} "
             f"in guild {interaction.guild_id}",
-            {
+            extra_metadata={
                 "author_id": interaction.author.id,
                 "guild_id": interaction.guild_id,
                 "suggestion_id": suggestion.suggestion_id,
@@ -510,7 +512,7 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.user.id} cleared suggestion"
             f" {suggestion_id} in guild {interaction.guild_id}",
-            {
+            extra_metadata={
                 "author_id": interaction.author.id,
                 "guild_id": interaction.guild_id,
                 "suggestion_id": suggestion.suggestion_id,
@@ -543,7 +545,7 @@ class SuggestionsCog(commands.Cog):
             if not values:
                 logger.debug(
                     f"Values was found, but empty in guild {interaction.guild_id} thus populating",
-                    {"guild_id": interaction.guild_id},
+                    extra_metadata={"guild_id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id

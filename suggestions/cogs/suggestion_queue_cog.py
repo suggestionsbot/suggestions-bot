@@ -1,33 +1,17 @@
 from __future__ import annotations
 
-import logging
-from datetime import timedelta
-from typing import TYPE_CHECKING
-
 import cooldowns
 import disnake
-from alaric import AQ
-from alaric.comparison import EQ
-from alaric.logical import AND
-from alaric.projections import Projection, SHOW
-from commons.caching import NonExistentEntry, TimedCache
-from disnake import Guild
 from disnake.ext import commands, components
+from logoo import Logger
 
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue
-from suggestions.exceptions import ErrorHandled
 from suggestions.interaction_handler import InteractionHandler
-from suggestions.objects import GuildConfig, UserConfig, QueuedSuggestion
-from suggestions.qs_paginator import QueuedSuggestionsPaginator
 
-if TYPE_CHECKING:
-    from alaric import Document
-    from suggestions import SuggestionsBot
-    from suggestions.objects import Suggestion
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class SuggestionsQueueCog(commands.Cog):

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -8,13 +7,14 @@ from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from commons.caching import NonExistentEntry
+from logoo import Logger
 
 from .member_command_stats import MemberCommandStats
 
 if TYPE_CHECKING:
     from suggestions import State, Stats
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class MemberStats:
@@ -112,10 +112,11 @@ class MemberStats:
             stats.refresh_member_stats(member_stats)
             return member_stats
 
-        log.debug(
+        logger.debug(
             "Getting fresh MemberStats object for %s in guild %s",
             member_id,
             guild_id,
+            extra_metadata={"guild_id": guild_id, "author_id": member_id},
         )
         instance = cls(member_id, guild_id)
         stats.refresh_member_stats(instance)

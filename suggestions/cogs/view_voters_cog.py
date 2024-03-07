@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Type
 
 import cooldowns
@@ -8,6 +7,7 @@ import disnake
 from commons.caching import NonExistentEntry
 from disnake.ext import commands
 from bot_base.paginators.disnake_paginator import DisnakePaginator
+from logoo import Logger
 
 from suggestions import Colors
 from suggestions.cooldown_bucket import InteractionBucket
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot, State
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class VoterPaginator(DisnakePaginator):
@@ -273,9 +273,10 @@ class ViewVotersCog(commands.Cog):
             )
         else:
             if not values:
-                log.debug(
+                logger.debug(
                     "Values was found, but empty in guild %s thus populating",
                     interaction.guild_id,
+                    extra_metadata={"guild_id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_view_voters_cache(
                     interaction.guild_id

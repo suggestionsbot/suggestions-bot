@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import datetime
-import logging
-from typing import Optional, TYPE_CHECKING, overload
+from typing import Optional, TYPE_CHECKING
 
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from disnake import Embed
+from logoo import Logger
 
 from suggestions.exceptions import UnhandledError, SuggestionNotFound
 from suggestions.objects import Suggestion
@@ -15,7 +15,7 @@ from suggestions.objects import Suggestion
 if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class QueuedSuggestion:
@@ -224,7 +224,7 @@ class QueuedSuggestion:
             #    the database and is then disregarded
             # 2. When we get here the object should have been retrieved
             #    via the queue system so the object should have an attached id
-            log.critical("QueuedSuggestion(%s) does not have an id", self.as_dict())
+            logger.critical("QueuedSuggestion(%s) does not have an id", self.as_dict())
             raise UnhandledError(
                 f"QueuedSuggestion({self.as_dict()}) does not have an id"
             )
