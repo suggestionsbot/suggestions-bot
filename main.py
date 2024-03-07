@@ -52,7 +52,10 @@ async def run_bot():
         username=os.environ["LOGOO_USER"],
         password=os.environ["LOGOO_PASSWORD"],
         poll_time=15,
-        global_metadata={"cluster": bot.cluster_id},
+        global_metadata={
+            "cluster": bot.cluster_id,
+            "bot_version": bot.version,
+        },
     )
     await logger.start_consumer()
 
