@@ -30,6 +30,9 @@ http_logger.setLevel(logging.WARNING)
 shard_logger = logging.getLogger("disnake.shard")
 shard_logger.setLevel(logging.WARNING)
 
+httpx_logger = logging.getLogger("httpx")
+httpx_logger.setLevel(logging.WARNING)
+
 suggestions_logger = logging.getLogger("suggestions")
 suggestions_logger.setLevel(logging.DEBUG)
 member_stats_logger = logging.getLogger("suggestions.objects.stats.member_stats")
@@ -48,7 +51,7 @@ async def run_bot():
         stream="prod_bot" if bot.is_prod else "test_bot",
         username=os.environ["LOGOO_USER"],
         password=os.environ["LOGOO_PASSWORD"],
-        poll_time=5,
+        poll_time=15,
         global_metadata={"cluster": bot.cluster_id},
     )
     await logger.start_consumer()
