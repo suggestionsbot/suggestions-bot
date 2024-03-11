@@ -6,7 +6,7 @@ import logging
 import random
 import string
 from datetime import timedelta
-from typing import TYPE_CHECKING, List, Dict, Set
+from typing import TYPE_CHECKING, List, Dict, Set, Any
 
 import disnake
 from alaric import AQ
@@ -15,6 +15,7 @@ from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
 from commons.caching import NonExistentEntry, TimedCache
+from logoo import Logger
 
 from suggestions.objects import GuildConfig, UserConfig
 
@@ -22,8 +23,10 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot
     from alaric import Document
     from suggestions.database import SuggestionsMongoManager
+    from suggestions.interaction_handler import InteractionHandler
 
 log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class State:
@@ -50,6 +53,9 @@ class State:
             lazy_eviction=False,
             ttl_from_last_access=True,
         )
+        self.object_cache: TimedCache[int, Any] = TimedCache(
+            global_ttl=timedelta(hours=1), lazy_eviction=False
+        )
 
         self.guild_configs: TimedCache = TimedCache(
             global_ttl=timedelta(minutes=30),
@@ -67,6 +73,10 @@ class State:
         self.existing_suggestion_ids: Set[str] = set()
         self._background_tasks: list[asyncio.Task] = []
 
+        self.interaction_handlers: TimedCache[int, InteractionHandler] = TimedCache(
+            global_ttl=timedelta(minutes=20), lazy_eviction=False
+        )
+
     @property
     def is_closing(self) -> bool:
         return self._is_closing
@@ -82,7 +92,7 @@ class State:
             error_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing error id")
+            logger.critical("Encountered an existing error id")
 
         self.existing_error_ids.add(error_id)
         return error_id
@@ -93,7 +103,7 @@ class State:
             pag_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing paginator id")
+            logger.critical("Encountered an existing paginator id")
 
         self.existing_paginator_ids.add(pag_id)
         return pag_id
@@ -107,7 +117,7 @@ class State:
             suggestion_id = "".join(
                 random.choices(string.ascii_lowercase + string.digits, k=8)
             )
-            log.critical("Encountered an existing SID")
+            logger.critical("Encountered an existing SID")
 
         self.existing_suggestion_ids.add(suggestion_id)
         return suggestion_id
@@ -168,7 +178,11 @@ class State:
         )
         data: List[str] = [d["_id"] for d in data]
         self.autocomplete_cache.add_entry(guild_id, data, override=True)
-        log.debug("Populated sid cache for guild %s", guild_id)
+        logger.debug(
+            "Populated sid cache for guild %s",
+            guild_id,
+            extra_metadata={"guild_id": guild_id},
+        )
         return data
 
     async def populate_view_voters_cache(self, guild_id: int) -> list:
@@ -180,7 +194,11 @@ class State:
         )
         data: List[str] = [d["_id"] for d in data]
         self.view_voters_cache.add_entry(guild_id, data, override=True)
-        log.debug("Populated view voter cache for guild %s", guild_id)
+        logger.debug(
+            "Populated view voter cache for guild %s",
+            guild_id,
+            extra_metadata={"guild_id": guild_id},
+        )
         return data
 
     def add_sid_to_cache(self, guild_id: int, suggestion_id: str) -> None:
@@ -198,7 +216,12 @@ class State:
         finally:
             self.autocomplete_cache.add_entry(guild_id, current_values, override=True)
 
-        log.debug("Added sid %s to cache for guild %s", suggestion_id, guild_id)
+        logger.debug(
+            "Added sid %s to cache for guild %s",
+            suggestion_id,
+            guild_id,
+            extra_metadata={"guild_id": guild_id, "suggestion_id": suggestion_id},
+        )
 
     def remove_sid_from_cache(self, guild_id: int, suggestion_id: str) -> None:
         """Removes a suggestion from the cache when it's state is no longer open."""
@@ -217,10 +240,14 @@ class State:
                     current_values,
                     override=True,
                 )
-                log.debug(
+                logger.debug(
                     "Removed sid %s from the cache for guild %s",
                     suggestion_id,
                     guild_id,
+                    extra_metadata={
+                        "guild_id": guild_id,
+                        "suggestion_id": suggestion_id,
+                    },
                 )
 
     async def load(self):
@@ -243,6 +270,31 @@ class State:
         )
         for entry in error_ids:
             self.existing_error_ids.add(entry["_id"])
+
+    async def fetch_channel(self, channel_id: int) -> disnake.TextChannel:
+        try:
+            return self.object_cache.get_entry(channel_id)
+        except NonExistentEntry:
+            chan = await self.bot.fetch_channel(channel_id)
+            self.object_cache.add_entry(channel_id, chan)
+            return chan  # type: ignore
+
+    async def fetch_user(self, user_id: int) -> disnake.User:
+        try:
+            return self.object_cache.get_entry(user_id)
+        except NonExistentEntry:
+            user = await self.bot.fetch_user(user_id)
+            self.object_cache.add_entry(user_id, user)
+            return user
+
+    async def fetch_guild(self, guild_id: int) -> disnake.Guild:
+        # Need guild cache instead of object as used else where
+        try:
+            return self.guild_cache.get_entry(guild_id)
+        except NonExistentEntry:
+            guild = await self.bot.fetch_guild(guild_id)
+            self.guild_cache.add_entry(guild_id, guild)
+            return guild
 
     async def evict_caches(self):
         """Cleans the caches every 10 minutes"""

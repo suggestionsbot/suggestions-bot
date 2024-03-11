@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
 from disnake.ext import commands
+from logoo import Logger
 
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
@@ -15,7 +15,7 @@ from suggestions.objects.suggestion import SuggestionState
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Stats
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 # noinspection DuplicatedCode
@@ -54,11 +54,16 @@ class SuggestionsMessageCommands(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
+        logger.debug(
             "User %s approved suggestion %s in guild %s by message command",
             interaction.author.id,
             suggestion.suggestion_id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "suggestion_id": suggestion.suggestion_id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -93,11 +98,16 @@ class SuggestionsMessageCommands(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
+        logger.debug(
             "User %s rejected suggestion %s in guild %s by message command",
             interaction.author.id,
             suggestion.suggestion_id,
             interaction.guild_id,
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "suggestion_id": suggestion.suggestion_id,
+                "guild_id": interaction.guild_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,

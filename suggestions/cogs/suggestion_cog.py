@@ -1,27 +1,36 @@
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Optional
 
 import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
 from bot_base.wraps import WrappedChannel
-from disnake import Guild, Localized
+from disnake import Guild, ButtonStyle
 from disnake.ext import commands, components
+from logoo import Logger
 
-from suggestions import checks, Stats, ErrorCode
+from suggestions import checks, Stats
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
-from suggestions.exceptions import SuggestionTooLong, ErrorHandled
+from suggestions.core import SuggestionsQueue
+from suggestions.exceptions import (
+    SuggestionTooLong,
+    ErrorHandled,
+    MissingPermissionsToAccessQueueChannel,
+    MissingQueueLogsChannel,
+)
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
+
 from suggestions.objects.suggestion import SuggestionState
+from suggestions.utility import r2
 
 if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot, State
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class SuggestionsCog(commands.Cog):
@@ -30,6 +39,8 @@ class SuggestionsCog(commands.Cog):
         self.state: State = self.bot.state
         self.stats: Stats = self.bot.stats
         self.suggestions_db: Document = self.bot.db.suggestions
+
+        self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
 
     @components.button_listener()
     async def suggestion_up_vote(
@@ -71,11 +82,10 @@ class SuggestionsCog(commands.Cog):
                 ),
                 ephemeral=True,
             )
-            # log.debug(
-            #     "Member %s modified their vote on %s to an up vote",
-            #     member_id,
-            #     suggestion_id,
-            # )
+            logger.debug(
+                f"Member {member_id} modified their vote on {suggestion_id} to a up vote",
+                extra_metadata={"suggestion_id": suggestion_id},
+            )
         else:
             suggestion.up_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
@@ -85,6 +95,10 @@ class SuggestionsCog(commands.Cog):
                     inter.locale,
                 ),
                 ephemeral=True,
+            )
+            logger.debug(
+                f"Member {member_id} up voted {suggestion_id}",
+                extra_metadata={"suggestion_id": suggestion_id},
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -130,11 +144,10 @@ class SuggestionsCog(commands.Cog):
                 ),
                 ephemeral=True,
             )
-            # log.debug(
-            #     "Member %s modified their vote on %s to a down vote",
-            #     member_id,
-            #     suggestion_id,
-            # )
+            logger.debug(
+                f"Member {member_id} modified their vote on {suggestion_id} to a down vote",
+                extra_metadata={"suggestion_id": suggestion_id},
+            )
         else:
             suggestion.down_voted_by.add(member_id)
             await self.state.suggestions_db.upsert(suggestion, suggestion)
@@ -145,9 +158,34 @@ class SuggestionsCog(commands.Cog):
                 ),
                 ephemeral=True,
             )
+            logger.debug(
+                f"Member {member_id} down voted {suggestion_id}",
+                extra_metadata={"suggestion_id": suggestion_id},
+            )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
-        # log.debug("Member %s down voted suggestion %s", member_id, suggestion_id)
+
+    @components.button_listener()
+    async def queue_approve(self, inter: disnake.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, self.state
+        )
+        await self.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=True
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
+
+    @components.button_listener()
+    async def queue_reject(self, inter: disnake.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, self.state
+        )
+        await self.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=False
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
 
     @commands.slash_command(
         dm_permission=False,
@@ -188,18 +226,26 @@ class SuggestionsCog(commands.Cog):
             )
             raise ErrorHandled
 
-        image_url = image.url if isinstance(image, disnake.Attachment) else None
-        if image_url and not guild_config.can_have_images_in_suggestions:
-            await interaction.send(
-                self.bot.get_locale(
-                    "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
-                ),
-                ephemeral=True,
+        image_url = None
+        if image is not None:
+            if not guild_config.can_have_images_in_suggestions:
+                await interaction.send(
+                    self.bot.get_locale(
+                        "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
+                    ),
+                    ephemeral=True,
+                )
+                raise ErrorHandled
+
+            image_url = await r2.upload_file_to_r2(
+                file_name=image.filename,
+                file_data=await image.read(use_cached=True),
+                guild_id=interaction.guild_id,
+                user_id=interaction.author.id,
             )
-            raise ErrorHandled
 
         if guild_config.uses_suggestion_queue:
-            await QueuedSuggestion.new(
+            qs = await QueuedSuggestion.new(
                 suggestion=suggestion,
                 guild_id=interaction.guild_id,
                 state=self.state,
@@ -207,10 +253,45 @@ class SuggestionsCog(commands.Cog):
                 image_url=image_url,
                 is_anonymous=anonymously,
             )
-            log.debug(
-                "User %s created new queued suggestion in guild %s",
-                interaction.author.id,
-                interaction.guild_id,
+            if not guild_config.virtual_suggestion_queue:
+                # Need to send to a channel
+                if guild_config.queued_channel_id is None:
+                    raise MissingQueueLogsChannel
+
+                try:
+                    queue_channel = await self.bot.state.fetch_channel(
+                        guild_config.queued_channel_id
+                    )
+                except disnake.Forbidden as e:
+                    raise MissingPermissionsToAccessQueueChannel from e
+
+                qs_embed: disnake.Embed = await qs.as_embed(self.bot)
+                msg = await queue_channel.send(
+                    embed=qs_embed,
+                    components=[
+                        disnake.ui.Button(
+                            label="Approve queued suggestion",
+                            custom_id=await self.queue_approve.build_custom_id(),
+                            style=ButtonStyle.green,
+                        ),
+                        disnake.ui.Button(
+                            label="Reject queued suggestion",
+                            custom_id=await self.queue_reject.build_custom_id(),
+                            style=ButtonStyle.danger,
+                        ),
+                    ],
+                )
+                qs.message_id = msg.id
+                qs.channel_id = msg.channel.id
+                await self.bot.db.queued_suggestions.upsert(qs, qs)
+
+            logger.debug(
+                f"User {interaction.author.id} created new queued"
+                f" suggestion in guild {interaction.guild_id}",
+                extra_metadata={
+                    "author_id": interaction.author.id,
+                    "guild_id": interaction.guild_id,
+                },
             )
             return await interaction.send(
                 ephemeral=True,
@@ -241,11 +322,14 @@ class SuggestionsCog(commands.Cog):
             icon_url=icon_url,
         )
 
-        log.debug(
-            "User %s created new suggestion %s in guild %s",
-            interaction.author.id,
-            suggestion.suggestion_id,
-            interaction.guild_id,
+        logger.debug(
+            f"User {interaction.author.id} created new suggestion "
+            f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+                "suggestion_id": suggestion.suggestion_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -297,11 +381,14 @@ class SuggestionsCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
-            "User %s approved suggestion %s in guild %s",
-            interaction.author.id,
-            suggestion.suggestion_id,
-            interaction.guild_id,
+        logger.debug(
+            f"User {interaction.author.id} approved suggestion "
+            f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+                "suggestion_id": suggestion.suggestion_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -357,11 +444,14 @@ class SuggestionsCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
-            "User %s rejected suggestion %s in guild %s",
-            interaction.author.id,
-            suggestion.suggestion_id,
-            interaction.guild_id,
+        logger.debug(
+            f"User {interaction.author} rejected suggestion {suggestion.suggestion_id} "
+            f"in guild {interaction.guild_id}",
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+                "suggestion_id": suggestion.suggestion_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -419,11 +509,14 @@ class SuggestionsCog(commands.Cog):
             ),
             ephemeral=True,
         )
-        log.debug(
-            "User %s cleared suggestion %s in guild %s",
-            interaction.user.id,
-            suggestion_id,
-            interaction.guild_id,
+        logger.debug(
+            f"User {interaction.user.id} cleared suggestion"
+            f" {suggestion_id} in guild {interaction.guild_id}",
+            extra_metadata={
+                "author_id": interaction.author.id,
+                "guild_id": interaction.guild_id,
+                "suggestion_id": suggestion.suggestion_id,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -450,9 +543,9 @@ class SuggestionsCog(commands.Cog):
             )
         else:
             if not values:
-                log.debug(
-                    "Values was found, but empty in guild %s thus populating",
-                    interaction.guild_id,
+                logger.debug(
+                    f"Values was found, but empty in guild {interaction.guild_id} thus populating",
+                    extra_metadata={"guild_id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id

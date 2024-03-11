@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 import aiohttp
+from logoo import Logger
 
 from suggestions.exceptions import PartialResponse
 
@@ -12,6 +13,7 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot
 
 log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class Garven:
@@ -57,7 +59,7 @@ class Garven:
             },
         ) as resp:
             if resp.status != 204:
-                log.error(
+                logger.error(
                     "Error when attempting to notify devs\n\t- %s",
                     await resp.text(),
                 )

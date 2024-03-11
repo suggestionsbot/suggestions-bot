@@ -18,9 +18,10 @@ import disnake
 from alaric import Cursor
 from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError, GatewayParams
+from disnake import Locale, LocalizationKeyError
 from disnake.ext import commands
 from bot_base import BotBase, BotContext, PrefixNotFound
+from logoo import Logger
 
 from suggestions import State, Colors, Emojis, ErrorCode, Garven
 from suggestions.exceptions import (
@@ -36,19 +37,24 @@ from suggestions.exceptions import (
     QueueImbalance,
     BlocklistedUser,
     PartialResponse,
+    MissingQueueLogsChannel,
+    MissingPermissionsToAccessQueueChannel,
+    InvalidFileType,
 )
 from suggestions.http_error_parser import try_parse_http_error
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
 from suggestions.zonis_routes import ZonisRoutes
 
 log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.21"
+        self.version: str = "Public Release 3.22"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -185,7 +191,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     text=f"Error code {error_code.value} | Cluster ID {self.cluster_id}"
                 )
 
-            log.debug("Encountered %s", error_code.name)
+            logger.debug("Encountered %s", error_code.name)
         elif error:
             embed.set_footer(text=f"Error ID {error.id}")
 
@@ -239,11 +245,16 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.invoke(ctx)
 
     async def _push_slash_error_stats(
-        self, interaction: disnake.ApplicationCommandInteraction
+        self,
+        interaction: disnake.ApplicationCommandInteraction | disnake.MessageInteraction,
     ):
-        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(
+        name = (
             interaction.application_command.qualified_name
+            if isinstance(interaction, disnake.ApplicationCommandInteraction)
+            else interaction.data["custom_id"].split(":")[0]  # Button name
         )
+
+        stat_type: Optional[StatsEnum] = StatsEnum.from_command_name(name)
         if not stat_type:
             return
 
@@ -379,6 +390,30 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        elif isinstance(exception, MissingQueueLogsChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Missing Queue Logs Channel",
+                    "This command requires a queue log channel to use.\n"
+                    "Please contact an administrator and ask them to set one up "
+                    "using the following command.\n`/config queue_channel`",
+                    error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
+        elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
+            return await interaction.send(
+                embed=self.error_embed(
+                    title="Missing permissions within queue logs channel",
+                    description="The bot does not have the required permissions in your queue channel. "
+                    "Please contact an administrator and ask them to fix this.",
+                    error=error,
+                    error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
+                )
+            )
+
         elif isinstance(exception, commands.MissingPermissions):
             perms = ",".join(i for i in exception.missing_permissions)
             return await interaction.send(
@@ -447,6 +482,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        elif isinstance(exception, InvalidFileType):
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Invalid file type",
+                    "The file you attempted to upload is not an accepted type.\n\n"
+                    "If you believe this is an error please reach out to us via our support discord.",
+                    error_code=ErrorCode.INVALID_FILE_TYPE,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
         elif isinstance(exception, ConfiguredChannelNoLongerExists):
             return await interaction.send(
                 embed=self.error_embed(
@@ -484,6 +531,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
+            logger.debug(
+                "disnake.NotFound: %s",
+                exception.text,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                },
+            )
             gid = interaction.guild_id if interaction.guild_id else None
             await interaction.send(
                 embed=self.error_embed(
@@ -499,6 +554,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
         elif isinstance(exception, disnake.Forbidden):
             log.debug("disnake.Forbidden: %s", exception.text)
+            logger.debug(
+                "disnake.Forbidden: %s",
+                exception.text,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                },
+            )
             await interaction.send(
                 embed=self.error_embed(
                     exception.text,
@@ -528,9 +591,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 log.debug(
                     "disnake.HTTPException: Interaction has already been acknowledged"
                 )
+                logger.debug(
+                    "disnake.HTTPException: Interaction has already been acknowledged"
+                )
                 return
 
-        if interaction.deferred_without_send:
+        ih: InteractionHandler = await InteractionHandler.fetch_handler(
+            interaction.id, self
+        )
+        if interaction.deferred_without_send or (
+            ih is not None and not ih.has_sent_something
+        ):
             gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(
@@ -743,7 +814,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                         json=body,
                     ) as r:
                         if r.status != 200:
-                            log.warning("%s", r.text)
+                            logger.warning("%s", r.text)
 
                 log.debug("Updated bot listings")
                 await self.sleep_with_condition(
@@ -790,7 +861,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return values[str(locale)]
         except KeyError:
             # Default to known translations if not set
-            return values["en-GB"]
+            return values.get("en-GB", values["en-US"])
 
     @staticmethod
     def inject_locale_values(
@@ -830,11 +901,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def get_localized_string(
         self,
         key: str,
-        interaction: disnake.Interaction,
+        interaction: disnake.Interaction | InteractionHandler,
         *,
         extras: Optional[dict] = None,
         guild_config: Optional[GuildConfig] = None,
     ):
+        if isinstance(interaction, InteractionHandler):
+            # Support this so easier going forward
+            interaction = interaction.interaction
+
         content = self.get_locale(key, interaction.locale)
         return self.inject_locale_values(
             content, interaction=interaction, guild_config=guild_config, extras=extras
@@ -885,6 +960,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     await self.sleep_with_condition(60, lambda: self.state.is_closing)
                 except (aiohttp.ClientConnectorError, ConnectionRefusedError):
                     log.warning("push_status failed to connect, retrying in 10 seconds")
+                    logger.warning(
+                        "push_status failed to connect, retrying in 10 seconds"
+                    )
                     await self.sleep_with_condition(10, lambda: self.state.is_closing)
                 except Exception as e:
                     if not self.is_prod:
@@ -893,6 +971,10 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
                     tb = "".join(traceback.format_exception(e))
                     log.error(
+                        "Status update failed: %s",
+                        tb,
+                    )
+                    logger.error(
                         "Status update failed: %s",
                         tb,
                     )

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import io
-import logging
 from typing import TYPE_CHECKING, Optional
 
 import disnake
@@ -11,6 +10,7 @@ from alaric.comparison import EQ
 from disnake.ext import commands
 from disnake.utils import format_dt
 from humanize import naturaldate
+from logoo import Logger
 
 from suggestions import ErrorCode
 from suggestions.objects import Error
@@ -18,7 +18,7 @@ from suggestions.objects import Error
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
 
-log = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class HelpGuildCog(commands.Cog):

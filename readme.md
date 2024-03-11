@@ -1,7 +1,6 @@
-The Suggestions Rewrite
+The Suggestions Bot
 ---
 
-A simplistic bot written by @skelmis utilising Python in
-order to get the suggestion's bot back on its feet while
-also providing breathing room for @acollierr17 to further
-work on the future of this bot.
+This bot represents the code base for [suggestions.gg](https://suggestions.gg).
+
+While it is open source we do not provide support for self-hosting.
