@@ -84,7 +84,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a up vote",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
         else:
             suggestion.up_voted_by.add(member_id)
@@ -98,7 +101,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} up voted {suggestion_id}",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -146,7 +152,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a down vote",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
         else:
             suggestion.down_voted_by.add(member_id)
@@ -160,7 +169,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} down voted {suggestion_id}",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
