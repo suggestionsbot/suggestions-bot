@@ -50,7 +50,7 @@ tomli==2.0.1
 typing_extensions==4.3.0
 websockets==10.4
 yarl==1.7.2
-zonis==1.2.5
+zonis==2.0.0
 types-aiobotocore==2.11.2
 aiobotocore==2.11.2
 logoo==1.2.0
