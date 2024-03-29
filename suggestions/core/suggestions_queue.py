@@ -192,11 +192,10 @@ class SuggestionsQueue:
                 await self.bot.state.suggestions_db.delete(suggestion)
 
                 if suggestion.message_id is not None:
-                    channel: disnake.TextChannel = await self.state.fetch_channel(
-                        suggestion.channel_id
+                    await self.bot.delete_message(
+                        message_id=suggestion.message_id,
+                        channel_id=suggestion.channel_id,
                     )
-                    message = await channel.fetch_message(suggestion.message_id)
-                    await message.delete()
 
             # Re-raise for the bot handler
             raise

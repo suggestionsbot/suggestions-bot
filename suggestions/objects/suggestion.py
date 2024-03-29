@@ -541,6 +541,11 @@ class Suggestion:
         -------
         bool
             Whether or not deleting succeeded
+
+        Notes
+        -----
+        BT-21 doesn't apply to this as we also want to check
+        if the message itself has already been deleted or not via fetch
         """
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)

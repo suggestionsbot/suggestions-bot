@@ -504,17 +504,9 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         if suggestion.channel_id and suggestion.message_id:
-            try:
-                channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                    suggestion.channel_id
-                )
-                message: disnake.Message = await channel.fetch_message(
-                    suggestion.message_id
-                )
-            except disnake.HTTPException:
-                pass
-            else:
-                await message.delete()
+            await self.bot.delete_message(
+                message_id=suggestion.message_id, channel_id=suggestion.channel_id
+            )
 
         await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         await interaction.send(

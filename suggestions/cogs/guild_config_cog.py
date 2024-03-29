@@ -118,6 +118,7 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id, self.state
         )
         try:
+            # BT-21 doesn't apply here as we are sending not fetching
             message = await channel.send("This is a test message and can be ignored.")
             await message.delete()
         except disnake.Forbidden:

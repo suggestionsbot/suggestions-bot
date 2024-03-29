@@ -987,3 +987,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)
         log.info("Setup status notifications")
+
+    async def delete_message(self, *, message_id: int, channel_id: int):
+        await self._connection.http.delete_message(channel_id, message_id)
