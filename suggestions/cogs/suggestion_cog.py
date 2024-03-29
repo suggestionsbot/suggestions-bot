@@ -226,6 +226,8 @@ class SuggestionsCog(commands.Cog):
 
         await interaction.response.defer(ephemeral=True)
 
+        suggestion: str = suggestion.replace("\\n", "\n")
+
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
