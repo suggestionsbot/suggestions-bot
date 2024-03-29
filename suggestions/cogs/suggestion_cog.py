@@ -316,7 +316,7 @@ class SuggestionsCog(commands.Cog):
                 ),
             )
 
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,

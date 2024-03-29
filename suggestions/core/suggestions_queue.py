@@ -12,7 +12,6 @@ from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import Projection, SHOW
 from commons.caching import NonExistentEntry, TimedCache
-from disnake import Guild
 
 from suggestions.exceptions import ErrorHandled, MissingQueueLogsChannel
 from suggestions.interaction_handler import InteractionHandler
@@ -129,7 +128,7 @@ class SuggestionsQueue:
                 suggestion = await queued_suggestion.convert_to_suggestion(
                     self.bot.state
                 )
-                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                icon_url = await self.bot.try_fetch_icon_url(guild_id)
                 guild = await self.state.fetch_guild(guild_id)
                 await suggestion.setup_initial_messages(
                     guild_config=guild_config,
@@ -162,7 +161,7 @@ class SuggestionsQueue:
                 user_config: UserConfig = await UserConfig.from_id(
                     queued_suggestion.suggestion_author_id, self.bot.state
                 )
-                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                icon_url = await self.bot.try_fetch_icon_url(guild_id)
                 guild = self.state.guild_cache.get_entry(guild_id)
                 if (
                     user_config.dm_messages_disabled
@@ -235,7 +234,7 @@ class SuggestionsQueue:
         count: int = await self.queued_suggestions_db.count(
             AQ(AND(EQ("guild_id", guild_id), EQ("still_in_queue", True)))
         )
-        icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(guild_id)
         guild = self.state.guild_cache.get_entry(guild_id)
         embed = disnake.Embed(
             title="Queue Info",
@@ -340,7 +339,7 @@ class SuggestionsQueue:
                 resolved_by=ih.interaction.author.id,
             )
             guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
-            icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+            icon_url = await self.bot.try_fetch_icon_url(guild_id)
             guild = self.state.guild_cache.get_entry(guild_id)
             await suggestion.setup_initial_messages(
                 guild_config=guild_config,

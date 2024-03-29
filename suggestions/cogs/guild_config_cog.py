@@ -223,7 +223,7 @@ class GuildConfigCog(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=self.bot.get_locale(
@@ -553,7 +553,7 @@ class GuildConfigCog(commands.Cog):
             locale_string, interaction
         )
 
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"

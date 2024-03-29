@@ -457,7 +457,7 @@ class Suggestion:
         else:
             embed.set_footer(text=f"sID: {self.suggestion_id}")
 
-        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        icon_url = await bot.try_fetch_icon_url(self.guild_id)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
 
         embed.set_author(name=guild.name, icon_url=icon_url)
@@ -653,7 +653,7 @@ class Suggestion:
             return
 
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
-        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        icon_url = await bot.try_fetch_icon_url(self.guild_id)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
         resolved_by_text = (

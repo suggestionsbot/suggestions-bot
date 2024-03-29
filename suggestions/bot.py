@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional
+from typing import Type, Optional, Union
 
 import aiohttp
 import alaric
@@ -990,3 +990,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
 
     async def delete_message(self, *, message_id: int, channel_id: int):
         await self._connection.http.delete_message(channel_id, message_id)
+
+    async def try_fetch_icon_url(self, guild_id: int) -> Union[None, str]:
+        """Given an id and state, return either the guilds icon or None."""
+        if guild_id not in self.state.guild_cache:
+            guild = await self.state.bot.fetch_guild(guild_id)
+            self.state.refresh_guild_cache(guild)
+        else:
+            guild = self.state.guild_cache.get_entry(guild_id)
+
+            if not guild.icon:
+                # Update cache if we don't have it
+                guild = await self.state.bot.fetch_guild(guild_id)
+                self.state.refresh_guild_cache(guild)
+
+        return None if not guild.icon else guild.icon.url
