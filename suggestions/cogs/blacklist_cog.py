@@ -21,12 +21,10 @@ class BlacklistCog(commands.Cog):
         self.state: State = self.bot.state
 
     @commands.slash_command()
-    async def user(self, interaction: disnake.GuildCommandInteraction):
-        ...
+    async def user(self, interaction: disnake.GuildCommandInteraction): ...
 
     @user.sub_command_group()
-    async def blocklist(self, interaction: disnake.GuildCommandInteraction):
-        ...
+    async def blocklist(self, interaction: disnake.GuildCommandInteraction): ...
 
     @blocklist.sub_command()
     async def add(

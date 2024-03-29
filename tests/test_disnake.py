@@ -1,4 +1,5 @@
 """Tests library modifications to ensure changes work"""
+
 from unittest.mock import Mock
 
 import disnake

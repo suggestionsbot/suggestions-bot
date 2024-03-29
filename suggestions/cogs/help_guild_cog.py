@@ -79,15 +79,15 @@ class HelpGuildCog(commands.Cog):
         cluster_id = (
             1
             if shard_id < 10
-            else 2
-            if shard_id < 20
-            else 3
-            if shard_id < 30
-            else 4
-            if shard_id < 40
-            else 5
-            if shard_id < 50
-            else 6
+            else (
+                2
+                if shard_id < 20
+                else (
+                    3
+                    if shard_id < 30
+                    else 4 if shard_id < 40 else 5 if shard_id < 50 else 6
+                )
+            )
         )
 
         await interaction.send(

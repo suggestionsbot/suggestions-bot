@@ -13,8 +13,7 @@ async def assert_stats_count(
     member_id: int,
     guild_id: int,
     should_be_none: bool,
-):
-    ...
+): ...
 
 
 @overload
@@ -26,8 +25,7 @@ async def assert_stats_count(
     field: str,
     success_count: int = 0,
     failure_count: int = 0,
-):
-    ...
+): ...
 
 
 async def assert_stats_count(
