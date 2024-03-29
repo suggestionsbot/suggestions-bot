@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+import commons
 import disnake
 from logoo import Logger
 
@@ -60,13 +61,14 @@ async def update_suggestion_message(
             channel_id=up_to_date_suggestion.channel_id,
             message_id=up_to_date_suggestion.message_id,
         ).edit(embed=await up_to_date_suggestion.as_embed(bot))
-    except (disnake.HTTPException, disnake.NotFound):
+    except (disnake.HTTPException, disnake.NotFound) as e:
         logger.error(
             "Failed to update suggestion %s",
             suggestion.suggestion_id,
             extra_metadata={
                 "guild_id": suggestion.guild_id,
                 "suggestion_id": suggestion.suggestion_id,
+                "traceback": commons.exception_as_string(e),
             },
         )
 

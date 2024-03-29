@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import tracemalloc
 
 import alaric
 from alaric import Cursor

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
-from disnake import Guild
 from disnake.ext import commands
 from logoo import Logger
 
@@ -118,6 +117,7 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id, self.state
         )
         try:
+            # BT-21 doesn't apply here as we are sending not fetching
             message = await channel.send("This is a test message and can be ignored.")
             await message.delete()
         except disnake.Forbidden:
@@ -222,7 +222,7 @@ class GuildConfigCog(commands.Cog):
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
         )
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=self.bot.get_locale(
@@ -552,7 +552,7 @@ class GuildConfigCog(commands.Cog):
             locale_string, interaction
         )
 
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         embed: disnake.Embed = disnake.Embed(
             description=f"Configuration for {guild.name}\n\nSuggestions channel: {suggestions_channel}\n"

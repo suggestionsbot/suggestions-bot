@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Optional
 import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
-from bot_base.wraps import WrappedChannel
-from disnake import Guild, ButtonStyle
+from disnake import ButtonStyle
 from disnake.ext import commands, components
 from logoo import Logger
 
@@ -21,8 +20,7 @@ from suggestions.exceptions import (
     MissingQueueLogsChannel,
 )
 from suggestions.interaction_handler import InteractionHandler
-from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
-
+from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 from suggestions.utility import r2
 
@@ -84,7 +82,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a up vote",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
         else:
             suggestion.up_voted_by.add(member_id)
@@ -98,7 +99,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} up voted {suggestion_id}",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -146,7 +150,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} modified their vote on {suggestion_id} to a down vote",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
         else:
             suggestion.down_voted_by.add(member_id)
@@ -160,7 +167,10 @@ class SuggestionsCog(commands.Cog):
             )
             logger.debug(
                 f"Member {member_id} down voted {suggestion_id}",
-                extra_metadata={"suggestion_id": suggestion_id},
+                extra_metadata={
+                    "suggestion_id": suggestion_id,
+                    "guild_id": inter.guild_id,
+                },
             )
 
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
@@ -213,6 +223,8 @@ class SuggestionsCog(commands.Cog):
             raise SuggestionTooLong
 
         await interaction.response.defer(ephemeral=True)
+
+        suggestion: str = suggestion.replace("\\n", "\n")
 
         guild_config: GuildConfig = await GuildConfig.from_id(
             interaction.guild_id, self.state
@@ -302,7 +314,7 @@ class SuggestionsCog(commands.Cog):
                 ),
             )
 
-        icon_url = await Guild.try_fetch_icon_url(interaction.guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(interaction.guild_id)
         guild = self.state.guild_cache.get_entry(interaction.guild_id)
         suggestion: Suggestion = await Suggestion.new(
             suggestion=suggestion,
@@ -314,9 +326,7 @@ class SuggestionsCog(commands.Cog):
         )
         await suggestion.setup_initial_messages(
             guild_config=guild_config,
-            interaction=interaction,
-            state=self.state,
-            bot=self.bot,
+            ih=await InteractionHandler.new_handler(interaction),
             cog=self,
             guild=guild,
             icon_url=icon_url,
@@ -490,17 +500,9 @@ class SuggestionsCog(commands.Cog):
             suggestion_id, interaction.guild_id, self.state
         )
         if suggestion.channel_id and suggestion.message_id:
-            try:
-                channel: WrappedChannel = await self.bot.get_or_fetch_channel(
-                    suggestion.channel_id
-                )
-                message: disnake.Message = await channel.fetch_message(
-                    suggestion.message_id
-                )
-            except disnake.HTTPException:
-                pass
-            else:
-                await message.delete()
+            await self.bot.delete_message(
+                message_id=suggestion.message_id, channel_id=suggestion.channel_id
+            )
 
         await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         await interaction.send(

@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional
+from typing import Type, Optional, Union
 
 import aiohttp
 import alaric
@@ -54,7 +54,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.22"
+        self.version: str = "Public Release 3.23"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -987,3 +987,21 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         task_1 = asyncio.create_task(inner())
         self.state.add_background_task(task_1)
         log.info("Setup status notifications")
+
+    async def delete_message(self, *, message_id: int, channel_id: int):
+        await self._connection.http.delete_message(channel_id, message_id)
+
+    async def try_fetch_icon_url(self, guild_id: int) -> Union[None, str]:
+        """Given an id and state, return either the guilds icon or None."""
+        if guild_id not in self.state.guild_cache:
+            guild = await self.state.bot.fetch_guild(guild_id)
+            self.state.refresh_guild_cache(guild)
+        else:
+            guild = self.state.guild_cache.get_entry(guild_id)
+
+            if not guild.icon:
+                # Update cache if we don't have it
+                guild = await self.state.bot.fetch_guild(guild_id)
+                self.state.refresh_guild_cache(guild)
+
+        return None if not guild.icon else guild.icon.url

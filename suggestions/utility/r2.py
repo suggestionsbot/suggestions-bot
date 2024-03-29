@@ -29,15 +29,15 @@ async def upload_file_to_r2(
     ) as client:
         mimetype_guessed, _ = mimetypes.guess_type(file_name)
         accepted_mimetypes: dict[str, set[str]] = {
-            "image/jpeg": {".jpeg", ".jpg"},
-            "image/png": {".png"},
-            "image/gif": {".gif"},
-            "video/mp3": {".mp3"},
-            "video/mp4": {".mp4"},
-            "video/mpeg": {".mpeg"},
-            "video/webm": {".webm"},
-            "image/webp": {".webp"},
-            "audio/webp": {".weba"},
+            "image/jpeg": {"jpeg", "jpg"},
+            "image/png": {"png"},
+            "image/gif": {"gif"},
+            "video/mp3": {"mp3"},
+            "video/mp4": {"mp4"},
+            "video/mpeg": {"mpeg"},
+            "video/webm": {"webm"},
+            "image/webp": {"webp"},
+            "audio/webp": {"weba"},
         }
         file_names = accepted_mimetypes.get(mimetype_guessed)
         if file_names is None:

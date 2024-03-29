@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, call
 
 import pytest
-from commons.caching import NonExistentEntry
 
 from suggestions import SuggestionsBot
 from suggestions.exceptions import ConflictingHandlerInformation

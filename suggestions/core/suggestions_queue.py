@@ -12,7 +12,6 @@ from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import Projection, SHOW
 from commons.caching import NonExistentEntry, TimedCache
-from disnake import Guild
 
 from suggestions.exceptions import ErrorHandled, MissingQueueLogsChannel
 from suggestions.interaction_handler import InteractionHandler
@@ -129,13 +128,11 @@ class SuggestionsQueue:
                 suggestion = await queued_suggestion.convert_to_suggestion(
                     self.bot.state
                 )
-                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                icon_url = await self.bot.try_fetch_icon_url(guild_id)
                 guild = await self.state.fetch_guild(guild_id)
                 await suggestion.setup_initial_messages(
                     guild_config=guild_config,
-                    interaction=ih.interaction,
-                    state=self.state,
-                    bot=self.bot,
+                    ih=ih,
                     cog=self.bot.get_cog("SuggestionsCog"),
                     guild=guild,
                     icon_url=icon_url,
@@ -162,7 +159,7 @@ class SuggestionsQueue:
                 user_config: UserConfig = await UserConfig.from_id(
                     queued_suggestion.suggestion_author_id, self.bot.state
                 )
-                icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+                icon_url = await self.bot.try_fetch_icon_url(guild_id)
                 guild = self.state.guild_cache.get_entry(guild_id)
                 if (
                     user_config.dm_messages_disabled
@@ -192,11 +189,10 @@ class SuggestionsQueue:
                 await self.bot.state.suggestions_db.delete(suggestion)
 
                 if suggestion.message_id is not None:
-                    channel: disnake.TextChannel = await self.state.fetch_channel(
-                        suggestion.channel_id
+                    await self.bot.delete_message(
+                        message_id=suggestion.message_id,
+                        channel_id=suggestion.channel_id,
                     )
-                    message = await channel.fetch_message(suggestion.message_id)
-                    await message.delete()
 
             # Re-raise for the bot handler
             raise
@@ -236,7 +232,7 @@ class SuggestionsQueue:
         count: int = await self.queued_suggestions_db.count(
             AQ(AND(EQ("guild_id", guild_id), EQ("still_in_queue", True)))
         )
-        icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
+        icon_url = await self.bot.try_fetch_icon_url(guild_id)
         guild = self.state.guild_cache.get_entry(guild_id)
         embed = disnake.Embed(
             title="Queue Info",
@@ -320,51 +316,3 @@ class SuggestionsQueue:
             ],
         )
         self.paginator_objects.add_entry(pid, paginator)
-
-    async def accept_queued_suggestion(
-        self, ih: InteractionHandler, message_id: int, channel_id: int, button
-    ):
-        current_suggestion: QueuedSuggestion = await QueuedSuggestion.from_message_id(
-            message_id, channel_id, self.state
-        )
-        if current_suggestion.is_resolved:
-            return await ih.send(translation_key="QUEUE_INNER_ALREADY_RESOLVED")
-
-        # By here we need to do something about resolving it
-        suggestion: None = None
-        guild_id = ih.interaction.guild_id
-        try:
-            await paginator.remove_current_page()
-            suggestion: Suggestion = await current_suggestion.resolve(
-                was_approved=True,
-                state=self.bot.state,
-                resolved_by=ih.interaction.author.id,
-            )
-            guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
-            icon_url = await Guild.try_fetch_icon_url(guild_id, self.state)
-            guild = self.state.guild_cache.get_entry(guild_id)
-            await suggestion.setup_initial_messages(
-                guild_config=guild_config,
-                interaction=ih.interaction,
-                state=self.state,
-                bot=self.bot,
-                cog=self.bot.get_cog("SuggestionsCog"),
-                guild=guild,
-                icon_url=icon_url,
-                comes_from_queue=True,
-            )
-        except:
-            # Throw it back in the queue on error
-            current_suggestion.resolved_by = None
-            current_suggestion.resolved_at = None
-            current_suggestion.still_in_queue = True
-            await self.bot.state.queued_suggestions_db.update(
-                current_suggestion, current_suggestion
-            )
-
-            if suggestion is not None:
-                await self.bot.state.suggestions_db.delete(suggestion)
-
-            raise
-
-        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")

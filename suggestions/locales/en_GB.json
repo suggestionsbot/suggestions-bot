@@ -57,6 +57,7 @@
   "SUGGEST_INNER_SENT_TO_QUEUE": "Your suggestion has been sent to the queue for processing.",
   "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Your guild does not allow anonymous suggestions.",
   "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS": "Your guild does not allow images in suggestions.",
+  "SUGGEST_INNER_PING_AUTHOR_IN_THREAD": "Hey <@$AUTHOR_ID>, I have created this thread for you to discuss your suggestion in.",
   "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "I have enabled anonymous suggestions for this guild.",
   "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "I have disabled anonymous suggestions for this guild.",
   "SUGGESTION_OBJECT_LOCK_THREAD": "Locking this thread as the suggestion has reached a resolution.",

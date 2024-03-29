@@ -9,12 +9,13 @@ from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
-from disnake import Embed, Guild
+from disnake import Embed
 from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
 from suggestions.objects import UserConfig, GuildConfig
 
@@ -457,7 +458,7 @@ class Suggestion:
         else:
             embed.set_footer(text=f"sID: {self.suggestion_id}")
 
-        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        icon_url = await bot.try_fetch_icon_url(self.guild_id)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
 
         embed.set_author(name=guild.name, icon_url=icon_url)
@@ -485,7 +486,6 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
-        await self.try_notify_user_of_decision(state.bot)
 
     async def mark_rejected_by(
         self,
@@ -502,7 +502,6 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
-        await self.try_notify_user_of_decision(state.bot)
 
     async def mark_cleared_by(
         self,
@@ -541,6 +540,11 @@ class Suggestion:
         -------
         bool
             Whether or not deleting succeeded
+
+        Notes
+        -----
+        BT-21 doesn't apply to this as we also want to check
+        if the message itself has already been deleted or not via fetch
         """
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
@@ -648,7 +652,7 @@ class Suggestion:
             return
 
         user = await bot.get_or_fetch_user(self.suggestion_author_id)
-        icon_url = await Guild.try_fetch_icon_url(self.guild_id, bot.state)
+        icon_url = await bot.try_fetch_icon_url(self.guild_id)
         guild = bot.state.guild_cache.get_entry(self.guild_id)
         text = "approved" if self.state == SuggestionState.approved else "rejected"
         resolved_by_text = (
@@ -684,14 +688,27 @@ class Suggestion:
                 },
             )
 
-    async def create_thread(self, message: disnake.Message):
+    async def create_thread(self, message: disnake.Message, *, ih: InteractionHandler):
         """Create a thread for this suggestion"""
         if self.state != SuggestionState.pending:
             raise ValueError(
                 "Cannot create a thread for suggestions which aren't pending."
             )
 
-        await message.create_thread(name=f"Thread for suggestion {self.suggestion_id}")
+        thread = await message.create_thread(
+            name=f"Thread for suggestion {self.suggestion_id}"
+        )
+        try:
+            await thread.send(
+                ih.bot.get_localized_string(
+                    "SUGGEST_INNER_PING_AUTHOR_IN_THREAD",
+                    ih,
+                    extras={"AUTHOR_ID": self.suggestion_author_id},
+                )
+            )
+        except:
+            # I'd consider it fine if the bot can't send this message
+            pass
 
     async def update_vote_count(
         self,
@@ -769,7 +786,6 @@ class Suggestion:
         else:
             # Move the suggestion to the logs channel
             await self.save_reaction_results(bot, interaction)
-            await self.try_delete(bot, interaction)
             channel: WrappedChannel = await bot.get_or_fetch_channel(
                 guild_config.log_channel_id
             )
@@ -783,6 +799,11 @@ class Suggestion:
                         "Missing permissions to send in configured log channel"
                     ]
                 )
+
+            # Only delete the original suggestion if we actually
+            # managed to send the log message to the new channel
+            await self.try_delete(bot, interaction)
+
             self.message_id = message.id
             self.channel_id = channel.id
             await state.suggestions_db.upsert(self, self)
@@ -909,20 +930,22 @@ class Suggestion:
             interaction=interaction,
             guild_config=guild_config,
         )
+        await self.try_notify_user_of_decision(state.bot)
 
     async def setup_initial_messages(
         self,
         *,
         guild_config: GuildConfig,
-        bot: SuggestionsBot,
         cog,
-        state: State,
-        interaction: disnake.GuildCommandInteraction | disnake.MessageInteraction,
         guild: disnake.Guild,
         icon_url,
+        ih: InteractionHandler,
         comes_from_queue=False,
     ):
         """Encapsulates creation logic to save code re-use"""
+        interaction = ih.interaction
+        bot = ih.bot
+        state = ih.bot.state
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
@@ -964,7 +987,7 @@ class Suggestion:
 
         if guild_config.threads_for_suggestions:
             try:
-                await self.create_thread(message)
+                await self.create_thread(message, ih=ih)
             except disnake.HTTPException:
                 logger.debug(
                     "Failed to create a thread on suggestion %s",
