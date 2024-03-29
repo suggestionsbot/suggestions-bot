@@ -14,6 +14,7 @@ from typing import Type, Optional, Union
 
 import aiohttp
 import alaric
+import commons
 import disnake
 from alaric import Cursor
 from bot_base.wraps import WrappedChannel
@@ -614,6 +615,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 ephemeral=True,
             )
 
+        logger.critical(
+            "Unhandled error encountered",
+            extra_metadata={
+                "error_name": exception.__class__.__name__,
+                "traceback": commons.exception_as_string(exception),
+            },
+        )
         raise exception
 
     async def on_button_error(
