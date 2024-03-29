@@ -14,3 +14,4 @@
 - [ ] Guild config method names aren't duplicated
 - [ ] New localizations have been added
 - [ ] Documentation on ``docs.suggestions.gg`` has been updated
+- [ ] Do these changes make sure not to expose anonymous suggestion authors?

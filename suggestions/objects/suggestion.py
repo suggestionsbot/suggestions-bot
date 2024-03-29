@@ -698,6 +698,10 @@ class Suggestion:
         thread = await message.create_thread(
             name=f"Thread for suggestion {self.suggestion_id}"
         )
+        if self.is_anonymous:
+            # Dont expose the anon author
+            return
+
         try:
             await thread.send(
                 ih.bot.get_localized_string(
