@@ -486,7 +486,6 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
-        await self.try_notify_user_of_decision(state.bot)
 
     async def mark_rejected_by(
         self,
@@ -503,7 +502,6 @@ class Suggestion:
 
         state.remove_sid_from_cache(self.guild_id, self.suggestion_id)
         await state.suggestions_db.update(self, self)
-        await self.try_notify_user_of_decision(state.bot)
 
     async def mark_cleared_by(
         self,
@@ -788,7 +786,6 @@ class Suggestion:
         else:
             # Move the suggestion to the logs channel
             await self.save_reaction_results(bot, interaction)
-            await self.try_delete(bot, interaction)
             channel: WrappedChannel = await bot.get_or_fetch_channel(
                 guild_config.log_channel_id
             )
@@ -802,6 +799,11 @@ class Suggestion:
                         "Missing permissions to send in configured log channel"
                     ]
                 )
+
+            # Only delete the original suggestion if we actually
+            # managed to send the log message to the new channel
+            await self.try_delete(bot, interaction)
+
             self.message_id = message.id
             self.channel_id = channel.id
             await state.suggestions_db.upsert(self, self)
@@ -928,6 +930,7 @@ class Suggestion:
             interaction=interaction,
             guild_config=guild_config,
         )
+        await self.try_notify_user_of_decision(state.bot)
 
     async def setup_initial_messages(
         self,
