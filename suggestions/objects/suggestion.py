@@ -9,7 +9,7 @@ from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
-from disnake import Embed, Guild
+from disnake import Embed
 from disnake.ext import commands
 from logoo import Logger
 

@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Optional
 import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
-from bot_base.wraps import WrappedChannel
-from disnake import Guild, ButtonStyle
+from disnake import ButtonStyle
 from disnake.ext import commands, components
 from logoo import Logger
 
@@ -21,8 +20,7 @@ from suggestions.exceptions import (
     MissingQueueLogsChannel,
 )
 from suggestions.interaction_handler import InteractionHandler
-from suggestions.objects import Suggestion, GuildConfig, UserConfig, QueuedSuggestion
-
+from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 from suggestions.utility import r2
 

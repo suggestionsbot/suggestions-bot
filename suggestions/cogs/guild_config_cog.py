@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
-from disnake import Guild
 from disnake.ext import commands
 from logoo import Logger
 

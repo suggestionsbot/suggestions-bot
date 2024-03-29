@@ -307,7 +307,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
 
         await bot.graceful_shutdown()
 
-    async def graceful_shutdown(bot: SuggestionsBot, signame):
+    async def graceful_shutdown(bot: SuggestionsBot, _):
         await bot.graceful_shutdown()
 
     # https://github.com/gearbot/GearBot/blob/live/GearBot/GearBot.py
