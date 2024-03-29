@@ -132,9 +132,7 @@ class SuggestionsQueue:
                 guild = await self.state.fetch_guild(guild_id)
                 await suggestion.setup_initial_messages(
                     guild_config=guild_config,
-                    interaction=ih.interaction,
-                    state=self.state,
-                    bot=self.bot,
+                    ih=ih,
                     cog=self.bot.get_cog("SuggestionsCog"),
                     guild=guild,
                     icon_url=icon_url,

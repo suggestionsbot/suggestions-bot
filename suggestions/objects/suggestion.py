@@ -15,6 +15,7 @@ from logoo import Logger
 
 from suggestions import ErrorCode
 from suggestions.exceptions import ErrorHandled, SuggestionNotFound
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
 from suggestions.objects import UserConfig, GuildConfig
 
@@ -689,14 +690,27 @@ class Suggestion:
                 },
             )
 
-    async def create_thread(self, message: disnake.Message):
+    async def create_thread(self, message: disnake.Message, *, ih: InteractionHandler):
         """Create a thread for this suggestion"""
         if self.state != SuggestionState.pending:
             raise ValueError(
                 "Cannot create a thread for suggestions which aren't pending."
             )
 
-        await message.create_thread(name=f"Thread for suggestion {self.suggestion_id}")
+        thread = await message.create_thread(
+            name=f"Thread for suggestion {self.suggestion_id}"
+        )
+        try:
+            await thread.send(
+                ih.bot.get_localized_string(
+                    "SUGGEST_INNER_PING_AUTHOR_IN_THREAD",
+                    ih,
+                    extras={"AUTHOR_ID": self.suggestion_author_id},
+                )
+            )
+        except:
+            # I'd consider it fine if the bot can't send this message
+            pass
 
     async def update_vote_count(
         self,
@@ -919,15 +933,16 @@ class Suggestion:
         self,
         *,
         guild_config: GuildConfig,
-        bot: SuggestionsBot,
         cog,
-        state: State,
-        interaction: disnake.GuildCommandInteraction | disnake.MessageInteraction,
         guild: disnake.Guild,
         icon_url,
+        ih: InteractionHandler,
         comes_from_queue=False,
     ):
         """Encapsulates creation logic to save code re-use"""
+        interaction = ih.interaction
+        bot = ih.bot
+        state = ih.bot.state
         try:
             channel: WrappedChannel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
@@ -969,7 +984,7 @@ class Suggestion:
 
         if guild_config.threads_for_suggestions:
             try:
-                await self.create_thread(message)
+                await self.create_thread(message, ih=ih)
             except disnake.HTTPException:
                 logger.debug(
                     "Failed to create a thread on suggestion %s",

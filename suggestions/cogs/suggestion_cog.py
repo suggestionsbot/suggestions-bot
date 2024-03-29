@@ -326,9 +326,7 @@ class SuggestionsCog(commands.Cog):
         )
         await suggestion.setup_initial_messages(
             guild_config=guild_config,
-            interaction=interaction,
-            state=self.state,
-            bot=self.bot,
+            ih=await InteractionHandler.new_handler(interaction),
             cog=self,
             guild=guild,
             icon_url=icon_url,
