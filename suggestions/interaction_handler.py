@@ -22,15 +22,19 @@ class InteractionHandler:
 
     def __init__(
         self,
-        interaction: disnake.Interaction
-        | disnake.GuildCommandInteraction
-        | disnake.MessageInteraction,
+        interaction: (
+            disnake.Interaction
+            | disnake.GuildCommandInteraction
+            | disnake.MessageInteraction
+        ),
         ephemeral: bool,
         with_message: bool,
     ):
-        self.interaction: disnake.Interaction | disnake.GuildCommandInteraction | disnake.MessageInteraction = (
-            interaction
-        )
+        self.interaction: (
+            disnake.Interaction
+            | disnake.GuildCommandInteraction
+            | disnake.MessageInteraction
+        ) = interaction
         self.ephemeral: bool = ephemeral
         self.with_message: bool = with_message
         self.is_deferred: bool = False
@@ -83,11 +87,17 @@ class InteractionHandler:
         *,
         ephemeral: bool = True,
         with_message: bool = True,
+        i_just_want_an_instance: bool = False,
     ) -> InteractionHandler:
         """Generate a new instance and defer the interaction."""
         instance = cls(interaction, ephemeral, with_message)
-        await interaction.response.defer(ephemeral=ephemeral, with_message=with_message)
-        instance.is_deferred = True
+
+        if not i_just_want_an_instance:
+            # TODO Remove this once BT-10 is resolved
+            await interaction.response.defer(
+                ephemeral=ephemeral, with_message=with_message
+            )
+            instance.is_deferred = True
 
         # Register this on the bot instance so other areas can
         # request the interaction handler, such as error handlers
