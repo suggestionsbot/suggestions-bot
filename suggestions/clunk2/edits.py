@@ -62,7 +62,7 @@ async def update_suggestion_message(
             message_id=up_to_date_suggestion.message_id,
         ).edit(embed=await up_to_date_suggestion.as_embed(bot))
     except (disnake.HTTPException, disnake.NotFound) as e:
-        logger.error(
+        logger.debug(
             "Failed to update suggestion %s",
             suggestion.suggestion_id,
             extra_metadata={
