@@ -14,7 +14,11 @@ from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import ErrorCode
-from suggestions.exceptions import ErrorHandled, SuggestionNotFound
+from suggestions.exceptions import (
+    ErrorHandled,
+    SuggestionNotFound,
+    SuggestionSecurityViolation,
+)
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
 from suggestions.objects import UserConfig, GuildConfig
@@ -286,13 +290,9 @@ class Suggestion:
             )
 
         if suggestion.guild_id != guild_id:
-            logger.critical(
-                "Someone in guild %s looked up a suggestion not from their guild",
-                guild_id,
-                extra_metadata={"guild_id": guild_id, "suggestion_id": suggestion_id},
-            )
-            raise SuggestionNotFound(
-                f"No suggestion found with the id {suggestion_id} in this guild"
+            raise SuggestionSecurityViolation(
+                sid=suggestion_id,
+                user_facing_message=f"No suggestion found with the id {suggestion_id} in this guild",
             )
 
         return suggestion

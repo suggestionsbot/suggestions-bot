@@ -41,6 +41,7 @@ from suggestions.exceptions import (
     MissingQueueLogsChannel,
     MissingPermissionsToAccessQueueChannel,
     InvalidFileType,
+    SuggestionSecurityViolation,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.interaction_handler import InteractionHandler
@@ -413,6 +414,26 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                     error=error,
                     error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
                 )
+            )
+
+        elif isinstance(exception, SuggestionSecurityViolation):
+            logger.critical(
+                "User %s looked up a suggestion from a different guild",
+                interaction.author.id,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "suggestion_id": exception.suggestion_id,
+                    "author_id": interaction.author.id,
+                },
+            )
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    exception.user_facing_message,
+                    error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                    error=error,
+                ),
+                ephemeral=True,
             )
 
         elif isinstance(exception, commands.MissingPermissions):
