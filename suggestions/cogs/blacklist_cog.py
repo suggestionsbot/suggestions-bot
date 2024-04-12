@@ -20,13 +20,14 @@ class BlacklistCog(commands.Cog):
         self.bot: SuggestionsBot = bot
         self.state: State = self.bot.state
 
-    @commands.slash_command()
-    async def user(self, interaction: disnake.GuildCommandInteraction):
-        ...
+    @commands.slash_command(
+        dm_permission=False,
+        default_member_permissions=disnake.Permissions(manage_guild=True),
+    )
+    async def user(self, interaction: disnake.GuildCommandInteraction): ...
 
     @user.sub_command_group()
-    async def blocklist(self, interaction: disnake.GuildCommandInteraction):
-        ...
+    async def blocklist(self, interaction: disnake.GuildCommandInteraction): ...
 
     @blocklist.sub_command()
     async def add(

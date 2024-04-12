@@ -15,3 +15,4 @@
 - [ ] New localizations have been added
 - [ ] Documentation on ``docs.suggestions.gg`` has been updated
 - [ ] Do these changes make sure not to expose anonymous suggestion authors?
+- [ ] Do these changes have the correct default discord permissions setup?
