@@ -57,6 +57,7 @@
   "SUGGEST_INNER_SENT_TO_QUEUE": "Sua sugestão foi enviada à fila para processamento.",
   "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS": "Seu servidor não permite sugestões anônimas.",
   "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS": "Seu servidor não permite imagens em sugestões.",
+  "SUGGEST_INNER_PING_AUTHOR_IN_THREAD": "Ei, <@$AUTHOR_ID>, criei este tópico para você discutir sua sugestão nele.",
   "CONFIG_ANONYMOUS_ENABLE_INNER_SUCCESS": "Habilitei sugestões anônimas para este servidor.",
   "CONFIG_ANONYMOUS_DISABLE_INNER_SUCCESS": "Desabilitei sugestões anônimas para este servidor.",
   "SUGGESTION_OBJECT_LOCK_THREAD": "Trancando este tópico já que a sugestão chegou a uma resolução.",
