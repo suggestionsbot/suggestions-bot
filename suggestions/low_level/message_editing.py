@@ -38,8 +38,7 @@ class MessageEditing:
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         components: Optional[Components[MessageUIComponent]] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def edit(
@@ -54,8 +53,7 @@ class MessageEditing:
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         components: Optional[Components[MessageUIComponent]] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def edit(
@@ -70,8 +68,7 @@ class MessageEditing:
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         components: Optional[Components[MessageUIComponent]] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def edit(
@@ -86,8 +83,7 @@ class MessageEditing:
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         components: Optional[Components[MessageUIComponent]] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def edit(self, content: Optional[str] = MISSING, **fields: Any) -> None:
         if self._state.allowed_mentions is not None:
