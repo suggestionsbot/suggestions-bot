@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -10,6 +9,7 @@ import alaric
 from alaric import Cursor, AQ
 from alaric.comparison import EQ
 from commons.caching import TimedCache
+from logoo import Logger
 
 from suggestions.objects.stats import MemberStats, MemberCommandStats
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
     from suggestions.database import SuggestionsMongoManager
 
-log = logging.getLogger(__name__)
+log = Logger(__name__)
 
 
 class StatsEnum(Enum):
