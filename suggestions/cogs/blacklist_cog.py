@@ -92,6 +92,12 @@ class BlacklistCog(commands.Cog):
                 ephemeral=True,
             )
 
+        if user_id is None and suggestion_id is None:
+            return await interaction.send(
+                "Either a suggestion_id or user_id is required.",
+                ephemeral=True,
+            )
+
         if suggestion_id:
             suggestion: Suggestion = await Suggestion.from_id(
                 suggestion_id, interaction.guild_id, self.state
