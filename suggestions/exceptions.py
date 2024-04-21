@@ -70,7 +70,7 @@ class ConflictingHandlerInformation(disnake.DiscordException):
 class InvalidFileType(disnake.DiscordException):
     """The file you attempted to upload is not allowed."""
 
-
+    
 class SuggestionSecurityViolation(disnake.DiscordException):
     """A security violation occurred."""
 
