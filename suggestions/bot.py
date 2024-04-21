@@ -521,7 +521,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 embed=self.error_embed(
                     "Configuration Error",
                     "I cannot find your configured channel for this command.\n"
-                    "Please ask an administrator to reconfigure one.",
+                    "Please ask an administrator to reconfigure one.\n"
+                    "This can be done using: `/config channel`",
                     error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
                     error=error,
                 ),
