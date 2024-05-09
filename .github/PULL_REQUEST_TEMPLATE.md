@@ -1,5 +1,23 @@
 ## Summary
 <!-- What is this pull request for? -->
+<!-- If this is not a version PR, remove the following -->
+## Documentation changes
+
+- XXX
+
+## Minor changes
+
+- XXX
+
+## Bug fixes
+
+- XXX
+
+## Technical changes
+
+- XXX
+
+<!-- Delete to here -->
 
 ## Checklist
 

@@ -54,7 +54,7 @@ async def update_suggestion_message(
     # We do this to avoid a race condition where the suggestion may have
     # had a value modified between when it was added to the edit queue
     # and the time at which it was actually edited
-    up_to_date_suggestion = await bot.state.suggestions_db.find(suggestion)
+    up_to_date_suggestion: Suggestion = await bot.state.suggestions_db.find(suggestion)
     try:
         await MessageEditing(
             bot,

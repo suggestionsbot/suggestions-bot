@@ -9,6 +9,7 @@ from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from bot_base.wraps import WrappedChannel
+from commons.caching import NonExistentEntry
 from disnake import Embed
 from disnake.ext import commands
 from logoo import Logger
@@ -73,6 +74,8 @@ class Suggestion:
             SuggestionState,
         ],
         *,
+        note: Optional[str] = None,
+        note_added_by: Optional[int] = None,
         total_up_votes: Optional[int] = None,
         total_down_votes: Optional[int] = None,
         up_voted_by: Optional[list[int]] = None,
@@ -107,6 +110,12 @@ class Suggestion:
 
         Other Parameters
         ----------------
+        note: Optional[str]
+            A note to add to the suggestion embed
+        note_added_by: Optional[int]
+            Who added the note.
+
+            Should be marked as hidden if not shown.
         resolved_by: Optional[int]
             Who changed the final state of this suggestion
         resolution_note: Optional[str]
@@ -176,6 +185,8 @@ class Suggestion:
         self.image_url: Optional[str] = image_url
         self.is_anonymous: bool = is_anonymous
         self.anonymous_resolution: Optional[bool] = anonymous_resolution
+        self.note: Optional[str] = note
+        self.note_added_by: Optional[int] = note_added_by
 
     @property
     def total_up_votes(self) -> Optional[int]:
@@ -365,6 +376,10 @@ class Suggestion:
             "anonymous_resolution": self.anonymous_resolution,
         }
 
+        if self.note:
+            data["note"] = self.note
+            data["note_added_by"] = self.note_added_by
+
         if self.resolved_by:
             data["resolved_by"] = self.resolved_by
             data["resolution_note"] = self.resolution_note
@@ -416,6 +431,11 @@ class Suggestion:
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.note:
+            note_desc = f"\n\n**Moderator note**\n{self.note}"
+            # TODO Resolve BT-44 and add this back
+            embed.description += note_desc
 
         if self.uses_views_for_votes:
             results = (
@@ -714,36 +734,23 @@ class Suggestion:
             # I'd consider it fine if the bot can't send this message
             pass
 
-    async def update_vote_count(
+    async def edit_suggestion_message(
         self,
-        bot: SuggestionsBot,
-        interaction: disnake.Interaction,
+        ih: InteractionHandler,
     ):
-        if self.channel_id is None or self.message_id is None:
-            logger.error(
-                "update_vote_count received a null value for SID %s, "
-                "channel_id=%s, message_id=%s",
-                self.channel_id,
-                self.message_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "author_id": self.suggestion_author_id,
-                },
-            )
-            return
-
+        """A generic method to edit a suggestion message to the new values."""
+        bot = ih.bot
         try:
             await MessageEditing(
                 bot, channel_id=self.channel_id, message_id=self.message_id
             ).edit(embed=await self.as_embed(bot))
         except (disnake.HTTPException, disnake.NotFound):
-            await interaction.send(
+            await ih.send(
                 embed=bot.error_embed(
                     "Command failed",
                     "Looks like this suggestion was deleted.",
                     footer_text=f"Error code {ErrorCode.SUGGESTION_MESSAGE_DELETED.value}",
                 ),
-                ephemeral=True,
             )
             raise ErrorHandled
 
