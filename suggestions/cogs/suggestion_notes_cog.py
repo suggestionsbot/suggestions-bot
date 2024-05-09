@@ -11,7 +11,7 @@ from suggestions.interaction_handler import InteractionHandler
 logger: Logger = Logger(__name__)
 
 
-class SuggestionsNotes(commands.Cog):
+class SuggestionNotesCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.state = bot.state
@@ -96,4 +96,4 @@ class SuggestionsNotes(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SuggestionsNotes(bot))
+    bot.add_cog(SuggestionNotesCog(bot))
