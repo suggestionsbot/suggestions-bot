@@ -86,6 +86,8 @@
   "CONFIG_DM_DISABLE_INNER_MESSAGE": "I have disabled DM messages for this guild.",
   "CONFIG_THREAD_ENABLE_INNER_MESSAGE": "I have enabled threads on new suggestions for this guild.",
   "CONFIG_THREAD_DISABLE_INNER_MESSAGE": "I have disabled thread creation on new suggestions for this guild.",
+  "CONFIG_PING_ON_THREAD_CREATION_ENABLE_INNER_MESSAGE": "I have enabled pings on new suggestion threads for this guild.",
+  "CONFIG_PING_ON_THREAD_CREATION_DISABLE_INNER_MESSAGE": "I have disabled pings on new suggestion threads for this guild.",
   "CONFIG_KEEPLOGS_ENABLE_INNER_MESSAGE": "Suggestions will now stay in your suggestions channel instead of going to logs.",
   "CONFIG_KEEPLOGS_DISABLE_INNER_MESSAGE": "Suggestions will now be moved to your logs channel when finished.",
   "CONFIG_AUTO_ARCHIVE_THREADS_ENABLE_INNER_MESSAGE": "Automatically created threads for suggestions will now be archived upon suggestion resolution.",
@@ -137,5 +139,9 @@
   "NOTES_REMOVE_NAME": "remove",
   "NOTES_REMOVE_DESCRIPTION": "Remove a note from a suggestion",
   "NOTES_REMOVE_ARG_SUGGESTION_ID_NAME": "suggestion_id",
-  "NOTES_REMOVE_ARG_SUGGESTION_ID_DESCRIPTION": "The sID you wish to remove a note from"
+  "NOTES_REMOVE_ARG_SUGGESTION_ID_DESCRIPTION": "The sID you wish to remove a note from",
+  "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET": "This guild uses a channel based suggestions queue.",
+  "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET": "This guild uses a virtual suggestions queue.",
+  "CONFIG_GET_INNER_USES_THREAD_PINGS_SET": "This guild pings users in threads created for suggestions.",
+  "CONFIG_GET_INNER_USES_THREAD_PINGS_NOT_SET": "This guild does not ping users in threads created for suggestions."
 }

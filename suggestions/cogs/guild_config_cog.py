@@ -211,6 +211,7 @@ class GuildConfigCog(commands.Cog):
                 "Using channel queue",
                 "Queue channel",
                 "Queue rejection channel",
+                "Ping on suggestion thread creation",
             ],
             default=None,
         ),
@@ -243,6 +244,16 @@ class GuildConfigCog(commands.Cog):
                 )
             )
             embed.description += log_channel
+
+        elif config == "Ping on suggestion thread creation":
+            locale_string = (
+                "CONFIG_GET_INNER_USES_THREAD_PINGS_SET"
+                if guild_config.ping_on_thread_creation
+                else "CONFIG_GET_INNER_USES_THREAD_PINGS_NOT_SET"
+            )
+            text = self.bot.get_localized_string(locale_string, interaction)
+
+            embed.description += text
 
         elif config == "Queue channel":
             log_channel = (
@@ -536,6 +547,15 @@ class GuildConfigCog(commands.Cog):
             "CONFIG_GET_INNER_AUTO_ARCHIVE_THREADS_MESSAGE", interaction.locale
         ).format(auto_archive_threads_text)
 
+        ping_on_thread_creation = (
+            "CONFIG_GET_INNER_USES_THREAD_PINGS_SET"
+            if guild_config.ping_on_thread_creation
+            else "CONFIG_GET_INNER_USES_THREAD_PINGS_NOT_SET"
+        )
+        ping_on_thread_creation = self.bot.get_localized_string(
+            ping_on_thread_creation, interaction
+        )
+
         locale_string = (
             "CONFIG_GET_INNER_SUGGESTIONS_QUEUE_SET"
             if guild_config.uses_suggestion_queue
@@ -560,7 +580,7 @@ class GuildConfigCog(commands.Cog):
             f"Suggestion threads: {threads}\nKeep Logs: {keep_logs}\nAnonymous suggestions: {anon}\n"
             f"Automatic thread archiving: {auto_archive_threads}\nSuggestions queue: {suggestions_queue}\n"
             f"Channel queue: {physical_queue}\nImages in suggestions: {images}\n"
-            f"Anonymous resolutions: {anonymous_resolutions}\n"
+            f"Anonymous resolutions: {anonymous_resolutions}\nPings in new suggestion threads: {ping_on_thread_creation}\n"
             f"Queue channel: {queue_channel}\nQueue rejection channel: {queue_rejection_channel}",
             color=self.bot.colors.embed_color,
             timestamp=self.bot.state.now,
@@ -671,6 +691,46 @@ class GuildConfigCog(commands.Cog):
             ),
             "Disabled thread creation on new suggestions for guild %s",
             self.stats.type.GUILD_THREAD_DISABLE,
+        )
+
+    @config.sub_command_group()
+    async def ping_on_thread_creation(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        pass
+
+    @ping_on_thread_creation.sub_command(name="enable")
+    async def ping_on_thread_creation_enable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Enable pings when a thread is created on a suggestion."""
+        await self.modify_guild_config(
+            interaction,
+            "ping_on_thread_creation",
+            True,
+            self.bot.get_locale(
+                "CONFIG_PING_ON_THREAD_CREATION_ENABLE_INNER_MESSAGE",
+                interaction.locale,
+            ),
+            "Enabled pings on new suggestion threads for guild %s",
+            self.stats.type.GUILD_PING_ON_THREAD_CREATE_ENABLE,
+        )
+
+    @ping_on_thread_creation.sub_command(name="disable")
+    async def ping_on_thread_creation_disable(
+        self, interaction: disnake.GuildCommandInteraction
+    ):
+        """Disable pings when a thread is created on a suggestion."""
+        await self.modify_guild_config(
+            interaction,
+            "ping_on_thread_creation",
+            False,
+            self.bot.get_locale(
+                "CONFIG_PING_ON_THREAD_CREATION_DISABLE_INNER_MESSAGE",
+                interaction.locale,
+            ),
+            "Disabled pings on new suggestion threads for guild %s",
+            self.stats.type.GUILD_PING_ON_THREAD_CREATE_DISABLE,
         )
 
     @config.sub_command_group()

@@ -145,7 +145,7 @@ class UserConfigCog(commands.Cog):
             self.stats.type.MEMBER_PING_ON_THREAD_CREATE_DISABLE,
         )
 
-    @ping_on_thread_creation.sub_command()
+    @ping_on_thread_creation.sub_command(name="view")
     async def ping_on_thread_creation_view(
         self, interaction: disnake.CommandInteraction
     ):

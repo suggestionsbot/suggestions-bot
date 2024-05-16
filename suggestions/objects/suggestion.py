@@ -718,8 +718,18 @@ class Suggestion:
         thread = await message.create_thread(
             name=f"Thread for suggestion {self.suggestion_id}"
         )
+        logger.debug(
+            f"Created a thread for suggestion {self.suggestion_id}",
+            extra_metadata={"suggestion_id": self.suggestion_id},
+        )
         if self.is_anonymous:
             # Don't expose the anon author
+            return
+
+        guild_config: GuildConfig = await GuildConfig.from_id(
+            ih.interaction.guild_id, ih.bot.state
+        )
+        if not guild_config.ping_on_thread_creation:
             return
 
         user_config: UserConfig = await UserConfig.from_id(
