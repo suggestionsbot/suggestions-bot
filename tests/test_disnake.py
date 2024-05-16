@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import disnake
 
 
+# TODO We want to remove this in favour of interaction handlers in BT-39
 def test_deferred_without_send():
     a = {
         "id": "1",
