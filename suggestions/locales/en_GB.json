@@ -22,7 +22,7 @@
   "CLEAR_NAME": "clear",
   "CLEAR_DESCRIPTION": "Remove a suggestion and any associated messages.",
   "CLEAR_ARG_SUGGESTION_ID_NAME": "suggestion_id",
-  "CLEAR_ARG_SUGGESTION_ID_DESCRIPTION": "The sID you wish to reject",
+  "CLEAR_ARG_SUGGESTION_ID_DESCRIPTION": "The sID you wish to clear",
   "CLEAR_ARG_RESPONSE_NAME": "response",
   "CLEAR_ARG_RESPONSE_DESCRIPTION": "An optional response to add to the suggestion",
   "STATS_NAME": "stats",
