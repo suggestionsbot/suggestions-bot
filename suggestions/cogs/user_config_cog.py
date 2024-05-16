@@ -88,6 +88,87 @@ class UserConfigCog(commands.Cog):
             self.stats.type.MEMBER_DM_VIEW,
         )
 
+    @commands.slash_command()
+    @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
+    async def user_config(self, interaction: disnake.CommandInteraction):
+        pass
+
+    @user_config.sub_command_group()
+    async def ping_on_thread_creation(self, interaction: disnake.CommandInteraction):
+        pass
+
+    @ping_on_thread_creation.sub_command(name="enable")
+    async def ping_on_thread_creation_enable(
+        self, interaction: disnake.CommandInteraction
+    ):
+        """Enable pings when a thread is created on a suggestion."""
+        user_config: UserConfig = await UserConfig.from_id(
+            interaction.author.id, self.state
+        )
+        user_config.ping_on_thread_creation = True
+        await self.bot.db.user_configs.upsert(user_config, user_config)
+        await interaction.send(
+            "I have enabled pings on thread creation for you.", ephemeral=True
+        )
+        logger.debug(
+            "Enabled pings on thread creation for member %s",
+            interaction.author.id,
+            extra_metadata={"author_id": interaction.author.id},
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.MEMBER_PING_ON_THREAD_CREATE_ENABLE,
+        )
+
+    @ping_on_thread_creation.sub_command(name="disable")
+    async def ping_on_thread_creation_disable(
+        self, interaction: disnake.CommandInteraction
+    ):
+        """Disable pings when a thread is created on a suggestion."""
+        user_config: UserConfig = await UserConfig.from_id(
+            interaction.author.id, self.state
+        )
+        user_config.ping_on_thread_creation = False
+        await self.bot.db.user_configs.upsert(user_config, user_config)
+        await interaction.send(
+            "I have disabled pings on thread creation for you.", ephemeral=True
+        )
+        logger.debug(
+            "Disabled pings on thread creation for member %s",
+            interaction.author.id,
+            extra_metadata={"author_id": interaction.author.id},
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.MEMBER_PING_ON_THREAD_CREATE_DISABLE,
+        )
+
+    @ping_on_thread_creation.sub_command()
+    async def ping_on_thread_creation_view(
+        self, interaction: disnake.CommandInteraction
+    ):
+        """View your current ping configuration."""
+        user_config: UserConfig = await UserConfig.from_id(
+            interaction.author.id, self.state
+        )
+        text = "will" if user_config.ping_on_thread_creation else "will not"
+        await interaction.send(
+            f"I {text} ping you on when a new thread is created for a suggestion.",
+            ephemeral=True,
+        )
+        logger.debug(
+            "User %s viewed their ping configuration",
+            interaction.author.id,
+            extra_metadata={"author_id": interaction.author.id},
+        )
+        await self.stats.log_stats(
+            interaction.author.id,
+            interaction.guild_id,
+            self.stats.type.MEMBER_PING_ON_THREAD_CREATE_VIEW,
+        )
+
 
 def setup(bot):
     bot.add_cog(UserConfigCog(bot))

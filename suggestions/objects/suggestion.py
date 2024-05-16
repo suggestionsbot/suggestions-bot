@@ -719,9 +719,16 @@ class Suggestion:
             name=f"Thread for suggestion {self.suggestion_id}"
         )
         if self.is_anonymous:
-            # Dont expose the anon author
+            # Don't expose the anon author
             return
 
+        user_config: UserConfig = await UserConfig.from_id(
+            ih.interaction.author.id, ih.bot.state
+        )
+        if not user_config.ping_on_thread_creation:
+            return
+
+        # TODO The ones for guilds as well
         try:
             await thread.send(
                 ih.bot.get_localized_string(

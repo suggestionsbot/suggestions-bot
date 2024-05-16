@@ -16,9 +16,15 @@ logger = Logger(__name__)
 class UserConfig:
     """Generic global user configuration"""
 
-    def __init__(self, _id: int, dm_messages_disabled: bool = False):
+    def __init__(
+        self,
+        _id: int,
+        dm_messages_disabled: bool = False,
+        ping_on_thread_creation: bool = True,
+    ):
         self._id: int = _id
         self.dm_messages_disabled: bool = dm_messages_disabled
+        self.ping_on_thread_creation: bool = ping_on_thread_creation
 
     @classmethod
     async def from_id(cls, user_id: int, state: State):
@@ -58,7 +64,11 @@ class UserConfig:
         return self._id
 
     def as_dict(self) -> Dict:
-        return {"_id": self.user_id, "dm_messages_disabled": self.dm_messages_disabled}
+        return {
+            "_id": self.user_id,
+            "dm_messages_disabled": self.dm_messages_disabled,
+            "ping_on_thread_creation": self.ping_on_thread_creation,
+        }
 
     def as_filter(self) -> Dict:
         return {"_id": self.user_id}
