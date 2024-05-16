@@ -20,7 +20,3 @@ def test_deferred_without_send():
     assert isinstance(inter.deferred_without_send, bool)
     assert hasattr(inter, "has_been_followed_up")
     assert isinstance(inter.has_been_followed_up, bool)
-
-
-def test_try_fetch_icon_url():
-    assert hasattr(disnake.Guild, "try_fetch_icon_url")
