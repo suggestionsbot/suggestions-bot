@@ -1,5 +1,4 @@
 import disnake
-import logoo
 from disnake import Embed
 from logoo import Logger
 

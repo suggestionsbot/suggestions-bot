@@ -17,6 +17,7 @@ from suggestions.exceptions import ErrorHandled, MissingQueueLogsChannel
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig, UserConfig, QueuedSuggestion
 from suggestions.qs_paginator import QueuedSuggestionsPaginator
+from suggestions.utility import wrap_with_error_handler
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -24,20 +25,6 @@ if TYPE_CHECKING:
     from suggestions.objects import Suggestion
 
 log = logging.getLogger(__name__)
-
-
-def wrap_with_error_handler():
-    def decorator(func: Callable):
-        @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except Exception as e:
-                await args[0].bot.on_slash_command_error(args[1].interaction, e)
-
-        return wrapper
-
-    return decorator
 
 
 class SuggestionsQueue:

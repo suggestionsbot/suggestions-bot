@@ -22,7 +22,7 @@ from suggestions.exceptions import (
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
-from suggestions.utility import r2
+from suggestions.utility import r2, wrap_with_error_handler
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -177,6 +177,7 @@ class SuggestionsCog(commands.Cog):
         await update_suggestion_message(suggestion=suggestion, bot=self.bot)
 
     @components.button_listener()
+    @wrap_with_error_handler()
     async def queue_approve(self, inter: disnake.MessageInteraction):
         ih = await InteractionHandler.new_handler(inter)
         qs = await QueuedSuggestion.from_message_id(
@@ -188,6 +189,7 @@ class SuggestionsCog(commands.Cog):
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
 
     @components.button_listener()
+    @wrap_with_error_handler()
     async def queue_reject(self, inter: disnake.MessageInteraction):
         ih = await InteractionHandler.new_handler(inter)
         qs = await QueuedSuggestion.from_message_id(
