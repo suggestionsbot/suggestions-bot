@@ -12,7 +12,7 @@ from logoo import Logger
 from suggestions import checks, Stats
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
-from suggestions.core import SuggestionsQueue
+from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
 from suggestions.exceptions import (
     SuggestionTooLong,
     ErrorHandled,
@@ -39,6 +39,7 @@ class SuggestionsCog(commands.Cog):
         self.suggestions_db: Document = self.bot.db.suggestions
 
         self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
+        self.resolution_core: SuggestionsResolutionCore = SuggestionsResolutionCore(bot)
 
     @components.button_listener()
     async def suggestion_up_vote(
@@ -371,41 +372,8 @@ class SuggestionsCog(commands.Cog):
         suggestion_id: str {{APPROVE_ARG_SUGGESTION_ID}}
         response: str {{APPROVE_ARG_RESPONSE}}
         """
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        await interaction.response.defer(ephemeral=True)
-        suggestion: Suggestion = await Suggestion.from_id(
-            suggestion_id, interaction.guild_id, self.state
-        )
-        await suggestion.resolve(
-            guild_config=guild_config,
-            state=self.state,
-            interaction=interaction,
-            resolution_note=response,
-            resolution_type=SuggestionState.approved,
-            bot=self.bot,
-        )
-
-        await interaction.send(
-            self.bot.get_locale("APPROVE_INNER_MESSAGE", interaction.locale).format(
-                suggestion_id
-            ),
-            ephemeral=True,
-        )
-        logger.debug(
-            f"User {interaction.author.id} approved suggestion "
-            f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
-            },
-        )
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
-            self.stats.type.APPROVE,
+        await self.resolution_core.approve(
+            await InteractionHandler.new_handler(interaction), suggestion_id, response
         )
 
     @approve.autocomplete("suggestion_id")
@@ -434,41 +402,8 @@ class SuggestionsCog(commands.Cog):
         suggestion_id: str {{REJECT_ARG_SUGGESTION_ID}}
         response: str {{REJECT_ARG_RESPONSE}}
         """
-        guild_config: GuildConfig = await GuildConfig.from_id(
-            interaction.guild_id, self.state
-        )
-        await interaction.response.defer(ephemeral=True)
-        suggestion: Suggestion = await Suggestion.from_id(
-            suggestion_id, interaction.guild_id, self.state
-        )
-        await suggestion.resolve(
-            guild_config=guild_config,
-            state=self.state,
-            interaction=interaction,
-            resolution_note=response,
-            resolution_type=SuggestionState.rejected,
-            bot=self.bot,
-        )
-
-        await interaction.send(
-            self.bot.get_locale("REJECT_INNER_MESSAGE", interaction.locale).format(
-                suggestion_id
-            ),
-            ephemeral=True,
-        )
-        logger.debug(
-            f"User {interaction.author} rejected suggestion {suggestion.suggestion_id} "
-            f"in guild {interaction.guild_id}",
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
-            },
-        )
-        await self.stats.log_stats(
-            interaction.author.id,
-            interaction.guild_id,
-            self.stats.type.REJECT,
+        await self.resolution_core.reject(
+            await InteractionHandler.new_handler(interaction), suggestion_id, response
         )
 
     @reject.autocomplete("suggestion_id")

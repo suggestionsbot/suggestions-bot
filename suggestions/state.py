@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List, Dict, Set, Any
 
 import disnake
 from alaric import AQ
-from alaric.comparison import EQ
+from alaric.comparison import EQ, Exists
 from alaric.logical import AND
 from alaric.meta import Negate
 from alaric.projections import PROJECTION, SHOW
@@ -177,6 +177,19 @@ class State:
             try_convert=False,
         )
         data: List[str] = [d["_id"] for d in data]
+
+        queued_data: List[Dict] = await self.database.queued_suggestions.find_many(
+            AQ(
+                AND(EQ("guild_id", guild_id), Negate(Exists("resolved_at"))),
+            ),
+            projections=PROJECTION(SHOW("_id")),
+            try_convert=False,
+        )
+        queued_data: List[str] = [
+            d["_id"] for d in queued_data if isinstance(d["_id"], str)
+        ]
+        data.extend(queued_data)
+
         self.autocomplete_cache.add_entry(guild_id, data, override=True)
         logger.debug(
             "Populated sid cache for guild %s",
@@ -262,6 +275,15 @@ class State:
         )
         for entry in suggestion_ids:
             self.existing_suggestion_ids.add(entry["_id"])
+
+        suggestion_ids: List[Dict] = await self.queued_suggestions_db.get_all(
+            {},
+            projections=PROJECTION(SHOW("_id")),
+            try_convert=False,
+        )
+        for entry in suggestion_ids:
+            if isinstance(entry["_id"], str) and len(entry["_id"]) == 8:
+                self.existing_suggestion_ids.add(entry["_id"])
 
         error_ids: List[Dict] = await self.bot.db.error_tracking.get_all(
             {},

@@ -434,7 +434,7 @@ class Suggestion:
 
         if self.note:
             note_desc = f"\n\n**Moderator note**\n{self.note}"
-            # TODO Resolve BT-44 and add this back
+            # TODO Resolve BT-44 and add moderator back
             embed.description += note_desc
 
         if self.uses_views_for_votes:
