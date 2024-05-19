@@ -831,7 +831,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return values[str(locale)]
         except KeyError:
             # Default to known translations if not set
-            return values.get("en-GB", values["en-US"])
+            value = values.get("en-GB")
+            if value is None:
+                value = values["en-US"]
+                logger.critical(
+                    "Missing translation in en-GB file",
+                    extra_metadata={"translation_key": key},
+                )
+
+            return value
 
     @staticmethod
     def inject_locale_values(
