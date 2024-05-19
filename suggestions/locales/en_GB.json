@@ -143,5 +143,15 @@
   "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_SET": "This guild uses a channel based suggestions queue.",
   "CONFIG_GET_INNER_USES_PHYSICAL_QUEUE_NOT_SET": "This guild uses a virtual suggestions queue.",
   "CONFIG_GET_INNER_USES_THREAD_PINGS_SET": "This guild pings users in threads created for suggestions.",
-  "CONFIG_GET_INNER_USES_THREAD_PINGS_NOT_SET": "This guild does not ping users in threads created for suggestions."
+  "CONFIG_GET_INNER_USES_THREAD_PINGS_NOT_SET": "This guild does not ping users in threads created for suggestions.",
+  "CONFIG_USE_PHYSICAL_QUEUE_ENABLE_INNER_MESSAGE": "If the suggestions queue is enabled, all new suggestions will go to a channel queue.",
+  "CONFIG_USE_PHYSICAL_QUEUE_DISABLE_INNER_MESSAGE": "If the suggestions queue is enabled, all new suggestions will go to a virtual queue.",
+  "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion queue channel to $CHANNEL",
+  "CONFIG_QUEUE_LOG_CHANNEL_INNER_MESSAGE": "I have set this guilds suggestion queue channel to {}",
+  "CONFIG_QUEUE_CHANNEL_INNER_MESSAGE_REMOVED": "I have disabled sending rejected queue suggestions to a channel.",
+  "CONFIG_GET_INNER_PARTIAL_QUEUE_LOG_CHANNEL_SET": "Queue channel: <#{}>",
+  "CONFIG_GET_INNER_PARTIAL_QUEUE_LOG_CHANNEL_NOT_SET": "Not set",
+  "CONFIG_GET_INNER_PARTIAL_QUEUE_REJECTION_LOG_CHANNEL_SET": "Queue rejection channel: <#{}>",
+  "CONFIG_GET_INNER_PARTIAL_QUEUE_REJECTION_LOG_CHANNEL_NOT_SET": "Not set",
+  "QUEUE_INNER_ALREADY_RESOLVED": "This queued suggestion has already been resolved."
 }
