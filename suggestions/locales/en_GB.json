@@ -126,7 +126,7 @@
   "USER_ID_NAME": "user_id",
   "USER_ID_DESCRIPTION": "The users discord id.",
   "VIEW_VOTERS_CLEARED_SUGGESTION": "Cannot view a cleared suggestion.",
-  "NOTE_INNER_CHANGE_MADE_DESCRIPTION": "A moderator has modified a note on your suggestion.\n\nYou can review the note (or lack therefore) here: $JUMP",
+  "NOTE_INNER_CHANGE_MADE_DESCRIPTION": "A moderator has modified a note on your suggestion.\n\nYou can review the note (or lack thereof) here: $JUMP",
   "NOTE_INNER_CHANGE_MADE_FOOTER": "Guild ID: $GUILD_ID | sID: $SID",
   "NOTE_INNER_RESPONSE": "Your change has been made to the suggestion.",
   "NOTES_NAME": "note",
