@@ -31,6 +31,7 @@ class GuildConfig:
         can_have_images_in_suggestions: bool = True,
         anonymous_resolutions: bool = False,
         blocked_users: Optional[list[int]] = None,
+        ping_on_thread_creation: bool = True,
         **kwargs,
     ):
         self._id: int = _id
@@ -42,8 +43,9 @@ class GuildConfig:
         self.dm_messages_disabled: bool = dm_messages_disabled
         self.anonymous_resolutions: bool = anonymous_resolutions
         self.uses_suggestion_queue: bool = uses_suggestion_queue
-        self.virtual_suggestion_queue: bool = virtual_suggestion_queue
         self.threads_for_suggestions: bool = threads_for_suggestions
+        self.ping_on_thread_creation: bool = ping_on_thread_creation
+        self.virtual_suggestion_queue: bool = virtual_suggestion_queue
         self.suggestions_channel_id: Optional[int] = suggestions_channel_id
         self.can_have_anonymous_suggestions: bool = can_have_anonymous_suggestions
         self.can_have_images_in_suggestions: bool = can_have_images_in_suggestions
@@ -108,6 +110,7 @@ class GuildConfig:
             "auto_archive_threads": self.auto_archive_threads,
             "dm_messages_disabled": self.dm_messages_disabled,
             "suggestions_channel_id": self.suggestions_channel_id,
+            "ping_on_thread_creation": self.ping_on_thread_creation,
             "uses_suggestion_queue": self.uses_suggestion_queue,
             "anonymous_resolutions": self.anonymous_resolutions,
             "virtual_suggestion_queue": self.virtual_suggestion_queue,

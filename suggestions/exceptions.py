@@ -69,3 +69,18 @@ class ConflictingHandlerInformation(disnake.DiscordException):
 
 class InvalidFileType(disnake.DiscordException):
     """The file you attempted to upload is not allowed."""
+
+    
+class SuggestionSecurityViolation(disnake.DiscordException):
+    """A security violation occurred."""
+
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        user_facing_message: str,
+        sid: str,
+    ):
+        self.suggestion_id: str = sid
+        self.user_facing_message = user_facing_message
+        self.message = message if message is not None else self.__doc__

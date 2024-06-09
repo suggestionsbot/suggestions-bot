@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -10,6 +9,7 @@ import alaric
 from alaric import Cursor, AQ
 from alaric.comparison import EQ
 from commons.caching import TimedCache
+from logoo import Logger
 
 from suggestions.objects.stats import MemberStats, MemberCommandStats
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
     from suggestions.database import SuggestionsMongoManager
 
-log = logging.getLogger(__name__)
+log = Logger(__name__)
 
 
 class StatsEnum(Enum):
@@ -30,6 +30,9 @@ class StatsEnum(Enum):
     MEMBER_DM_VIEW = "member_dm_view"
     MEMBER_DM_ENABLE = "member_dm_enable"
     MEMBER_DM_DISABLE = "member_dm_disable"
+    MEMBER_PING_ON_THREAD_CREATE_ENABLE = "member_ping_on_thread_create_enable"
+    MEMBER_PING_ON_THREAD_CREATE_DISABLE = "member_ping_on_thread_create_disable"
+    MEMBER_PING_ON_THREAD_CREATE_VIEW = "member_ping_on_thread_create_view"
     GUILD_CONFIG_LOG_CHANNEL = "guild_config_log_channel"
     GUILD_CONFIG_QUEUE_CHANNEL = "guild_config_queue_channel"
     GUILD_CONFIG_REJECTED_QUEUE_CHANNEL = "guild_config_rejected_queue_channel"
@@ -39,6 +42,8 @@ class StatsEnum(Enum):
     GUILD_DM_DISABLE = "guild_dm_disable"
     GUILD_THREAD_ENABLE = "guild_thread_enable"
     GUILD_THREAD_DISABLE = "guild_thread_disable"
+    GUILD_PING_ON_THREAD_CREATE_ENABLE = "guild_ping_on_thread_create_enable"
+    GUILD_PING_ON_THREAD_CREATE_DISABLE = "guild_ping_on_thread_create_disable"
     GUILD_AUTO_ARCHIVE_THREADS_ENABLE = "guild_auto_archive_threads_enable"
     GUILD_AUTO_ARCHIVE_THREADS_DISABLE = "guild_auto_archive_threads_disable"
     GUILD_SUGGESTIONS_QUEUE_ENABLE = "guild_suggestions_queue_enable"

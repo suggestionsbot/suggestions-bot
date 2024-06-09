@@ -9,7 +9,11 @@ from alaric.logical import AND
 from disnake import Embed
 from logoo import Logger
 
-from suggestions.exceptions import UnhandledError, SuggestionNotFound
+from suggestions.exceptions import (
+    UnhandledError,
+    SuggestionNotFound,
+    SuggestionSecurityViolation,
+)
 from suggestions.objects import Suggestion
 
 if TYPE_CHECKING:
@@ -104,6 +108,53 @@ class QueuedSuggestion:
                 f"This message does not look like a suggestions message."
             )
 
+        # A backport for BT-22
+        if not suggestion._id:
+            suggestion._id = state.get_new_suggestion_id()
+            await state.queued_suggestions_db.upsert(suggestion, suggestion)
+
+        return suggestion
+
+    @classmethod
+    async def from_id(
+        cls, suggestion_id: str, guild_id: int, state: State
+    ) -> QueuedSuggestion:
+        """Returns a valid QueuedSuggestion instance from an id.
+
+        Parameters
+        ----------
+        suggestion_id: str
+            The suggestion we want
+        guild_id: int
+            The guild its meant to be in.
+            Secures against cross guild privileged escalation
+        state: State
+            Internal state to marshall data
+
+        Returns
+        -------
+        QueuedSuggestion
+            The valid suggestion
+
+        Raises
+        ------
+        SuggestionNotFound
+            No suggestion found with that id
+        """
+        suggestion: Optional[QueuedSuggestion] = await state.queued_suggestions_db.find(
+            AQ(EQ("_id", suggestion_id))
+        )
+        if not suggestion:
+            raise SuggestionNotFound(
+                f"No queued suggestion found with the id {suggestion_id} in this guild"
+            )
+
+        if suggestion.guild_id != guild_id:
+            raise SuggestionSecurityViolation(
+                sid=suggestion_id,
+                user_facing_message=f"No queued suggestion found with the id {suggestion_id} in this guild",
+            )
+
         return suggestion
 
     @classmethod
@@ -139,6 +190,7 @@ class QueuedSuggestion:
         Suggestion
             A valid suggestion.
         """
+        _id = state.get_new_suggestion_id()
         suggestion: QueuedSuggestion = QueuedSuggestion(
             guild_id=guild_id,
             suggestion=suggestion,
@@ -146,6 +198,7 @@ class QueuedSuggestion:
             created_at=state.now,
             image_url=image_url,
             is_anonymous=is_anonymous,
+            _id=_id,
         )
         await state.queued_suggestions_db.insert(suggestion)
 
@@ -206,13 +259,25 @@ class QueuedSuggestion:
             timestamp=self.created_at,
         )
         if not self.is_anonymous:
+            id_section = ""
+            if self._id and isinstance(self._id, str):
+                # If longer then 8 it's a database generated id
+                # and shouldn't be considered for this purpose
+                id_section = f" ID {self._id}"
+
             embed.set_thumbnail(user.display_avatar)
             embed.set_footer(
-                text=f"Queued suggestion | Submitter ID: {self.suggestion_author_id}"
+                text=f"Queued suggestion{id_section} | Submitter ID: {self.suggestion_author_id}"
             )
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.resolution_note and self.resolved_by is not None:
+            # Means it's been rejected so we should show it
+            note_desc = f"\n\n**Moderator note**\n{self.resolution_note}"
+            # TODO Resolve BT-44 and add moderator back
+            embed.description += note_desc
 
         return embed
 
@@ -238,6 +303,11 @@ class QueuedSuggestion:
             is_anonymous=self.is_anonymous,
         )
         self.related_suggestion_id = suggestion.suggestion_id
+
+        # Resolution notes default to the suggestion notes
+        if self.resolution_note:
+            suggestion.note = self.resolution_note
+
         await state.queued_suggestions_db.update(self, self)
         return suggestion
 

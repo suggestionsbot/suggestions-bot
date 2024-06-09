@@ -41,6 +41,7 @@ from suggestions.exceptions import (
     MissingQueueLogsChannel,
     MissingPermissionsToAccessQueueChannel,
     InvalidFileType,
+    SuggestionSecurityViolation,
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.interaction_handler import InteractionHandler
@@ -55,7 +56,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.23"
+        self.version: str = "Public Release 3.24"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -415,6 +416,26 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 )
             )
 
+        elif isinstance(exception, SuggestionSecurityViolation):
+            logger.critical(
+                "User %s looked up a suggestion from a different guild",
+                interaction.author.id,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "suggestion_id": exception.suggestion_id,
+                    "author_id": interaction.author.id,
+                },
+            )
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    exception.user_facing_message,
+                    error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
+
         elif isinstance(exception, commands.MissingPermissions):
             perms = ",".join(i for i in exception.missing_permissions)
             return await interaction.send(
@@ -500,7 +521,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 embed=self.error_embed(
                     "Configuration Error",
                     "I cannot find your configured channel for this command.\n"
-                    "Please ask an administrator to reconfigure one.",
+                    "Please ask an administrator to reconfigure one.\n"
+                    "This can be done using: `/config channel`",
                     error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
                     error=error,
                 ),
@@ -660,7 +682,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         await self.stats.load()
         await self.update_bot_listings()
         await self.push_status()
-        await self.update_dev_channel()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
         await self.zonis.start()
@@ -719,65 +740,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 break
 
             asyncio.create_task(self.graceful_shutdown())
-
-        task_1 = asyncio.create_task(process_watch_for_shutdown())
-        process_watch_for_shutdown.__task = task_1
-        state.add_background_task(task_1)
-
-    async def update_dev_channel(self):
-        if not self.is_prod:
-            log.info("Not watching for debug info as not on prod")
-            return
-
-        if not self.is_primary_cluster:
-            log.info("Not watching for debug info as not primary cluster")
-            return
-
-        state: State = self.state
-
-        async def process_watch_for_shutdown():
-            await self.wait_until_ready()
-            log.debug("Started tracking bot latency")
-
-            while not state.is_closing:
-                # Update once an hour
-                await self.sleep_with_condition(
-                    datetime.timedelta(minutes=5).total_seconds(),
-                    lambda: self.state.is_closing,
-                )
-
-                await self.garven.notify_devs(
-                    title=f"WS latency as follows",
-                    description=f"Timestamped for {datetime.datetime.utcnow().isoformat()}",
-                    sender=f"N/A",
-                )
-
-                data = await self.garven.get_bot_ws_latency()
-                shard_data = data["shards"]
-                for i in range(0, 75, 5):
-                    description = io.StringIO()
-                    for o in range(0, 6):
-                        shard = str(i + o)
-                        try:
-                            description.write(
-                                f"**Shard {shard}**\nWS latency: `{shard_data[shard]['ws']}`\n"
-                                f"Keep Alive latency: `{shard_data[shard]['keepalive']}`\n\n"
-                            )
-                        except KeyError:
-                            # My lazy way of not doing env checks n math right
-                            continue
-
-                    if description.getvalue():
-                        await self.garven.notify_devs(
-                            title=f"WS latency",
-                            description=description.getvalue(),
-                            sender=f"Partial response: {data['partial_response']}",
-                        )
-
-                await self.sleep_with_condition(
-                    datetime.timedelta(hours=1).total_seconds(),
-                    lambda: self.state.is_closing,
-                )
 
         task_1 = asyncio.create_task(process_watch_for_shutdown())
         process_watch_for_shutdown.__task = task_1
@@ -869,7 +831,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return values[str(locale)]
         except KeyError:
             # Default to known translations if not set
-            return values.get("en-GB", values["en-US"])
+            value = values.get("en-GB")
+            if value is None:
+                value = values["en-US"]
+                logger.critical(
+                    "Missing translation in en-GB file",
+                    extra_metadata={"translation_key": key},
+                )
+
+            return value
 
     @staticmethod
     def inject_locale_values(
