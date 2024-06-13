@@ -41,6 +41,7 @@ class SuggestionNotesCog(commands.Cog):
         suggestion_id: str {{NOTES_ADD_ARG_SUGGESTION_ID}}
         note: str {{NOTES_ADD_ARG_NOTE}}
         """
+        note: str = note.replace("\\n", "\n")
         await self.core.modify_note_on_suggestions(
             await InteractionHandler.new_handler(interaction), suggestion_id, note
         )
