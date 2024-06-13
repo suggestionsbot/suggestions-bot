@@ -33,7 +33,7 @@ httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
 logoo_logger = logging.getLogger("logoo")
-logoo_logger.setLevel(logging.DEBUG)
+logoo_logger.setLevel(logging.INFO)
 
 suggestions_logger = logging.getLogger("suggestions")
 suggestions_logger.setLevel(logging.DEBUG)
