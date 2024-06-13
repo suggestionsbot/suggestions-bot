@@ -389,6 +389,8 @@ class Suggestion:
 
         if self.message_id:
             data["message_id"] = self.message_id
+
+        if self.channel_id:
             data["channel_id"] = self.channel_id
 
         if self.uses_views_for_votes:
@@ -850,6 +852,15 @@ class Suggestion:
                     "guild_id": self.guild_id,
                 },
             )
+            return
+
+        if self.channel_id is None:
+            # I don't know why this is none tbh
+            logger.critical(
+                "Suggestion channel id was none", extra_metadata=self.as_dict()
+            )
+
+            # Don't hard crash so we can hopefully keep going
             return
 
         channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
