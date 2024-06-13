@@ -1,5 +1,5 @@
 from alaric import Document
-from bot_base.db import MongoManager
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from suggestions.objects import (
     Suggestion,
@@ -11,9 +11,12 @@ from suggestions.objects import (
 from suggestions.objects.stats import MemberStats
 
 
-class SuggestionsMongoManager(MongoManager):
+class SuggestionsMongoManager:
     def __init__(self, connection_url):
-        super().__init__(connection_url=connection_url, database_name="suggestions_bot")
+        self.database_name = "suggestions_bot"
+
+        self.__mongo = AsyncIOMotorClient(connection_url)
+        self.db = self.__mongo[self.database_name]
 
         self.suggestions: Document = Document(
             self.db, "suggestions", converter=Suggestion

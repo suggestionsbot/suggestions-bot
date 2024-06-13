@@ -7,6 +7,7 @@ from alaric import Cursor
 from dotenv import load_dotenv
 from logoo import PrimaryLogger
 
+
 import suggestions
 
 load_dotenv()

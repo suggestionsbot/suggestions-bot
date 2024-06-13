@@ -9,7 +9,6 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
-from bot_base.wraps import WrappedChannel
 from commons.caching import NonExistentEntry
 from disnake import Embed
 from disnake.ext import commands
@@ -575,7 +574,7 @@ class Suggestion:
         if the message itself has already been deleted or not via fetch
         """
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
         except disnake.HTTPException:
             if silently:
@@ -615,7 +614,7 @@ class Suggestion:
             return None
 
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
         except disnake.HTTPException:
             await interaction.send(
@@ -797,7 +796,7 @@ class Suggestion:
         if guild_config.keep_logs:
             await self.save_reaction_results(bot, interaction)
             # In place suggestion edit
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
 
             try:
@@ -822,9 +821,7 @@ class Suggestion:
         else:
             # Move the suggestion to the logs channel
             await self.save_reaction_results(bot, interaction)
-            channel: WrappedChannel = await bot.get_or_fetch_channel(
-                guild_config.log_channel_id
-            )
+            channel = await bot.get_or_fetch_channel(guild_config.log_channel_id)
             try:
                 message: disnake.Message = await channel.send(
                     embed=await self.as_embed(bot)
@@ -870,7 +867,7 @@ class Suggestion:
             # Don't hard crash so we can hopefully keep going
             return
 
-        channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+        channel = await bot.get_or_fetch_channel(self.channel_id)
         message: disnake.Message = await channel.fetch_message(self.message_id)
         if not message.thread:
             # Suggestion has no created thread
@@ -993,7 +990,7 @@ class Suggestion:
         bot = ih.bot
         state = ih.bot.state
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(
+            channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)

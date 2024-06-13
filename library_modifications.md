@@ -6,30 +6,11 @@ This mainly exists such that if we wish to upgrade from say, `2.5.x` -> `2.6.x` 
 
 ## Features
 
-- `Interaction.deferred_without_send` -> `bool`
-  - Hooks into the `Interaction` object to see if a given interaction has been differed without a follow-up send occurring. We do this as we need to clean up after the bot in the case an error occurs otherwise our users will simply get "Interaction failed to respond" which is not ideal
-  - Implementation details:
-    - New variable on `Interaction` -> `self.has_been_followed_up: bool = False`
-      - Set to `True` in `Interaction.send` after message is sent
-    - New variable on `InteractionResponse` -> `self.has_been_deferred: bool = False`
-      - Set to `True` in `InteractionResponse.defer`
-    - New property
-      - https://paste.disnake.dev/?id=1660196042475314
 - Show gateway session on initial startup
   - Logs session related information to console with log level `WARNING` to avoid being suppressed or needing special handling to show. (Anything lower is suppressed bot side.)
   - Implementation details:
     - After `data: gateway.GatewayBot = await self.request(Route("GET", "/gateway/bot"))` in `get_bot_gateway`
       - https://paste.disnake.dev/?id=1660196180710978
-- `disnake.Guild.icon.url` erroring when `icon` is `None`
-  - Due to the lack of guild intents, using `disnake.Guild.icon.url` requires guarding to ensure we can actually use the icon. A similar port will also likely be applied to `disnake.User` sooner or later.
-  - Fixed by adding a new method `disnake.Guild.try_fetch_icon_url`
-  - *I consider this one a feature due to the nature of the fix.*
-  - Related issues: https://github.com/suggestionsbot/suggestions-bot-rewrite/issues/3
-  - https://workbin.dev/?id=1676113402913198
-- Added `__eq__` to `disnake.Embed` 
-  - This is used primarily within tests
-  - This includes `__eq__` on `EmbedProxy` otherwise they compare as False
-  - Note: This now returns `None` on disnake `2.8.0` and older
 - Heavily modified guild caching in relation to <https://github.com/suggestionsbot/suggestions-bot/issues/24>
   - Introduced the variable `guild_ids`
   - Disabled the guild cache even with enabled guild intents

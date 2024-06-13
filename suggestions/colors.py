@@ -1,5 +1,7 @@
 import disnake
-from bot_base.paginators.disnake_paginator import DisnakePaginator
+
+from suggestions.interaction_handler import InteractionHandler
+from suggestions.utility import DisnakePaginator
 
 
 class Colors:
@@ -49,4 +51,8 @@ class Colors:
             )
 
         paginator.format_page = format_page
-        await paginator.start(interaction=interaction)
+        await paginator.start(
+            await InteractionHandler.new_handler(
+                interaction, i_just_want_an_instance=True
+            )
+        )

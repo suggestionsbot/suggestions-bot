@@ -6,6 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Optional, Type
 
 import alaric
+import commons
 from alaric import Cursor, AQ
 from alaric.comparison import EQ
 from commons.caching import TimedCache
@@ -207,7 +208,7 @@ class Stats:
 
     async def push_inter_stats(self):
         while not self.state.is_closing:
-            await self.bot.sleep_with_condition(
+            await commons.sleep_with_condition(
                 datetime.timedelta(hours=1).total_seconds(),
                 lambda: self.state.is_closing,
             )
@@ -243,7 +244,7 @@ class Stats:
                     "Cluster %s now sees %s guilds", self.bot.cluster_id, current_count
                 )
 
-            await self.bot.sleep_with_condition(5 * 60, lambda: self.state.is_closing)
+            await commons.sleep_with_condition(5 * 60, lambda: self.state.is_closing)
 
     def increment_event_type(self, event_type: str):
         # We only want interactions for now

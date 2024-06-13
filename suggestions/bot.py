@@ -10,18 +10,19 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional, Union
+from typing import Type, Optional, Union, Any
 
 import aiohttp
 import alaric
 import commons
 import disnake
+import humanize
 from alaric import Cursor
-from bot_base.wraps import WrappedChannel
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError
+from disnake import Locale, LocalizationKeyError, Thread
+from disnake.abc import PrivateChannel, GuildChannel
 from disnake.ext import commands
-from bot_base import BotBase, BotContext, PrefixNotFound
+from disnake.state import AutoShardedConnectionState
 from logoo import Logger
 
 from suggestions import State, Colors, Emojis, ErrorCode, Garven
@@ -45,6 +46,7 @@ from suggestions.exceptions import (
 )
 from suggestions.http_error_parser import try_parse_http_error
 from suggestions.interaction_handler import InteractionHandler
+from suggestions.low_level import PatchedConnectionState
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
 from suggestions.database import SuggestionsMongoManager
@@ -54,7 +56,7 @@ log = logging.getLogger(__name__)
 logger = Logger(__name__)
 
 
-class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
+class SuggestionsBot(commands.AutoShardedInteractionBot):
     def __init__(self, *args, **kwargs):
         self.version: str = "Public Release 3.25"
         self.main_guild_id: int = 601219766258106399
@@ -62,6 +64,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self.automated_beta_role_id: int = 998173237282361425
         self.beta_channel_id: int = 995622792294830080
         self.base_website_url: str = "https://suggestions.gg"
+        self._uptime: datetime.datetime = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        )
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
 
@@ -107,8 +112,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         super().__init__(
             *args,
             **kwargs,
-            leave_db=True,
-            do_command_stats=False,
             activity=disnake.Activity(
                 name="suggestions",
                 type=disnake.ActivityType.watching,
@@ -120,6 +123,19 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         self._initial_ready_future: asyncio.Future = asyncio.Future()
 
         self.zonis: ZonisRoutes = ZonisRoutes(self)
+
+        # This exists on the basis we have patched state
+        self.guild_ids: set[int] = self._connection.guild_ids
+
+    def _get_state(self, **options: Any) -> AutoShardedConnectionState:
+        return PatchedConnectionState(
+            **options,
+            dispatch=self.dispatch,
+            handlers=self._handlers,
+            hooks=self._hooks,
+            http=self.http,
+            loop=self.loop,
+        )
 
     async def launch_shard(
         self, _gateway: str, shard_id: int, *, initial: bool = False
@@ -134,9 +150,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         # gateway-proxy
         return
 
-    async def get_or_fetch_channel(self, channel_id: int) -> WrappedChannel:
+    async def get_or_fetch_channel(
+        self, channel_id: int
+    ) -> Union[GuildChannel, PrivateChannel, Thread]:
         try:
-            return await super().get_or_fetch_channel(channel_id)
+            channel = self.get_channel(channel_id)
+            if channel is None:
+                channel = await self.fetch_channel(channel_id)
+
+            return channel
         except disnake.NotFound as e:
             raise ConfiguredChannelNoLongerExists from e
 
@@ -149,6 +171,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         log.info("Suggestions main: Ready")
         log.info("Startup took: %s", self.get_uptime())
         await self.suggestion_emojis.populate_emojis()
+
+    @property
+    def uptime(self) -> datetime.datetime:
+        """Returns when the bot was initialized."""
+        return self._uptime
+
+    def get_uptime(self) -> str:
+        """Returns a human readable string for the bots uptime."""
+        return humanize.precisedelta(
+            self.uptime - datetime.datetime.now(tz=datetime.timezone.utc)
+        )
 
     async def on_resumed(self):
         if self.gc_lock.locked():
@@ -198,53 +231,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             embed.set_footer(text=f"Error ID {error.id}")
 
         return embed
-
-    async def process_commands(self, message: disnake.Message):
-        try:
-            prefix = await self.get_guild_prefix(message.guild.id)
-            prefix = self.get_case_insensitive_prefix(message.content, prefix)
-        except (AttributeError, PrefixNotFound):
-            prefix = self.get_case_insensitive_prefix(
-                message.content, self.DEFAULT_PREFIX
-            )
-
-        as_args: list[str] = message.content.split(" ")
-        command_to_invoke: str = as_args[0]
-        if not command_to_invoke.startswith(prefix):
-            # Not our prefix
-            return
-
-        command_to_invoke = command_to_invoke[len(prefix) :]
-
-        if command_to_invoke in self.old_prefixed_commands:
-            embed: disnake.Embed = disnake.Embed(
-                title="Maintenance mode",
-                description="Sadly this command is in maintenance mode.\n"
-                # "You can read more about how this affects you [here]()",
-                "You can read more about how this affects you by following our announcements channel.",
-                colour=disnake.Color.from_rgb(255, 148, 148),
-            )
-            return await message.channel.send(embed=embed)
-
-        elif command_to_invoke in self.converted_prefix_commands:
-            embed: disnake.Embed = disnake.Embed(
-                description="We are moving with the times, as such this command is now a slash command.\n"
-                "You can read more about how this affects you as well as ensuring you can "
-                # "use the bots commands [here]()",
-                "use the bots commands by following our announcements channel.",
-                colour=disnake.Color.magenta(),
-            )
-            return await message.channel.send(embed=embed)
-
-        ctx = await self.get_context(message, cls=BotContext)
-        if ctx.command:
-            log.debug(
-                "Attempting to invoke command %s for User(id=%s)",
-                ctx.command.qualified_name,
-                ctx.author.id,
-            )
-
-        await self.invoke(ctx)
 
     async def _push_slash_error_stats(
         self,
@@ -635,9 +621,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
         ih: InteractionHandler = await InteractionHandler.fetch_handler(
             interaction.id, self
         )
-        if interaction.deferred_without_send or (
-            ih is not None and not ih.has_sent_something
-        ):
+        if ih is not None and not ih.has_sent_something:
             gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(
@@ -730,14 +714,18 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 )
                 items = await cursor.execute()
                 if not items:
-                    await self.sleep_with_condition(15, lambda: self.state.is_closing)
+                    await commons.sleep_with_condition(
+                        15, lambda: self.state.is_closing
+                    )
                     continue
 
                 entry = items[0]
                 if not entry or (
                     entry and self.cluster_id in entry["responded_clusters"]
                 ):
-                    await self.sleep_with_condition(15, lambda: self.state.is_closing)
+                    await commons.sleep_with_condition(
+                        15, lambda: self.state.is_closing
+                    )
                     continue
 
                 # We need to respond
@@ -779,7 +767,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                 try:
                     total_guilds = await self.garven.get_total_guilds()
                 except PartialResponse:
-                    await self.sleep_with_condition(
+                    await commons.sleep_with_condition(
                         time_between_updates.total_seconds(),
                         lambda: self.state.is_closing,
                     )
@@ -800,7 +788,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                             logger.warning("%s", r.text)
 
                 log.debug("Updated bot listings")
-                await self.sleep_with_condition(
+                await commons.sleep_with_condition(
                     time_between_updates.total_seconds(),
                     lambda: self.state.is_closing,
                 )
@@ -948,13 +936,17 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
                             ):
                                 pass
 
-                    await self.sleep_with_condition(60, lambda: self.state.is_closing)
+                    await commons.sleep_with_condition(
+                        60, lambda: self.state.is_closing
+                    )
                 except (aiohttp.ClientConnectorError, ConnectionRefusedError):
                     log.warning("push_status failed to connect, retrying in 10 seconds")
                     logger.warning(
                         "push_status failed to connect, retrying in 10 seconds"
                     )
-                    await self.sleep_with_condition(10, lambda: self.state.is_closing)
+                    await commons.sleep_with_condition(
+                        10, lambda: self.state.is_closing
+                    )
                 except Exception as e:
                     if not self.is_prod:
                         log.error("Borked it")
