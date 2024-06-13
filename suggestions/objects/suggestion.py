@@ -358,6 +358,11 @@ class Suggestion:
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
+
+        logger.debug(
+            "Created new suggestion",
+            extra_metadata={**suggestion.as_dict(), "suggestion_id": suggestion_id},
+        )
         return suggestion
 
     def as_filter(self) -> dict:
@@ -857,7 +862,8 @@ class Suggestion:
         if self.channel_id is None:
             # I don't know why this is none tbh
             logger.critical(
-                "Suggestion channel id was none", extra_metadata=self.as_dict()
+                "Suggestion channel id was none",
+                extra_metadata={**self.as_dict(), "suggestion_id": self.suggestion_id},
             )
 
             # Don't hard crash so we can hopefully keep going
