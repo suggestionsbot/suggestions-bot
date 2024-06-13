@@ -469,6 +469,7 @@ class Suggestion:
         resolved_by_text = (
             "Anonymous" if self.anonymous_resolution else f"<@{self.resolved_by}>"
         )
+
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
             f"**Submitter**\n{submitter}\n\n"
@@ -495,6 +496,11 @@ class Suggestion:
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.note:
+            note_desc = f"**Moderator note**\n{self.note}"
+            # TODO Resolve BT-44 and add moderator back
+            embed.description += note_desc
 
         return embed
 
