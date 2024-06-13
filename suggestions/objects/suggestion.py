@@ -4,6 +4,7 @@ import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional, cast
 
+import commons
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
@@ -1022,6 +1023,17 @@ class Suggestion:
                 },
             )
         except disnake.Forbidden as e:
+            state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
+            await state.suggestions_db.delete(self.as_filter())
+            raise e
+        except Exception as e:
+            logger.critical(
+                "Error creating the initial message for a suggestion",
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "traceback": commons.exception_as_string(e),
+                },
+            )
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
             raise e
