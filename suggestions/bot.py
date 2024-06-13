@@ -307,6 +307,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot, BotBase):
             return
 
         if isinstance(exception, UnhandledError):
+            logger.critical(
+                "An unhandled exception occurred",
+                extra_metadata={
+                    "error_id": error.id,
+                    "author_id": error.user_id,
+                    "guild_id": error.guild_id,
+                    "traceback": commons.exception_as_string(exception),
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Something went wrong",
