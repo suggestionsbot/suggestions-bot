@@ -6,13 +6,14 @@ import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
 from disnake.ext import commands
-from bot_base.paginators.disnake_paginator import DisnakePaginator
 from logoo import Logger
 
 from suggestions import Colors
 from suggestions.cooldown_bucket import InteractionBucket
+from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion
 from suggestions.objects.suggestion import SuggestionState
+from suggestions.utility import DisnakePaginator
 
 if TYPE_CHECKING:
     from alaric import Document
@@ -96,7 +97,11 @@ class ViewVotersCog(commands.Cog):
             bot=self.bot,
             locale=interaction.locale,
         )
-        await vp.start(interaction=interaction)
+        await vp.start(
+            await InteractionHandler.new_handler(
+                interaction, i_just_want_an_instance=True
+            )
+        )
 
     @commands.message_command(name="View voters")
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)

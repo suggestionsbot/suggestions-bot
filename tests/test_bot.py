@@ -9,7 +9,6 @@ async def test_cogs_loaded(causar: Causar):
     bot: SuggestionsBot = cast(SuggestionsBot, causar.bot)
 
     cog_names = [
-        "Internal",
         "GuildConfigCog",
         "HelpGuildCog",
         "SuggestionsCog",

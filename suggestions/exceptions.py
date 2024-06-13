@@ -38,6 +38,9 @@ class SuggestionNotFound(disnake.DiscordException):
 class SuggestionTooLong(disnake.DiscordException):
     """The suggestion content was too long."""
 
+    def __init__(self, suggestion_text: str):
+        self.suggestion_text = suggestion_text
+
 
 class InvalidGuildConfigOption(disnake.DiscordException):
     """The provided guild config choice doesn't exist."""
@@ -70,7 +73,7 @@ class ConflictingHandlerInformation(disnake.DiscordException):
 class InvalidFileType(disnake.DiscordException):
     """The file you attempted to upload is not allowed."""
 
-    
+
 class SuggestionSecurityViolation(disnake.DiscordException):
     """A security violation occurred."""
 

@@ -104,6 +104,7 @@ class MessageEditing:
             "allowed_mentions": MISSING,
             "view": MISSING,
             "components": MISSING,
+            "flags": MISSING,
         }
         data = {**data, **fields}
 

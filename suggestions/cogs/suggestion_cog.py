@@ -223,7 +223,7 @@ class SuggestionsCog(commands.Cog):
         anonymously: {{SUGGEST_ARG_ANONYMOUSLY}}
         """
         if len(suggestion) > 1000:
-            raise SuggestionTooLong
+            raise SuggestionTooLong(suggestion)
 
         await interaction.response.defer(ephemeral=True)
 

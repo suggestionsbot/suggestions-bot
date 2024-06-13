@@ -13,9 +13,10 @@ import cooldowns
 import disnake
 from disnake import Locale
 from disnake.ext import commands
-from bot_base.paginators.disnake_paginator import DisnakePaginator
 
 from suggestions import SuggestionsBot
+from suggestions.interaction_handler import InteractionHandler
+from suggestions.utility import DisnakePaginator
 from suggestions.cooldown_bucket import InteractionBucket
 
 
@@ -50,10 +51,6 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
 
     bot = SuggestionsBot(
         intents=intents,
-        command_prefix="s.",
-        case_insensitive=True,
-        strip_after_prefix=True,
-        load_builtin_commands=True,
         chunk_guilds_at_startup=False,
         database_wrapper=database_wrapper,
         member_cache_flags=disnake.MemberCacheFlags.none(),
@@ -248,7 +245,9 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             try_ephemeral=True,
         )
         paginator.format_page = format_page
-        await paginator.start(interaction=ctx)
+        await paginator.start(
+            await InteractionHandler.new_handler(ctx, i_just_want_an_instance=True)
+        )
 
     @bot.slash_command(
         dm_permission=False,

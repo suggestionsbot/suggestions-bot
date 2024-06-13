@@ -4,11 +4,11 @@ import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional, cast
 
+import commons
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
-from bot_base.wraps import WrappedChannel
 from commons.caching import NonExistentEntry
 from disnake import Embed
 from disnake.ext import commands
@@ -358,6 +358,11 @@ class Suggestion:
         )
         await state.suggestions_db.insert(suggestion)
         state.add_sid_to_cache(guild_id, suggestion_id)
+
+        logger.debug(
+            "Created new suggestion",
+            extra_metadata={**suggestion.as_dict(), "suggestion_id": suggestion_id},
+        )
         return suggestion
 
     def as_filter(self) -> dict:
@@ -389,6 +394,8 @@ class Suggestion:
 
         if self.message_id:
             data["message_id"] = self.message_id
+
+        if self.channel_id:
             data["channel_id"] = self.channel_id
 
         if self.uses_views_for_votes:
@@ -462,6 +469,7 @@ class Suggestion:
         resolved_by_text = (
             "Anonymous" if self.anonymous_resolution else f"<@{self.resolved_by}>"
         )
+
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
             f"**Submitter**\n{submitter}\n\n"
@@ -488,6 +496,11 @@ class Suggestion:
 
         if self.image_url:
             embed.set_image(self.image_url)
+
+        if self.note:
+            note_desc = f"**Moderator note**\n{self.note}"
+            # TODO Resolve BT-44 and add moderator back
+            embed.description += note_desc
 
         return embed
 
@@ -567,7 +580,7 @@ class Suggestion:
         if the message itself has already been deleted or not via fetch
         """
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
         except disnake.HTTPException:
             if silently:
@@ -607,7 +620,7 @@ class Suggestion:
             return None
 
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
         except disnake.HTTPException:
             await interaction.send(
@@ -789,7 +802,7 @@ class Suggestion:
         if guild_config.keep_logs:
             await self.save_reaction_results(bot, interaction)
             # In place suggestion edit
-            channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+            channel = await bot.get_or_fetch_channel(self.channel_id)
             message: disnake.Message = await channel.fetch_message(self.message_id)
 
             try:
@@ -814,9 +827,7 @@ class Suggestion:
         else:
             # Move the suggestion to the logs channel
             await self.save_reaction_results(bot, interaction)
-            channel: WrappedChannel = await bot.get_or_fetch_channel(
-                guild_config.log_channel_id
-            )
+            channel = await bot.get_or_fetch_channel(guild_config.log_channel_id)
             try:
                 message: disnake.Message = await channel.send(
                     embed=await self.as_embed(bot)
@@ -852,7 +863,17 @@ class Suggestion:
             )
             return
 
-        channel: WrappedChannel = await bot.get_or_fetch_channel(self.channel_id)
+        if self.channel_id is None:
+            # I don't know why this is none tbh
+            logger.critical(
+                "Suggestion channel id was none",
+                extra_metadata={**self.as_dict(), "suggestion_id": self.suggestion_id},
+            )
+
+            # Don't hard crash so we can hopefully keep going
+            return
+
+        channel = await bot.get_or_fetch_channel(self.channel_id)
         message: disnake.Message = await channel.fetch_message(self.message_id)
         if not message.thread:
             # Suggestion has no created thread
@@ -975,7 +996,7 @@ class Suggestion:
         bot = ih.bot
         state = ih.bot.state
         try:
-            channel: WrappedChannel = await bot.get_or_fetch_channel(
+            channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
@@ -1005,6 +1026,17 @@ class Suggestion:
                 },
             )
         except disnake.Forbidden as e:
+            state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
+            await state.suggestions_db.delete(self.as_filter())
+            raise e
+        except Exception as e:
+            logger.critical(
+                "Error creating the initial message for a suggestion",
+                extra_metadata={
+                    "suggestion_id": self.suggestion_id,
+                    "traceback": commons.exception_as_string(e),
+                },
+            )
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
             raise e
