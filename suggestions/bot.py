@@ -300,6 +300,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "author_id": error.user_id,
                     "guild_id": error.guild_id,
                     "traceback": commons.exception_as_string(exception),
+                    "error_code": ErrorCode.UNHANDLED_ERROR.value,
                 },
             )
             return await interaction.send(
@@ -320,17 +321,33 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             await self.db.error_tracking.update(error, error)
 
         if attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
+            logger.debug(
+                "MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": attempt_code.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
                     "I do not have permission to use your guilds configured suggestions channel.",
-                    error_code=attempt_code,
+                    error_code=attempt_code.value,
                     error=error,
                 ),
                 ephemeral=True,
             )
 
         elif attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL:
+            logger.debug(
+                "MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": attempt_code.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
@@ -342,6 +359,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif attempt_code == ErrorCode.MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL:
+            logger.debug(
+                "MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": attempt_code.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
@@ -353,6 +378,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         if isinstance(exception, BetaOnly):
+            logger.critical(
+                "BetaOnly",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                },
+            )
             embed: disnake.Embed = disnake.Embed(
                 title="Beta restrictions",
                 description="This command is restricted to beta guilds only, "
@@ -362,6 +394,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             return await interaction.send(embed=embed, ephemeral=True)
 
         elif isinstance(exception, MissingSuggestionsChannel):
+            logger.debug(
+                "MissingSuggestionsChannel",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_SUGGESTIONS_CHANNEL.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Missing Suggestions Channel",
@@ -375,6 +415,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingLogsChannel):
+            logger.debug(
+                "MissingLogsChannel",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_LOG_CHANNEL.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Missing Logs Channel",
@@ -388,6 +436,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingQueueLogsChannel):
+            logger.debug(
+                "MissingQueueLogsChannel",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_QUEUE_LOG_CHANNEL.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Missing Queue Logs Channel",
@@ -401,6 +457,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
+            logger.debug(
+                "MissingPermissionsToAccessQueueChannel",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     title="Missing permissions within queue logs channel",
@@ -419,6 +483,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "guild_id": interaction.guild_id,
                     "suggestion_id": exception.suggestion_id,
                     "author_id": interaction.author.id,
+                    "error_code": ErrorCode.SUGGESTION_NOT_FOUND.value,
                 },
             )
             return await interaction.send(
@@ -433,6 +498,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, commands.MissingPermissions):
             perms = ",".join(i for i in exception.missing_permissions)
+            logger.debug(
+                "commands.MissingPermissions: %s",
+                perms,
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_PERMISSIONS.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Missing Permissions",
@@ -445,6 +519,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, SuggestionNotFound):
+            logger.debug(
+                "SuggestionNotFound",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.SUGGESTION_NOT_FOUND.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
@@ -456,6 +538,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, SuggestionTooLong):
+            logger.debug(
+                "SuggestionTooLong",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.SUGGESTION_CONTENT_TOO_LONG.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
@@ -471,6 +561,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, InvalidGuildConfigOption):
+            logger.debug(
+                "InvalidGuildConfigOption",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.INVALID_GUILD_CONFIG_CHOICE.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
@@ -482,6 +580,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, CallableOnCooldown):
+            logger.debug(
+                "CallableOnCooldown",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.COMMAND_ON_COOLDOWN.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Command on Cooldown",
@@ -493,6 +599,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, BlocklistedUser):
+            logger.debug(
+                "BlocklistedUser",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.BLOCKLISTED_USER.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Blocked Action",
@@ -504,6 +618,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, InvalidFileType):
+            logger.debug(
+                "InvalidFileType",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.INVALID_FILE_TYPE.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Invalid file type",
@@ -516,6 +638,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, ConfiguredChannelNoLongerExists):
+            logger.debug(
+                "ConfiguredChannelNoLongerExists",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Configuration Error",
@@ -530,6 +660,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, LocalizationKeyError):
             gid = interaction.guild_id if interaction.guild_id else None
+            logger.debug(
+                "LocalizationKeyError",
+                extra_metadata={
+                    "guild_id": gid,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.MISSING_TRANSLATION.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Something went wrong",
@@ -541,6 +679,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, QueueImbalance):
+            logger.debug(
+                "QueueImbalance",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.QUEUE_IMBALANCE.value,
+                },
+            )
             return await interaction.send(
                 embed=self.error_embed(
                     "Queue Imbalance",
@@ -560,6 +706,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "guild_id": interaction.guild_id,
                     "author_id": interaction.author.id,
                     "traceback": commons.exception_as_string(exception),
+                    "error_code": ErrorCode.GENERIC_NOT_FOUND.value,
                 },
             )
             gid = interaction.guild_id if interaction.guild_id else None
@@ -568,7 +715,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "Command failed",
                     "I've failed to find something, please retry whatever you were doing.\n"
                     f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
-                    error_code=ErrorCode.GENERIC_NOT_FOUND,
+                    error_code=ErrorCode.GENERIC_NOT_FOUND.value,
                     error=error,
                 ),
                 ephemeral=True,
@@ -583,6 +730,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 extra_metadata={
                     "guild_id": interaction.guild_id,
                     "author_id": interaction.author.id,
+                    "error_code": ErrorCode.GENERIC_FORBIDDEN.value,
                 },
             )
             await interaction.send(
@@ -598,6 +746,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             raise exception
 
         elif isinstance(exception, commands.NotOwner):
+            logger.debug(
+                "commands.NotOwner",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.OWNER_ONLY.value,
+                },
+            )
             await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
@@ -615,7 +771,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "disnake.HTTPException: Interaction has already been acknowledged"
                 )
                 logger.debug(
-                    "disnake.HTTPException: Interaction has already been acknowledged"
+                    "disnake.HTTPException: Interaction has already been acknowledged",
+                    extra_metadata={
+                        "guild_id": interaction.guild_id,
+                        "author_id": interaction.author.id,
+                    },
                 )
                 return
 
@@ -623,6 +783,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             interaction.id, self
         )
         if ih is not None and not ih.has_sent_something:
+            logger.critical(
+                "Interaction was never ack'd",
+                extra_metadata={
+                    "guild_id": interaction.guild_id,
+                    "author_id": interaction.author.id,
+                    "error_code": ErrorCode.UNHANDLED_ERROR.value,
+                },
+            )
             gid = interaction.guild_id if interaction.guild_id else None
             # Fix "Bot is thinking" hanging on edge cases...
             await interaction.send(
