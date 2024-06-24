@@ -803,7 +803,12 @@ class Suggestion:
             await self.save_reaction_results(bot, interaction)
             # In place suggestion edit
             channel = await bot.get_or_fetch_channel(self.channel_id)
-            message: disnake.Message = await channel.fetch_message(self.message_id)
+            try:
+                message: disnake.Message = await channel.fetch_message(self.message_id)
+            except disnake.Forbidden:
+                raise SuggestionNotFound(
+                    "Failed to find this suggestions message in order to resolve it."
+                )
 
             try:
                 await message.edit(embed=await self.as_embed(bot), components=None)
