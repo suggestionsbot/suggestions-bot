@@ -559,6 +559,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 extra_metadata={
                     "guild_id": interaction.guild_id,
                     "author_id": interaction.author.id,
+                    "traceback": commons.exception_as_string(exception),
                 },
             )
             gid = interaction.guild_id if interaction.guild_id else None
