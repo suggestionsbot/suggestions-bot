@@ -263,7 +263,7 @@ class QueuedSuggestion:
             if self._id and isinstance(self._id, str):
                 # If longer then 8 it's a database generated id
                 # and shouldn't be considered for this purpose
-                id_section = f" ID {self._id}"
+                id_section = f" ID: {self._id}"
 
             embed.set_thumbnail(user.display_avatar)
             embed.set_footer(

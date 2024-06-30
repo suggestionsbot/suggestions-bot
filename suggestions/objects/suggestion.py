@@ -803,7 +803,12 @@ class Suggestion:
             await self.save_reaction_results(bot, interaction)
             # In place suggestion edit
             channel = await bot.get_or_fetch_channel(self.channel_id)
-            message: disnake.Message = await channel.fetch_message(self.message_id)
+            try:
+                message: disnake.Message = await channel.fetch_message(self.message_id)
+            except disnake.Forbidden:
+                raise SuggestionNotFound(
+                    "Failed to find this suggestions message in order to resolve it."
+                )
 
             try:
                 await message.edit(embed=await self.as_embed(bot), components=None)
@@ -873,8 +878,19 @@ class Suggestion:
             # Don't hard crash so we can hopefully keep going
             return
 
-        channel = await bot.get_or_fetch_channel(self.channel_id)
-        message: disnake.Message = await channel.fetch_message(self.message_id)
+        try:
+            channel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.NotFound:
+            # While not ideal, we ignore the error here as
+            # failing to archive a thread isn't a critical issue
+            # worth crashing on. Instead, pass this to the actual
+            # suggestion closing logic to handle more gracefully
+            #
+            # It'll likely still fail there but like, meh. Failing
+            # to find the thread here means technically the function worked
+            return
+
         if not message.thread:
             # Suggestion has no created thread
             logger.debug(

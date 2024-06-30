@@ -148,28 +148,26 @@ class SuggestionsQueue:
                 )
                 icon_url = await self.bot.try_fetch_icon_url(guild_id)
                 guild = self.state.guild_cache.get_entry(guild_id)
-                if (
+                if not (
                     user_config.dm_messages_disabled
                     or guild_config.dm_messages_disabled
                 ):
-                    # Set up not to message users
-                    return
-
-                embed: disnake.Embed = disnake.Embed(
-                    description=self.bot.get_localized_string(
-                        "QUEUE_INNER_USER_REJECTED", ih
-                    ),
-                    colour=self.bot.colors.embed_color,
-                    timestamp=self.state.now,
-                )
-                embed.set_author(
-                    name=guild.name,
-                    icon_url=icon_url,
-                )
-                embed.set_footer(text=f"Guild ID {guild_id}")
-                await user.send(
-                    embeds=[embed, await queued_suggestion.as_embed(self.bot)]
-                )
+                    # Set up to message users
+                    embed: disnake.Embed = disnake.Embed(
+                        description=self.bot.get_localized_string(
+                            "QUEUE_INNER_USER_REJECTED", ih
+                        ),
+                        colour=self.bot.colors.embed_color,
+                        timestamp=self.state.now,
+                    )
+                    embed.set_author(
+                        name=guild.name,
+                        icon_url=icon_url,
+                    )
+                    embed.set_footer(text=f"Guild ID {guild_id}")
+                    await user.send(
+                        embeds=[embed, await queued_suggestion.as_embed(self.bot)]
+                    )
         except:
             # Don't remove from queue on failure
             if suggestion is not None:
