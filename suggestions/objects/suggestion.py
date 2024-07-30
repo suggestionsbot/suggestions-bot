@@ -473,7 +473,7 @@ class Suggestion:
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
             f"**Submitter**\n{submitter}\n\n"
-            f"**{text} By**\n{resolved_by_text}\n\n",
+            f"**{text} By**\n{resolved_by_text}",
             colour=self.color,
             timestamp=bot.state.now,
         )
@@ -492,7 +492,7 @@ class Suggestion:
         embed.set_author(name=guild.name, icon_url=icon_url)
 
         if self.resolution_note:
-            embed.description += f"**Response**\n{self.resolution_note}"
+            embed.description += f"\n\n**Response**\n{self.resolution_note}"
 
         if self.image_url:
             embed.set_image(self.image_url)
