@@ -498,7 +498,7 @@ class Suggestion:
             embed.set_image(self.image_url)
 
         if self.note:
-            note_desc = f"**Moderator note**\n{self.note}"
+            note_desc = f"\n\n**Moderator note**\n{self.note}"
             # TODO Resolve BT-44 and add moderator back
             embed.description += note_desc
 
