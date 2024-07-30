@@ -473,7 +473,7 @@ class Suggestion:
         embed = Embed(
             description=f"{results}\n\n**Suggestion**\n{self.suggestion}\n\n"
             f"**Submitter**\n{submitter}\n\n"
-            f"**{text} By**\n{resolved_by_text}\n\n",
+            f"**{text} By**\n{resolved_by_text}",
             colour=self.color,
             timestamp=bot.state.now,
         )
@@ -492,13 +492,13 @@ class Suggestion:
         embed.set_author(name=guild.name, icon_url=icon_url)
 
         if self.resolution_note:
-            embed.description += f"**Response**\n{self.resolution_note}"
+            embed.description += f"\n\n**Response**\n{self.resolution_note}"
 
         if self.image_url:
             embed.set_image(self.image_url)
 
         if self.note:
-            note_desc = f"**Moderator note**\n{self.note}"
+            note_desc = f"\n\n**Moderator note**\n{self.note}"
             # TODO Resolve BT-44 and add moderator back
             embed.description += note_desc
 
@@ -803,7 +803,12 @@ class Suggestion:
             await self.save_reaction_results(bot, interaction)
             # In place suggestion edit
             channel = await bot.get_or_fetch_channel(self.channel_id)
-            message: disnake.Message = await channel.fetch_message(self.message_id)
+            try:
+                message: disnake.Message = await channel.fetch_message(self.message_id)
+            except disnake.Forbidden:
+                raise SuggestionNotFound(
+                    "Failed to find this suggestions message in order to resolve it."
+                )
 
             try:
                 await message.edit(embed=await self.as_embed(bot), components=None)
@@ -873,8 +878,19 @@ class Suggestion:
             # Don't hard crash so we can hopefully keep going
             return
 
-        channel = await bot.get_or_fetch_channel(self.channel_id)
-        message: disnake.Message = await channel.fetch_message(self.message_id)
+        try:
+            channel = await bot.get_or_fetch_channel(self.channel_id)
+            message: disnake.Message = await channel.fetch_message(self.message_id)
+        except disnake.NotFound:
+            # While not ideal, we ignore the error here as
+            # failing to archive a thread isn't a critical issue
+            # worth crashing on. Instead, pass this to the actual
+            # suggestion closing logic to handle more gracefully
+            #
+            # It'll likely still fail there but like, meh. Failing
+            # to find the thread here means technically the function worked
+            return
+
         if not message.thread:
             # Suggestion has no created thread
             logger.debug(

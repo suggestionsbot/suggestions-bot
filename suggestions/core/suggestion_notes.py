@@ -30,6 +30,8 @@ class SuggestionsNotesCore(BaseCore):
         # We should now update the suggestions message
         await suggestion.edit_suggestion_message(ih)
 
+        await ih.send(ih.bot.get_localized_string("NOTE_INNER_RESPONSE", ih))
+
         # We should tell the user a change has occurred
         suggestion_author_id: int = suggestion.suggestion_author_id
         user_config: UserConfig = await UserConfig.from_id(
@@ -92,5 +94,3 @@ class SuggestionsNotesCore(BaseCore):
         embed.set_author(name=guild.name, icon_url=icon_url)
         user: disnake.User = await ih.bot.fetch_user(suggestion_author_id)
         await user.send(embed=embed)
-
-        await ih.send(ih.bot.get_localized_string("NOTE_INNER_RESPONSE", ih))
