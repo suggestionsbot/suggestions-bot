@@ -715,7 +715,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "Command failed",
                     "I've failed to find something, please retry whatever you were doing.\n"
                     f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
-                    error_code=ErrorCode.GENERIC_NOT_FOUND.value,
+                    error_code=ErrorCode.GENERIC_NOT_FOUND,
                     error=error,
                 ),
                 ephemeral=True,

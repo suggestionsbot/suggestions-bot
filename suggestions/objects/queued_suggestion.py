@@ -221,6 +221,8 @@ class QueuedSuggestion:
             "is_anonymous": self.is_anonymous,
             "still_in_queue": self.still_in_queue,
             "suggestion_author_id": self.suggestion_author_id,
+            "message_id": self.message_id,
+            "channel_id": self.channel_id,
         }
 
         if self._id:
@@ -238,10 +240,6 @@ class QueuedSuggestion:
 
         if self.related_suggestion_id:
             data["related_suggestion_id"] = self.related_suggestion_id
-
-        if self.message_id is not None:
-            data["message_id"] = self.message_id
-            data["channel_id"] = self.channel_id
 
         return data
 
