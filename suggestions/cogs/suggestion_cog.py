@@ -18,6 +18,7 @@ from suggestions.exceptions import (
     ErrorHandled,
     MissingPermissionsToAccessQueueChannel,
     MissingQueueLogsChannel,
+    SuggestionNotFound,
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
@@ -435,15 +436,34 @@ class SuggestionsCog(commands.Cog):
         response: str {{CLEAR_ARG_RESPONSE}}
         """
         await interaction.response.defer(ephemeral=True)
-        suggestion: Suggestion = await Suggestion.from_id(
-            suggestion_id, interaction.guild_id, self.state
-        )
-        if suggestion.channel_id and suggestion.message_id:
-            await self.bot.delete_message(
-                message_id=suggestion.message_id, channel_id=suggestion.channel_id
+        try:
+            suggestion_type = "suggestion"
+            suggestion: Suggestion = await Suggestion.from_id(
+                suggestion_id, interaction.guild_id, self.state
+            )
+            if suggestion.channel_id and suggestion.message_id:
+                await self.bot.delete_message(
+                    message_id=suggestion.message_id, channel_id=suggestion.channel_id
+                )
+
+            await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
+        except SuggestionNotFound:
+            # Maybe its a queued suggestion?
+            suggestion_type = "queued_suggestion"
+            suggestion: QueuedSuggestion = await QueuedSuggestion.from_id(
+                suggestion_id, interaction.guild_id, self.state
+            )
+            if suggestion.channel_id and suggestion.message_id:
+                await self.bot.delete_message(
+                    message_id=suggestion.message_id, channel_id=suggestion.channel_id
+                )
+
+            suggestion.channel_id = None
+            suggestion.message_id = None
+            await suggestion.resolve(
+                state=self.state, resolved_by=interaction.user.id, was_approved=False
             )
 
-        await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         await interaction.send(
             self.bot.get_locale("CLEAR_INNER_MESSAGE", interaction.locale).format(
                 suggestion_id
@@ -456,7 +476,8 @@ class SuggestionsCog(commands.Cog):
             extra_metadata={
                 "author_id": interaction.author.id,
                 "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
+                "suggestion_id": suggestion_id,
+                "suggestion_type": suggestion_type,
             },
         )
         await self.stats.log_stats(

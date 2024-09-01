@@ -58,7 +58,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.26"
+        self.version: str = "Public Release 3.27"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -715,7 +715,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "Command failed",
                     "I've failed to find something, please retry whatever you were doing.\n"
                     f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
-                    error_code=ErrorCode.GENERIC_NOT_FOUND.value,
+                    error_code=ErrorCode.GENERIC_NOT_FOUND,
                     error=error,
                 ),
                 ephemeral=True,
