@@ -6,8 +6,12 @@ ENV PIP_NO_CACHE_DIR=false
 RUN mkdir -p /bot
 WORKDIR bot
 
-COPY ./requirements.txt /bot/requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip install poetry
+
+COPY ./pyproject.toml /code/pyproject.toml
+COPY ./poetry.lock /code/poetry.lock
+
+RUN poetry install
 
 COPY . /bot
 
