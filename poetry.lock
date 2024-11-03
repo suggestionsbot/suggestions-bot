@@ -1617,13 +1617,13 @@ propcache = ">=0.2.0"
 
 [[package]]
 name = "zonis"
-version = "2.0.0"
+version = "2.1.0"
 description = "Agnostic IPC for Python programs "
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "zonis-2.0.0-py3-none-any.whl", hash = "sha256:99e3cf975965695c224db3c6d3cd91bbe10a81e1ed0d9d5198c4599490231530"},
-    {file = "zonis-2.0.0.tar.gz", hash = "sha256:b7f4ffdc444f268ce2bd08d98469e775b65a229eb6ed0fd5f2f5390d31295b54"},
+    {file = "zonis-2.1.0-py3-none-any.whl", hash = "sha256:08e7750dc1da9ca6e69a14a74388d0e4df427cd6aeb0f899f104ea1eed214c11"},
+    {file = "zonis-2.1.0.tar.gz", hash = "sha256:aea29117ab4b3772c59fa6a0a9b2dfff5e3711485ea3b26974eb73831f0460c0"},
 ]
 
 [package.dependencies]
@@ -1632,4 +1632,4 @@ websockets = ">=10.4,<11.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ffd9875e8c40385ce0e1557ef82e84df68b8055dcff9cbf34328c188f10c620d"
+content-hash = "33c02152a07e26b43f3301f276f7d0cd55712920b4eadc3996648a96416e98a2"
