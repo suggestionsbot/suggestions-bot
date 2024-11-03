@@ -266,7 +266,6 @@ class SuggestionsQueue:
                 AND(
                     EQ("guild_id", guild_id),
                     EQ("still_in_queue", True),
-                    Negate(Exists("message_id")),
                 )
             ),
             projections=Projection(SHOW("_id")),
