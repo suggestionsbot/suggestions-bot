@@ -1,7 +1,7 @@
 ## Summary
 <!-- What is this pull request for? -->
 <!-- If this is not a version PR, remove the following -->
-## Documentation changes
+## Changes & Features
 
 - XXX
 
