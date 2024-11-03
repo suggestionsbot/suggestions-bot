@@ -105,9 +105,13 @@ class SuggestionsQueue:
 
             # If sent to channel queue, delete it
             if not queued_suggestion.is_in_virtual_queue:
-                chan = await self.state.fetch_channel(queued_suggestion.channel_id)
-                msg = await chan.fetch_message(queued_suggestion.message_id)
-                await msg.delete()
+                try:
+                    chan = await self.state.fetch_channel(queued_suggestion.channel_id)
+                    msg = await chan.fetch_message(queued_suggestion.message_id)
+                    await msg.delete()
+                except disnake.NotFound:
+                    # Dont fail if message no longer exists
+                    pass
 
             # Send the message to the relevant channel if required
             if was_approved:
