@@ -105,9 +105,13 @@ class SuggestionsQueue:
 
             # If sent to channel queue, delete it
             if not queued_suggestion.is_in_virtual_queue:
-                chan = await self.state.fetch_channel(queued_suggestion.channel_id)
-                msg = await chan.fetch_message(queued_suggestion.message_id)
-                await msg.delete()
+                try:
+                    chan = await self.state.fetch_channel(queued_suggestion.channel_id)
+                    msg = await chan.fetch_message(queued_suggestion.message_id)
+                    await msg.delete()
+                except disnake.NotFound:
+                    # Dont fail if message no longer exists
+                    pass
 
             # Send the message to the relevant channel if required
             if was_approved:
@@ -214,15 +218,31 @@ class SuggestionsQueue:
     async def info(self, ih: InteractionHandler):
         guild_id = ih.interaction.guild_id
         guild_config: GuildConfig = await GuildConfig.from_id(guild_id, self.state)
-        count: int = await self.queued_suggestions_db.count(
-            AQ(AND(EQ("guild_id", guild_id), EQ("still_in_queue", True)))
+        virtual_count: int = await self.queued_suggestions_db.count(
+            AQ(
+                AND(
+                    EQ("guild_id", guild_id),
+                    EQ("still_in_queue", True),
+                    Negate(Exists("message_id")),
+                ),
+            )
+        )
+        physical_count: int = await self.queued_suggestions_db.count(
+            AQ(
+                AND(
+                    EQ("guild_id", guild_id),
+                    EQ("still_in_queue", True),
+                    Exists("message_id"),
+                ),
+            )
         )
         icon_url = await self.bot.try_fetch_icon_url(guild_id)
         guild = self.state.guild_cache.get_entry(guild_id)
         embed = disnake.Embed(
             title="Queue Info",
             timestamp=self.bot.state.now,
-            description=f"`{count}` suggestions currently in queue.\n"
+            description=f"`{virtual_count}` suggestions currently in a virtual queue.\n"
+            f"`{physical_count}` suggestions in a physical queue.\n"
             f"New suggestions will {'' if guild_config.uses_suggestion_queue else 'not'} be "
             f"sent to the suggestions queue.",
             colour=self.bot.colors.embed_color,
@@ -250,7 +270,6 @@ class SuggestionsQueue:
                 AND(
                     EQ("guild_id", guild_id),
                     EQ("still_in_queue", True),
-                    Negate(Exists("message_id")),
                 )
             ),
             projections=Projection(SHOW("_id")),
