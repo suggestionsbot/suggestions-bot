@@ -15,4 +15,4 @@ RUN poetry install
 
 COPY . /bot
 
-CMD python3 main.py
+CMD poetry run python3 main.py
