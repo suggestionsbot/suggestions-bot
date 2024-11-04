@@ -8,8 +8,8 @@ WORKDIR bot
 
 RUN pip install poetry
 
-COPY ./pyproject.toml /code/pyproject.toml
-COPY ./poetry.lock /code/poetry.lock
+COPY ./pyproject.toml /bot/pyproject.toml
+COPY ./poetry.lock /bot/poetry.lock
 
 RUN poetry install
 
