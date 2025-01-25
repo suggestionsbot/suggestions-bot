@@ -89,6 +89,7 @@ class Suggestion:
         uses_views_for_votes: bool = False,
         is_anonymous: bool = False,
         anonymous_resolution: Optional[bool] = None,
+        thread_id: Optional[int] = None,
         **kwargs,
     ):
         """
@@ -160,6 +161,8 @@ class Suggestion:
         anonymous_resolution: Optional[bool]
             Whether or not to show who resolved this suggestion
             to the end suggester
+        thread_id: Optional[str]
+            The ID of the thread to resolve directly
         """
         self._id: str = _id
         self.guild_id: int = guild_id
@@ -175,6 +178,7 @@ class Suggestion:
 
         self.channel_id: Optional[int] = channel_id
         self.message_id: Optional[int] = message_id
+        self.thread_id: Optional[int] = thread_id
         self.resolved_by: Optional[int] = resolved_by
         self.resolved_at: Optional[datetime.datetime] = resolved_at
         self.resolution_note: Optional[str] = resolution_note
@@ -397,6 +401,9 @@ class Suggestion:
 
         if self.channel_id:
             data["channel_id"] = self.channel_id
+
+        if self.thread_id:
+            data["thread_id"] = self.thread_id
 
         if self.uses_views_for_votes:
             data["up_voted_by"] = list(self.up_voted_by)
@@ -731,6 +738,8 @@ class Suggestion:
         thread = await message.create_thread(
             name=f"Thread for suggestion {self.suggestion_id}"
         )
+        self.thread_id = thread.id
+        await ih.bot.db.suggestions.update(self, self)
         logger.debug(
             f"Created a thread for suggestion {self.suggestion_id}",
             extra_metadata={"suggestion_id": self.suggestion_id},
@@ -879,8 +888,26 @@ class Suggestion:
             return
 
         try:
-            channel = await bot.get_or_fetch_channel(self.channel_id)
-            message: disnake.Message = await channel.fetch_message(self.message_id)
+            if self.thread_id:
+                thread = await bot.get_or_fetch_channel(self.thread_id)
+            else:
+                channel = await bot.get_or_fetch_channel(self.channel_id)
+                message: disnake.Message = await channel.fetch_message(self.message_id)
+
+                if not message.thread:
+                    # Suggestion has no created thread
+                    logger.debug(
+                        "No thread for suggestion %s, should have one: %s",
+                        self.suggestion_id,
+                        "yes" if guild_config.threads_for_suggestions else "no",
+                        extra_metadata={
+                            "suggestion_id": self.suggestion_id,
+                            "guild_id": self.guild_id,
+                        },
+                    )
+                    return
+
+                thread = message.thread
         except disnake.NotFound:
             # While not ideal, we ignore the error here as
             # failing to archive a thread isn't a critical issue
@@ -891,25 +918,12 @@ class Suggestion:
             # to find the thread here means technically the function worked
             return
 
-        if not message.thread:
-            # Suggestion has no created thread
-            logger.debug(
-                "No thread for suggestion %s, should have one: %s",
-                self.suggestion_id,
-                "yes" if guild_config.threads_for_suggestions else "no",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
-                },
-            )
-            return
-
-        if message.thread.owner_id != bot.user.id:
+        if thread.owner_id != bot.user.id:
             # I did not create this thread
             logger.debug(
                 "Thread on suggestion %s is owned by %s",
                 self.suggestion_id,
-                message.thread.owner_id,
+                thread.owner_id,
                 extra_metadata={
                     "suggestion_id": self.suggestion_id,
                     "guild_id": self.guild_id,
@@ -917,7 +931,7 @@ class Suggestion:
             )
             return
 
-        if message.thread.archived or message.thread.locked:
+        if thread.archived or thread.locked:
             # Thread is already archived or
             # locked so no need to redo the action
             logger.debug(
@@ -930,10 +944,10 @@ class Suggestion:
             )
             return
 
-        await message.thread.send(
+        await thread.send(
             bot.get_locale("SUGGESTION_OBJECT_LOCK_THREAD", locale),
         )
-        await message.thread.edit(locked=True, archived=True)
+        await thread.edit(locked=True, archived=True)
         logger.debug(
             "Locked thread for suggestion %s",
             self.suggestion_id,
