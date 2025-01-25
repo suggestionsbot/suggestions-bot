@@ -31,10 +31,10 @@ class HelpGuildCog(commands.Cog):
         self.bot.stats.increment_event_type(event_type)
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),
         guild_ids=[601219766258106399, 737166408525283348],
     )
+    @commands.contexts(guild=True)
     async def error_code(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -57,10 +57,10 @@ class HelpGuildCog(commands.Cog):
         )
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),
         guild_ids=[601219766258106399, 737166408525283348],
     )
+    @commands.contexts(guild=True)
     async def instance_info(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -96,10 +96,10 @@ class HelpGuildCog(commands.Cog):
         )
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),
         guild_ids=[601219766258106399, 737166408525283348],
     )
+    @commands.contexts(guild=True)
     async def error_information(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -131,11 +131,11 @@ class HelpGuildCog(commands.Cog):
         )
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(kick_members=True),
         guild_ids=[601219766258106399, 737166408525283348],
         name="bot_status",
     )
+    @commands.contexts(guild=True)
     async def show_bot_status(
         self,
         interaction: disnake.GuildCommandInteraction,

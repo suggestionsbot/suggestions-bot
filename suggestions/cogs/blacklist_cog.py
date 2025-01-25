@@ -21,9 +21,9 @@ class BlacklistCog(commands.Cog):
         self.state: State = self.bot.state
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     async def user(self, interaction: disnake.GuildCommandInteraction): ...
 
     @user.sub_command_group()

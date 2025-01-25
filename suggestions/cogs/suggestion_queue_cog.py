@@ -50,9 +50,9 @@ class SuggestionsQueueCog(commands.Cog):
         )
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_suggestions_channel()
     async def queue(self, interaction: disnake.GuildCommandInteraction):

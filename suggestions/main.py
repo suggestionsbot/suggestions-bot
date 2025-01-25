@@ -64,10 +64,10 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         await bot.dispatch_initial_ready()
 
     @bot.slash_command(
-        dm_permission=False,
         guild_ids=[601219766258106399, 737166408525283348],
         default_member_permissions=disnake.Permissions(administrator=True),
     )
+    @commands.contexts(guild=True)
     @commands.is_owner()
     async def colors(interaction: disnake.ApplicationCommandInteraction):
         """Shows the bots color palette."""
@@ -194,10 +194,10 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             return content
 
     @bot.slash_command(
-        dm_permission=False,
         guild_ids=[601219766258106399, 737166408525283348],
         default_member_permissions=disnake.Permissions(administrator=True),
     )
+    @commands.contexts(guild=True)
     @commands.is_owner()
     async def eval(ctx, code):
         """
@@ -250,10 +250,10 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         )
 
     @bot.slash_command(
-        dm_permission=False,
         guild_ids=[601219766258106399, 737166408525283348],
         default_member_permissions=disnake.Permissions(administrator=True),
     )
+    @commands.contexts(guild=True)
     @commands.is_owner()
     async def shutdown(
         interaction: disnake.ApplicationCommandInteraction,

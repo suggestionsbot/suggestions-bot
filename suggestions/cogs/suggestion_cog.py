@@ -201,9 +201,8 @@ class SuggestionsCog(commands.Cog):
         )
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
 
-    @commands.slash_command(
-        dm_permission=False,
-    )
+    @commands.slash_command()
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_user_is_not_blocklisted()
     @checks.ensure_guild_has_suggestions_channel()
@@ -354,9 +353,9 @@ class SuggestionsCog(commands.Cog):
         )
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def approve(
@@ -384,9 +383,9 @@ class SuggestionsCog(commands.Cog):
         return await self.get_sid_for(inter, user_input)
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def reject(
@@ -414,9 +413,9 @@ class SuggestionsCog(commands.Cog):
         return await self.get_sid_for(inter, user_input)
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     async def clear(
         self,
