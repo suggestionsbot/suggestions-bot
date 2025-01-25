@@ -19,21 +19,21 @@ class SuggestionsQueueCog(commands.Cog):
         self.bot = bot
         self.core: SuggestionsQueue = SuggestionsQueue(bot)
 
-    @components.button_listener()
+    # @components.button_listener()
     async def next_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await self.core.next_button(await InteractionHandler.new_handler(inter), pid)
 
-    @components.button_listener()
+    # @components.button_listener()
     async def previous_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await self.core.previous_button(
             await InteractionHandler.new_handler(inter), pid
         )
 
-    @components.button_listener()
+    # @components.button_listener()
     async def stop_button(self, inter: disnake.MessageInteraction, *, pid: str):
         await self.core.stop_button(await InteractionHandler.new_handler(inter), pid)
 
-    @components.button_listener()
+    # @components.button_listener()
     async def virtual_approve_button(
         self, inter: disnake.MessageInteraction, *, pid: str
     ):
@@ -41,7 +41,7 @@ class SuggestionsQueueCog(commands.Cog):
             await InteractionHandler.new_handler(inter), pid
         )
 
-    @components.button_listener()
+    # @components.button_listener()
     async def virtual_reject_button(
         self, inter: disnake.MessageInteraction, *, pid: str
     ):

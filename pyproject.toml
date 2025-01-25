@@ -18,10 +18,10 @@ skelmis-commons = "^1.4.0"
 zonis = "^2.1.0"
 aiobotocore = "^2.15.2"
 logoo = "^1.5.1"
-disnake-ext-components = {git = "https://github.com/suggestionsbot/disnake-ext-components.git", rev = "91689ed74ffee73f631453a39e548af9b824826d"}
 typing-extensions = "^4.12.2"
 python-dotenv = "^1.0.1"
 humanize = "^4.11.0"
+disnake-ext-components = {git = "https://github.com/DisnakeCommunity/disnake-ext-components.git", rev = "rewrite"}
 
 
 [tool.poetry.group.dev.dependencies]

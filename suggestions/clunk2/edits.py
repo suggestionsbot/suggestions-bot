@@ -8,9 +8,9 @@ import disnake
 from logoo import Logger
 
 from suggestions.low_level import MessageEditing
-from suggestions.objects import Suggestion
 
 if TYPE_CHECKING:
+    from suggestions.objects import Suggestion
     from suggestions import SuggestionsBot
 
 logger = Logger(__name__)
