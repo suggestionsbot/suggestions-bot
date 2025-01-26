@@ -86,7 +86,6 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color,
             timestamp=bot.state.now,
-            description="For more stats, click [here](https://stats.suggestions.gg/)",
         )
         guilds: int = await bot.stats.fetch_global_guild_count()
         embed.add_field(name="Guilds", value=guilds)
