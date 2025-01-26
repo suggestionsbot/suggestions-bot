@@ -852,7 +852,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
-        await self.push_status()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
         await self.zonis.start()
@@ -1079,71 +1078,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             }
         )
         await self.process_application_commands(interaction)
-
-    async def push_status(self):
-        if not self.is_prod:
-            log.warning("Cancelling status updates as we aren't in production")
-            return
-
-        async def inner():
-            await self._initial_ready_future
-            patch = os.environ["UPTIME_PATCH"]
-            while not self.state.is_closing:
-                try:
-                    appears_down = False
-                    for shard_id, shard_info in self.shards.items():
-                        if shard_info.is_closed():
-                            # We consider this as 'down' as sometimes
-                            # they fail to reconnect and we don't handle
-                            # that edge case as of current
-                            log.critical(
-                                "Shard %s in cluster %s is reporting as closed",
-                                shard_id,
-                                self.cluster_id,
-                            )
-                            appears_down = True
-
-                    if not appears_down:
-                        async with aiohttp.ClientSession() as session:
-                            async with session.get(
-                                url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
-                            ):
-                                pass
-
-                    await commons.sleep_with_condition(
-                        60, lambda: self.state.is_closing
-                    )
-                except (aiohttp.ClientConnectorError, ConnectionRefusedError):
-                    log.warning("push_status failed to connect, retrying in 10 seconds")
-                    logger.warning(
-                        "push_status failed to connect, retrying in 10 seconds"
-                    )
-                    await commons.sleep_with_condition(
-                        10, lambda: self.state.is_closing
-                    )
-                except Exception as e:
-                    if not self.is_prod:
-                        log.error("Borked it")
-                        return
-
-                    tb = "".join(traceback.format_exception(e))
-                    log.error(
-                        "Status update failed: %s",
-                        tb,
-                    )
-                    logger.error(
-                        "Status update failed: %s",
-                        tb,
-                    )
-                    await self.garven.notify_devs(
-                        title="Status page ping error",
-                        description=tb,
-                        sender=f"Cluster {self.cluster_id}, shard {self.shard_id}",
-                    )
-
-        task_1 = asyncio.create_task(inner())
-        self.state.add_background_task(task_1)
-        log.info("Setup status notifications")
 
     async def delete_message(self, *, message_id: int, channel_id: int):
         await self._connection.http.delete_message(channel_id, message_id)
