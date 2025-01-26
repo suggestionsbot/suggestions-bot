@@ -1,11 +1,6 @@
-FROM python:3.10
+FROM python:3.11-alpine
 
-# Set pip to have cleaner logs and no saved cache
-ENV PIP_NO_CACHE_DIR=false
-
-RUN mkdir -p /bot
-WORKDIR bot
-
+WORKDIR /code
 RUN pip install poetry
 
 COPY ./pyproject.toml /code/pyproject.toml
@@ -13,6 +8,6 @@ COPY ./poetry.lock /code/poetry.lock
 
 RUN poetry install
 
-COPY . /bot
+COPY . /code
 
-CMD python3 main.py
+CMD ["poetry", "run", "python", "main.py"]
