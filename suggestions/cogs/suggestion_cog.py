@@ -9,7 +9,7 @@ from disnake import ButtonStyle
 from disnake.ext import commands, components
 from logoo import Logger
 
-from suggestions import checks, Stats
+from suggestions import checks, Stats, buttons
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
@@ -41,165 +41,6 @@ class SuggestionsCog(commands.Cog):
 
         self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
         self.resolution_core: SuggestionsResolutionCore = SuggestionsResolutionCore(bot)
-
-    @components.button_listener()
-    async def suggestion_up_vote(
-        self, inter: disnake.MessageInteraction, *, suggestion_id: str
-    ):
-        await inter.response.defer(ephemeral=True, with_message=True)
-        suggestion: Suggestion = await Suggestion.from_id(
-            suggestion_id, inter.guild_id, self.state
-        )
-        if suggestion.state != SuggestionState.pending:
-            return await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_UP_VOTE_INNER_NO_MORE_CASTING",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-
-        member_id = inter.author.id
-        if member_id in suggestion.up_voted_by:
-            return await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_UP_VOTE_INNER_ALREADY_VOTED",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-
-        if member_id in suggestion.down_voted_by:
-            suggestion.down_voted_by.discard(member_id)
-            suggestion.up_voted_by.add(member_id)
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
-            # await suggestion.update_vote_count(self.bot, inter)
-            # lock.enqueue(suggestion.update_vote_count(self.bot, inter))
-            await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-            logger.debug(
-                f"Member {member_id} modified their vote on {suggestion_id} to a up vote",
-                extra_metadata={
-                    "suggestion_id": suggestion_id,
-                    "guild_id": inter.guild_id,
-                },
-            )
-        else:
-            suggestion.up_voted_by.add(member_id)
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
-            await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-            logger.debug(
-                f"Member {member_id} up voted {suggestion_id}",
-                extra_metadata={
-                    "suggestion_id": suggestion_id,
-                    "guild_id": inter.guild_id,
-                },
-            )
-
-        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
-
-    @components.button_listener()
-    async def suggestion_down_vote(
-        self,
-        inter: disnake.MessageInteraction,
-        *,
-        suggestion_id: str,
-    ):
-        await inter.response.defer(ephemeral=True, with_message=True)
-        suggestion: Suggestion = await Suggestion.from_id(
-            suggestion_id, inter.guild_id, self.state
-        )
-        if suggestion.state != SuggestionState.pending:
-            return await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-
-        member_id = inter.author.id
-        if member_id in suggestion.down_voted_by:
-            return await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-
-        if member_id in suggestion.up_voted_by:
-            suggestion.up_voted_by.discard(member_id)
-            suggestion.down_voted_by.add(member_id)
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
-            await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-            logger.debug(
-                f"Member {member_id} modified their vote on {suggestion_id} to a down vote",
-                extra_metadata={
-                    "suggestion_id": suggestion_id,
-                    "guild_id": inter.guild_id,
-                },
-            )
-        else:
-            suggestion.down_voted_by.add(member_id)
-            await self.state.suggestions_db.upsert(suggestion, suggestion)
-            await inter.send(
-                self.bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
-            logger.debug(
-                f"Member {member_id} down voted {suggestion_id}",
-                extra_metadata={
-                    "suggestion_id": suggestion_id,
-                    "guild_id": inter.guild_id,
-                },
-            )
-
-        await update_suggestion_message(suggestion=suggestion, bot=self.bot)
-
-    @components.button_listener()
-    @wrap_with_error_handler()
-    async def queue_approve(self, inter: disnake.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter)
-        qs = await QueuedSuggestion.from_message_id(
-            inter.message.id, inter.message.channel.id, self.state
-        )
-        await self.qs_core.resolve_queued_suggestion(
-            ih, queued_suggestion=qs, was_approved=True
-        )
-        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
-
-    @components.button_listener()
-    @wrap_with_error_handler()
-    async def queue_reject(self, inter: disnake.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter)
-        qs = await QueuedSuggestion.from_message_id(
-            inter.message.id, inter.message.channel.id, self.state
-        )
-        await self.qs_core.resolve_queued_suggestion(
-            ih, queued_suggestion=qs, was_approved=False
-        )
-        await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
 
     @commands.slash_command()
     @commands.contexts(guild=True)
@@ -284,16 +125,14 @@ class SuggestionsCog(commands.Cog):
                 msg = await queue_channel.send(
                     embed=qs_embed,
                     components=[
-                        disnake.ui.Button(
+                        await buttons.SuggestionsQueueApprove(
                             label="Approve queued suggestion",
-                            custom_id=await self.queue_approve.build_custom_id(),
                             style=ButtonStyle.green,
-                        ),
-                        disnake.ui.Button(
+                        ).as_ui_component(),
+                        await buttons.SuggestionsQueueReject(
                             label="Reject queued suggestion",
-                            custom_id=await self.queue_reject.build_custom_id(),
                             style=ButtonStyle.danger,
-                        ),
+                        ).as_ui_component(),
                     ],
                 )
                 qs.message_id = msg.id

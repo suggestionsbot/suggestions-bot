@@ -601,22 +601,22 @@ voice = ["PyNaCl (>=1.5.0,<1.6)", "audioop-lts (==0.2.1)"]
 
 [[package]]
 name = "disnake-ext-components"
-version = "0.4.1"
-description = "A component listener wrapper for disnake"
+version = "0.5.0a1"
+description = "An extension for disnake aimed at making component interactions with listeners somewhat less cumbersome."
 optional = false
-python-versions = ">=3.8.0"
+python-versions = "^3.8"
 files = []
 develop = false
 
 [package.dependencies]
-disnake = ">=2.5.0"
-typing-extensions = "*"
+disnake = "^2.5.0"
+typing-extensions = "^4.4.0"
 
 [package.source]
 type = "git"
-url = "https://github.com/suggestionsbot/disnake-ext-components.git"
-reference = "91689ed74ffee73f631453a39e548af9b824826d"
-resolved_reference = "91689ed74ffee73f631453a39e548af9b824826d"
+url = "https://github.com/DisnakeCommunity/disnake-ext-components.git"
+reference = "rewrite"
+resolved_reference = "a5568425b50f90cf8941b6f0658c66c06eae439b"
 
 [[package]]
 name = "dnspython"
@@ -1991,4 +1991,4 @@ websockets = ">=10.4,<11.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2094d6c4e4a4a91c0d747e7629a4c8b92eb9fd9b2ea30372eb026f1d1b7533f5"
+content-hash = "21e3802419a165edacd0c867f3d78c22d4e1275f713d9673cb368acccb9954ba"

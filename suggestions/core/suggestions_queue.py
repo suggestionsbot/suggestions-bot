@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import functools
 import logging
 from datetime import timedelta
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import disnake
 from alaric import AQ
@@ -13,6 +12,7 @@ from alaric.meta import Negate
 from alaric.projections import Projection, SHOW
 from commons.caching import NonExistentEntry, TimedCache
 
+from suggestions import buttons
 from suggestions.exceptions import ErrorHandled, MissingQueueLogsChannel
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig, UserConfig, QueuedSuggestion
@@ -256,11 +256,6 @@ class SuggestionsQueue:
     async def view(
         self,
         ih: InteractionHandler,
-        previous_button,
-        next_button,
-        stop_button,
-        approve_button,
-        reject_button,
     ):
         """View this guilds suggestions queue."""
         guild_id = ih.interaction.guild_id
@@ -294,28 +289,25 @@ class SuggestionsQueue:
             embed=await paginator.format_page(),
             components=[
                 disnake.ui.ActionRow(
-                    disnake.ui.Button(
-                        emoji="\N{BLACK LEFT-POINTING TRIANGLE}\ufe0f",
-                        custom_id=await previous_button.build_custom_id(pid=pid),
-                    ),
-                    disnake.ui.Button(
-                        emoji="\N{BLACK SQUARE FOR STOP}\ufe0f",
-                        custom_id=await stop_button.build_custom_id(pid=pid),
-                    ),
-                    disnake.ui.Button(
-                        emoji="\N{BLACK RIGHT-POINTING TRIANGLE}\ufe0f",
-                        custom_id=await next_button.build_custom_id(pid=pid),
-                    ),
+                    await buttons.QueuePreviousButton(
+                        emoji="\N{BLACK LEFT-POINTING TRIANGLE}\ufe0f", pid=pid
+                    ).as_ui_component(),
+                    await buttons.QueueStopButton(
+                        emoji="\N{BLACK SQUARE FOR STOP}\ufe0f", pid=pid
+                    ).as_ui_component(),
+                    await buttons.QueueNextButton(
+                        emoji="\N{BLACK RIGHT-POINTING TRIANGLE}\ufe0f", pid=pid
+                    ).as_ui_component(),
                 ),
                 disnake.ui.ActionRow(
-                    disnake.ui.Button(
+                    await buttons.VirtualApproveButton(
                         emoji=await self.bot.suggestion_emojis.default_up_vote(),
-                        custom_id=await approve_button.build_custom_id(pid=pid),
-                    ),
-                    disnake.ui.Button(
+                        pid=pid,
+                    ).as_ui_component(),
+                    await buttons.VirtualRejectButton(
                         emoji=await self.bot.suggestion_emojis.default_down_vote(),
-                        custom_id=await reject_button.build_custom_id(pid=pid),
-                    ),
+                        pid=pid,
+                    ).as_ui_component(),
                 ),
             ],
         )

@@ -16,7 +16,7 @@ def wrap_with_error_handler():
                     if isinstance(args[1], InteractionHandler)
                     else args[1]
                 )
-                await args[0].bot.on_slash_command_error(inter, e)
+                await inter.bot.on_slash_command_error(inter, e)
 
         return wrapper
 

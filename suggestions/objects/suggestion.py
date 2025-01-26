@@ -11,7 +11,7 @@ from alaric.comparison import EQ
 from alaric.logical import AND
 from commons.caching import NonExistentEntry
 from disnake import Embed
-from disnake.ext import commands
+from disnake.ext import commands, components
 from logoo import Logger
 
 from suggestions import ErrorCode
@@ -1025,6 +1025,20 @@ class Suggestion:
         interaction = ih.interaction
         bot = ih.bot
         state = ih.bot.state
+
+        from suggestions import buttons
+
+        components_to_send = [
+            await buttons.SuggestionUpVote(
+                suggestion_id=self.suggestion_id,
+                emoji=await bot.suggestion_emojis.default_up_vote(),
+            ).as_ui_component(),
+            await buttons.SuggestionDownVote(
+                suggestion_id=self.suggestion_id,
+                emoji=await bot.suggestion_emojis.default_down_vote(),
+            ).as_ui_component(),
+        ]
+
         try:
             channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
@@ -1032,20 +1046,7 @@ class Suggestion:
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
                 embed=await self.as_embed(bot),
-                components=[
-                    disnake.ui.Button(
-                        emoji=await bot.suggestion_emojis.default_up_vote(),
-                        custom_id=await cog.suggestion_up_vote.build_custom_id(
-                            suggestion_id=self.suggestion_id
-                        ),
-                    ),
-                    disnake.ui.Button(
-                        emoji=await bot.suggestion_emojis.default_down_vote(),
-                        custom_id=await cog.suggestion_down_vote.build_custom_id(
-                            suggestion_id=self.suggestion_id
-                        ),
-                    ),
-                ],
+                components=[components_to_send],
             )
             logger.debug(
                 "Sent suggestion %s to channel",
