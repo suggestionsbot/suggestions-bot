@@ -27,9 +27,9 @@ class GuildConfigCog(commands.Cog):
         self.stats: Stats = self.bot.stats
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     async def config(self, interaction: disnake.GuildCommandInteraction):
         """Configure the bot for your guild."""
