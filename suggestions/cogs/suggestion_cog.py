@@ -9,7 +9,7 @@ from disnake import ButtonStyle
 from disnake.ext import commands, components
 from logoo import Logger
 
-from suggestions import checks, Stats
+from suggestions import checks, Stats, buttons
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
@@ -41,30 +41,6 @@ class SuggestionsCog(commands.Cog):
 
         self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
         self.resolution_core: SuggestionsResolutionCore = SuggestionsResolutionCore(bot)
-
-    # @components.button_listener()
-    @wrap_with_error_handler()
-    async def queue_approve(self, inter: disnake.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter)
-        qs = await QueuedSuggestion.from_message_id(
-            inter.message.id, inter.message.channel.id, self.state
-        )
-        await self.qs_core.resolve_queued_suggestion(
-            ih, queued_suggestion=qs, was_approved=True
-        )
-        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
-
-    # @components.button_listener()
-    @wrap_with_error_handler()
-    async def queue_reject(self, inter: disnake.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter)
-        qs = await QueuedSuggestion.from_message_id(
-            inter.message.id, inter.message.channel.id, self.state
-        )
-        await self.qs_core.resolve_queued_suggestion(
-            ih, queued_suggestion=qs, was_approved=False
-        )
-        await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
 
     @commands.slash_command()
     @commands.contexts(guild=True)
@@ -149,16 +125,14 @@ class SuggestionsCog(commands.Cog):
                 msg = await queue_channel.send(
                     embed=qs_embed,
                     components=[
-                        disnake.ui.Button(
+                        await buttons.SuggestionsQueueApprove(
                             label="Approve queued suggestion",
-                            custom_id=await self.queue_approve.build_custom_id(),
                             style=ButtonStyle.green,
-                        ),
-                        disnake.ui.Button(
+                        ).as_ui_component(),
+                        await buttons.SuggestionsQueueReject(
                             label="Reject queued suggestion",
-                            custom_id=await self.queue_reject.build_custom_id(),
                             style=ButtonStyle.danger,
-                        ),
+                        ).as_ui_component(),
                     ],
                 )
                 qs.message_id = msg.id

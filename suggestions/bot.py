@@ -119,6 +119,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             # gateway_params=GatewayParams(zlib=False),
         )
 
+        from suggestions import buttons
+
         self.component_manager = components.get_manager()
         self.component_manager.add_to_bot(self)  # type: ignore
 

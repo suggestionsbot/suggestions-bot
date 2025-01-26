@@ -6,13 +6,14 @@ import logoo
 from disnake.ext import components
 from disnake.ext.components import interaction
 
-from suggestions import SuggestionsBot
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.interaction_handler import InteractionHandler
+from suggestions.objects import Suggestion, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 from suggestions.utility import wrap_with_error_handler
-from suggestions.objects import Suggestion
 
+if typing.TYPE_CHECKING:
+    from suggestions.cogs.suggestion_cog import SuggestionsCog
 
 logger = logoo.Logger(__name__)
 manager = components.get_manager("suggestions")
@@ -27,10 +28,9 @@ class SuggestionUpVote(components.RichButton):
         self,
         inter: components.MessageInteraction,
     ) -> None:
-        bot: SuggestionsBot = inter.bot
-        ih: InteractionHandler = await InteractionHandler.new_handler(inter)
+        ih: InteractionHandler = await InteractionHandler.new_handler(inter._wrapped)
         suggestion: Suggestion = await Suggestion.from_id(
-            self.suggestion_id, inter.guild_id, bot.state
+            self.suggestion_id, inter.guild_id, ih.bot.state
         )
         if suggestion.state != SuggestionState.pending:
             return await ih.send(
@@ -46,7 +46,7 @@ class SuggestionUpVote(components.RichButton):
         if member_id in suggestion.down_voted_by:
             suggestion.down_voted_by.discard(member_id)
             suggestion.up_voted_by.add(member_id)
-            await bot.state.suggestions_db.upsert(suggestion, suggestion)
+            await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
             # await suggestion.update_vote_count(self.bot, inter)
             # lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await ih.send(translation_key="SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE")
@@ -59,7 +59,7 @@ class SuggestionUpVote(components.RichButton):
             )
         else:
             suggestion.up_voted_by.add(member_id)
-            await bot.state.suggestions_db.upsert(suggestion, suggestion)
+            await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
             await ih.send(translation_key="SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE")
             logger.debug(
                 f"Member {member_id} up voted {self.suggestion_id}",
@@ -69,7 +69,7 @@ class SuggestionUpVote(components.RichButton):
                 },
             )
 
-        await update_suggestion_message(suggestion=suggestion, bot=bot)
+        await update_suggestion_message(suggestion=suggestion, bot=ih.bot)
 
 
 @manager.register  # type: ignore
@@ -81,41 +81,26 @@ class SuggestionDownVote(components.RichButton):
         self,
         inter: interaction.MessageInteraction,
     ) -> None:
-        bot: SuggestionsBot = inter.bot
-        await inter.response.defer(ephemeral=True, with_message=True)
+        ih: InteractionHandler = await InteractionHandler.new_handler(inter._wrapped)
         suggestion: Suggestion = await Suggestion.from_id(
-            self.suggestion_id, inter.guild_id, bot.state
+            self.suggestion_id, inter.guild_id, ih.bot.state
         )
         if suggestion.state != SuggestionState.pending:
-            return await inter.send(
-                bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING",
-                    inter.locale,
-                ),
-                ephemeral=True,
+            return await ih.send(
+                translation_key="SUGGESTION_DOWN_VOTE_INNER_NO_MORE_CASTING"
             )
 
         member_id = inter.author.id
         if member_id in suggestion.down_voted_by:
-            return await inter.send(
-                bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED",
-                    inter.locale,
-                ),
-                ephemeral=True,
+            return await ih.send(
+                translation_key="SUGGESTION_DOWN_VOTE_INNER_ALREADY_VOTED"
             )
 
         if member_id in suggestion.up_voted_by:
             suggestion.up_voted_by.discard(member_id)
             suggestion.down_voted_by.add(member_id)
-            await bot.state.suggestions_db.upsert(suggestion, suggestion)
-            await inter.send(
-                bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
+            await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
+            await ih.send(translation_key="SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE")
             logger.debug(
                 f"Member {member_id} modified their vote on {self.suggestion_id} to a down vote",
                 extra_metadata={
@@ -125,14 +110,8 @@ class SuggestionDownVote(components.RichButton):
             )
         else:
             suggestion.down_voted_by.add(member_id)
-            await bot.state.suggestions_db.upsert(suggestion, suggestion)
-            await inter.send(
-                bot.get_locale(
-                    "SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE",
-                    inter.locale,
-                ),
-                ephemeral=True,
-            )
+            await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
+            await ih.send(translation_key="SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE")
             logger.debug(
                 f"Member {member_id} down voted {self.suggestion_id}",
                 extra_metadata={
@@ -141,4 +120,34 @@ class SuggestionDownVote(components.RichButton):
                 },
             )
 
-        await update_suggestion_message(suggestion=suggestion, bot=bot)
+        await update_suggestion_message(suggestion=suggestion, bot=ih.bot)
+
+
+@manager.register  # type:ignore
+class SuggestionsQueueApprove(components.RichButton):
+    @wrap_with_error_handler()
+    async def callback(self, inter: interaction.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter._wrapped)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, ih.bot.state
+        )
+        cog: SuggestionsCog = ih.bot.cogs.get("SuggestionsCog")  # type: ignore
+        await cog.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=True
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
+
+
+@manager.register  # type:ignore
+class SuggestionsQueueReject(components.RichButton):
+    @wrap_with_error_handler()
+    async def callback(self, inter: interaction.MessageInteraction):
+        ih = await InteractionHandler.new_handler(inter._wrapped)
+        qs = await QueuedSuggestion.from_message_id(
+            inter.message.id, inter.message.channel.id, ih.bot.state
+        )
+        cog: SuggestionsCog = ih.bot.cogs.get("SuggestionsCog")  # type: ignore
+        await cog.qs_core.resolve_queued_suggestion(
+            ih, queued_suggestion=qs, was_approved=False
+        )
+        await ih.send(translation_key="PAGINATION_INNER_QUEUE_REJECTED")
