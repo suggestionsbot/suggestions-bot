@@ -18,9 +18,9 @@ class SuggestionNotesCog(commands.Cog):
         self.core: SuggestionsNotesCore = SuggestionsNotesCore(bot)
 
     @commands.slash_command(
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     async def notes(self, interaction: disnake.GuildCommandInteraction):
         """{{NOTES}}"""

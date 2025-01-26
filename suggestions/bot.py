@@ -21,7 +21,7 @@ from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError, Thread
 from disnake.abc import PrivateChannel, GuildChannel
-from disnake.ext import commands
+from disnake.ext import commands, components
 from disnake.state import AutoShardedConnectionState
 from logoo import Logger
 
@@ -58,7 +58,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.27"
+        self.version: str = "Public Release 3.28"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -118,6 +118,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             ),
             # gateway_params=GatewayParams(zlib=False),
         )
+
+        from suggestions import buttons
+
+        self.component_manager = components.get_manager()
+        self.component_manager.add_to_bot(self)  # type: ignore
 
         self._has_dispatched_initial_ready: bool = False
         self._initial_ready_future: asyncio.Future = asyncio.Future()
@@ -777,7 +782,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                         "author_id": interaction.author.id,
                     },
                 )
-                return
+                raise exception
 
         ih: InteractionHandler = await InteractionHandler.fetch_handler(
             interaction.id, self

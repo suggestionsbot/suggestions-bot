@@ -29,9 +29,9 @@ class SuggestionsMessageCommands(commands.Cog):
 
     @commands.message_command(
         name="Approve suggestion",
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def approve_suggestion(self, interaction: disnake.GuildCommandInteraction):
@@ -77,9 +77,9 @@ class SuggestionsMessageCommands(commands.Cog):
 
     @commands.message_command(
         name="Reject suggestion",
-        dm_permission=False,
         default_member_permissions=disnake.Permissions(manage_guild=True),
     )
+    @commands.contexts(guild=True)
     @cooldowns.cooldown(1, 3, bucket=InteractionBucket.author)
     @checks.ensure_guild_has_logs_channel_or_keep_logs()
     async def reject_suggestion(self, interaction: disnake.GuildCommandInteraction):
