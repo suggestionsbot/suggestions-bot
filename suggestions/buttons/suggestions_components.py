@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import typing
 
+import disnake
 import logoo
 from disnake.ext import components
-from disnake.ext.components import interaction
+from disnake.ext.components import fields as component_fields
 
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.interaction_handler import InteractionHandler
@@ -19,16 +20,49 @@ logger = logoo.Logger(__name__)
 manager = components.get_manager("suggestions")
 
 
-@manager.register  # type: ignore
+@manager.as_callback_wrapper
+async def wrapper(
+    _: components.ComponentManager,
+    component: components.api.RichComponent,
+    inter: disnake.Interaction,
+):
+    # Ignore if not message interaction
+    if not isinstance(inter, disnake.MessageInteraction):
+        yield
+        return
+
+    component_type = type(component)
+    # CamelCase -> base36, snake_case -> base10
+    # Check for camelcase based on casing of first char
+    new_base = (
+        36
+        if inter.component.custom_id and inter.component.custom_id[0].isupper()
+        else 0
+    )
+
+    # Update the parsers in-place...
+    for field in component_fields.get_fields(
+        component_type, kind=component_fields.FieldType.CUSTOM_ID
+    ):
+        parser = component_fields.get_parser(field)
+        if isinstance(parser, components.parser.IntParser):
+            parser.base = new_base
+
+    # Run the component after updating parsers...
+    yield
+
+
+@manager.register(identifier="suggestion_up_vote")
+@manager.register()
 class SuggestionUpVote(components.RichButton):
     suggestion_id: str
 
     @wrap_with_error_handler()
     async def callback(  # type: ignore
         self,
-        inter: components.MessageInteraction,
+        inter: disnake.MessageInteraction,
     ) -> None:
-        ih: InteractionHandler = await InteractionHandler.new_handler(inter._wrapped)
+        ih: InteractionHandler = await InteractionHandler.new_handler(inter)
         suggestion: Suggestion = await Suggestion.from_id(
             self.suggestion_id, inter.guild_id, ih.bot.state
         )
@@ -72,16 +106,17 @@ class SuggestionUpVote(components.RichButton):
         await update_suggestion_message(suggestion=suggestion, bot=ih.bot)
 
 
-@manager.register  # type: ignore
+@manager.register(identifier="suggestion_down_vote")
+@manager.register()
 class SuggestionDownVote(components.RichButton):
     suggestion_id: str
 
     @wrap_with_error_handler()
     async def callback(  # type: ignore
         self,
-        inter: interaction.MessageInteraction,
+        inter: disnake.MessageInteraction,
     ) -> None:
-        ih: InteractionHandler = await InteractionHandler.new_handler(inter._wrapped)
+        ih: InteractionHandler = await InteractionHandler.new_handler(inter)
         suggestion: Suggestion = await Suggestion.from_id(
             self.suggestion_id, inter.guild_id, ih.bot.state
         )
@@ -123,11 +158,15 @@ class SuggestionDownVote(components.RichButton):
         await update_suggestion_message(suggestion=suggestion, bot=ih.bot)
 
 
-@manager.register  # type:ignore
+@manager.register(identifier="queue_approve")
+@manager.register()
 class SuggestionsQueueApprove(components.RichButton):
     @wrap_with_error_handler()
-    async def callback(self, inter: interaction.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter._wrapped)
+    async def callback(  # type: ignore
+        self,
+        inter: disnake.MessageInteraction,
+    ) -> None:
+        ih = await InteractionHandler.new_handler(inter)
         qs = await QueuedSuggestion.from_message_id(
             inter.message.id, inter.message.channel.id, ih.bot.state
         )
@@ -138,11 +177,15 @@ class SuggestionsQueueApprove(components.RichButton):
         await ih.send(translation_key="PAGINATION_INNER_QUEUE_ACCEPTED")
 
 
-@manager.register  # type:ignore
+@manager.register(identifier="queue_reject")
+@manager.register()
 class SuggestionsQueueReject(components.RichButton):
     @wrap_with_error_handler()
-    async def callback(self, inter: interaction.MessageInteraction):
-        ih = await InteractionHandler.new_handler(inter._wrapped)
+    async def callback(  # type: ignore
+        self,
+        inter: disnake.MessageInteraction,
+    ) -> None:
+        ih = await InteractionHandler.new_handler(inter)
         qs = await QueuedSuggestion.from_message_id(
             inter.message.id, inter.message.channel.id, ih.bot.state
         )
