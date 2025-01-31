@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import typing
 
+import disnake
 import logoo
 from disnake.ext import components
-from disnake.ext.components import interaction
 
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.utility import wrap_with_error_handler
@@ -22,9 +22,9 @@ class QueueButton(components.RichButton):
     @wrap_with_error_handler()
     async def callback(  # type: ignore
         self,
-        inter: interaction.MessageInteraction,
+        inter: disnake.MessageInteraction,
     ):
-        ih = await InteractionHandler.new_handler(inter._wrapped)
+        ih = await InteractionHandler.new_handler(inter)
         cog: SuggestionsQueueCog = ih.bot.cogs.get("SuggestionsQueueCog")  # type: ignore
         await getattr(cog.core, core_mapping[self.__class__])(ih, self.pid)  # type: ignore
 

@@ -21,7 +21,7 @@ logoo = "^1.5.1"
 typing-extensions = "^4.12.2"
 python-dotenv = "^1.0.1"
 humanize = "^4.11.0"
-disnake-ext-components = {git = "https://github.com/DisnakeCommunity/disnake-ext-components.git", rev = "rewrite"}
+disnake-ext-components = {git = "https://github.com/suggestionsbot/disnake-ext-components.git", rev = "docs"}
 
 
 [tool.poetry.group.dev.dependencies]
