@@ -86,13 +86,12 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
         embed: disnake.Embed = disnake.Embed(
             color=bot.colors.embed_color,
             timestamp=bot.state.now,
-            description="For more stats, click [here](https://stats.suggestions.gg/)",
         )
         guilds: int = await bot.stats.fetch_global_guild_count()
         embed.add_field(name="Guilds", value=guilds)
         embed.add_field(name="Total shards", value=bot.total_shards)
         embed.add_field(name="Cluster Uptime", value=bot.get_uptime())
-        embed.add_field(name="Disnake", value="Custom fork")
+        embed.add_field(name="Disnake", value=disnake.__version__)
         embed.add_field(name="Python", value=python_version)
         embed.add_field(name="Version", value=bot.version)
         embed.set_footer(text=f"Cluster {bot.cluster_id} - Shard {shard_id}")
