@@ -852,7 +852,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
-        await self.push_status()
+        # await self.push_status()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
         await self.zonis.start()
