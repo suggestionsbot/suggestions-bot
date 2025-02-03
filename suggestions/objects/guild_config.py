@@ -14,6 +14,25 @@ logger = Logger(__name__)
 
 
 class GuildConfig:
+    __slots__ = [
+        "_id",
+        "keep_logs",
+        "dm_messages_disabled",
+        "log_channel_id",
+        "queued_channel_id",
+        "queued_log_channel_id",
+        "threads_for_suggestions",
+        "suggestions_channel_id",
+        "can_have_anonymous_suggestions",
+        "auto_archive_threads",
+        "uses_suggestion_queue",
+        "virtual_suggestion_queue",
+        "can_have_images_in_suggestions",
+        "anonymous_resolutions",
+        "blocked_users",
+        "ping_on_thread_creation",
+    ]
+
     def __init__(
         self,
         _id: int,
