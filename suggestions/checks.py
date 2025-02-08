@@ -77,3 +77,18 @@ def ensure_user_is_not_blocklisted():
         return True
 
     return commands.check(check)  # type: ignore
+
+
+def ensure_guild_has_subscription():
+    async def check(interaction: disnake.Interaction):
+        entitlements: list[disnake.Entitlement] = [
+            e
+            for e in interaction.entitlements
+            if e.is_active() and e.sku_id == interaction.bot.guild_subscription_sku_id
+        ]
+        if entitlements is None:
+            return await interaction.response.require_premium()
+
+        return True
+
+    return commands.check(check)  # type: ignore

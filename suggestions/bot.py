@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional, Union, Any
+from typing import Type, Optional, Union, Any, Final
 
 import aiohttp
 import alaric
@@ -66,6 +66,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.base_website_url: str = "https://suggestions.gg"
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
+        )
+
+        # TODO Set this
+        self.guild_subscription_sku_id: Final[int] = int(
+            os.environ.get("guild_subscription_sku_id")
         )
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False

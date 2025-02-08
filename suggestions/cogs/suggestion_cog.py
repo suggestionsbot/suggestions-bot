@@ -21,7 +21,12 @@ from suggestions.exceptions import (
     SuggestionNotFound,
 )
 from suggestions.interaction_handler import InteractionHandler
-from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
+from suggestions.objects import (
+    Suggestion,
+    GuildConfig,
+    QueuedSuggestion,
+    PremiumGuildConfig,
+)
 from suggestions.objects.suggestion import SuggestionState
 from suggestions.utility import r2, wrap_with_error_handler
 
@@ -121,8 +126,12 @@ class SuggestionsCog(commands.Cog):
                 except disnake.Forbidden as e:
                     raise MissingPermissionsToAccessQueueChannel from e
 
+                premium_guild_config: PremiumGuildConfig = (
+                    await PremiumGuildConfig.from_id(qs.guild_id, interaction.bot.state)
+                )
                 qs_embed: disnake.Embed = await qs.as_embed(self.bot)
                 msg = await queue_channel.send(
+                    content=premium_guild_config.queued_suggestions_prefix or None,
                     embed=qs_embed,
                     components=[
                         await buttons.SuggestionsQueueApprove(
