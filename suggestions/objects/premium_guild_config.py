@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import typing
+from datetime import timedelta
+from enum import Enum
 from typing import Optional
 
 import logoo
@@ -14,16 +16,61 @@ if typing.TYPE_CHECKING:
 logger = logoo.Logger(__name__)
 
 
+class CooldownPeriod(Enum, str):
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    FORTNIGHT = "fortnight"
+    MONTH = "month"
+
+    @classmethod
+    def as_timedelta(cls) -> timedelta:
+        if cls is cls.HOUR:
+            return timedelta(hours=1)
+        elif cls is cls.DAY:
+            return timedelta(days=1)
+        elif cls is cls.WEEK:
+            return timedelta(weeks=1)
+        elif cls is cls.FORTNIGHT:
+            return timedelta(weeks=2)
+        elif cls is cls.MONTH:
+            return timedelta(weeks=4)
+        else:
+            raise NotImplementedError
+
+
 class PremiumGuildConfig:
-    __slots__ = ["_id", "suggestions_prefix", "queued_suggestions_prefix"]
+    __slots__ = [
+        "_id",
+        "suggestions_prefix",
+        "queued_suggestions_prefix",
+        "is_active",
+        "cooldown_period",
+        "cooldown_amount",
+        "uses_custom_cooldown",
+    ]
 
     def __init__(
         self,
         _id: int,
+        # Needs to be explicitly activated
+        is_active: bool = False,
+        uses_custom_cooldown: bool = False,
+        cooldown_amount: int = 1,
+        cooldown_period: str | CooldownPeriod = CooldownPeriod.HOUR,
         suggestions_prefix: str = "",
         queued_suggestions_prefix: str = "",
     ):
         self._id = _id
+        self.is_active = is_active
+        self.cooldown_period = (
+            CooldownPeriod[cooldown_period]
+            if isinstance(cooldown_period, str)
+            else cooldown_period
+        )
+        # Exists so we dont need to check defaults and have sentinels
+        self.uses_custom_cooldown = uses_custom_cooldown
+        self.cooldown_amount = cooldown_amount
         self.suggestions_prefix = suggestions_prefix
         self.queued_suggestions_prefix = queued_suggestions_prefix
 
@@ -32,6 +79,10 @@ class PremiumGuildConfig:
             "_id": self._id,
             "suggestions_prefix": self.suggestions_prefix,
             "queued_suggestions_prefix": self.queued_suggestions_prefix,
+            "is_active": self.is_active,
+            "cooldown_period": self.cooldown_period,
+            "cooldown_amount": self.cooldown_amount,
+            "uses_custom_cooldown": self.uses_custom_cooldown,
         }
 
     def as_filter(self):

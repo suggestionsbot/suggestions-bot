@@ -17,6 +17,7 @@ import alaric
 import commons
 import disnake
 import humanize
+import redis.asyncio as redis
 from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError, Thread
@@ -67,6 +68,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         )
+        self.redis: redis.Redis = None
 
         # TODO Set this
         self.guild_subscription_sku_id: Final[int] = int(
@@ -870,6 +872,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.state.notify_shutdown()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
+        await self.redis.aclose()
         log.info("Shutting down")
         await self.close()
 
