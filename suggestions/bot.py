@@ -10,13 +10,14 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional, Union, Any
+from typing import Type, Optional, Union, Any, Final
 
 import aiohttp
 import alaric
 import commons
 import disnake
 import humanize
+import redis.asyncio as redis
 from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError, Thread
@@ -66,6 +67,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.base_website_url: str = "https://suggestions.gg"
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
+        )
+        # TODO Set redis and also auto set decoding from bytes to strings
+        self.redis: redis.Redis = None
+
+        # TODO Set this
+        self.guild_subscription_sku_id: Final[int] = int(
+            os.environ.get("guild_subscription_sku_id")
         )
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
@@ -865,6 +873,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.state.notify_shutdown()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
+        await self.redis.aclose()
         log.info("Shutting down")
         await self.close()
 

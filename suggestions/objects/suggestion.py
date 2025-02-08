@@ -21,7 +21,7 @@ from suggestions.exceptions import (
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
-from suggestions.objects import UserConfig, GuildConfig
+from suggestions.objects import UserConfig, GuildConfig, PremiumGuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
@@ -1064,11 +1064,15 @@ class Suggestion:
         ]
 
         try:
+            premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+                self.guild_id, bot.state
+            )
             channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
+                content=premium_guild_config.suggestions_prefix or None,
                 embed=await self.as_embed(bot),
                 components=[components_to_send],
             )

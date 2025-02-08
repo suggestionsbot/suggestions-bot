@@ -1,17 +1,19 @@
-[tool.poetry]
-name = "suggestions bot"
+[project]
+name = "suggestions-bot"
 version = "3.29"
 description = "A Discord bot designed to build better communities by encouraging a positive and constructive relationship between community and staff."
-authors = ["Suggestions Bot"]
+authors = []
 license = "AGPL-3.0"
 readme = "readme.md"
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
 disnake = {extras = ["speed"], version = "2.10.1"}
 alaric = "^1.5.0"
-function-cooldowns = "^2.0.1"
+function-cooldowns = "^2.1.0"
 httpx = "^0.28.1"
 orjson = "^3.10.11"
 skelmis-commons = "^1.4.0"
@@ -22,6 +24,7 @@ typing-extensions = "^4.12.2"
 python-dotenv = "^1.0.1"
 humanize = "^4.11.0"
 disnake-ext-components = {git = "https://github.com/suggestionsbot/disnake-ext-components.git", rev = "docs"}
+redis = {extras = ["hiredis"], version = "^5.2.1"}
 
 
 [tool.poetry.group.dev.dependencies]

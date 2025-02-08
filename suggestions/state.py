@@ -17,7 +17,7 @@ from alaric.projections import PROJECTION, SHOW
 from commons.caching import NonExistentEntry, TimedCache
 from logoo import Logger
 
-from suggestions.objects import GuildConfig, UserConfig
+from suggestions.objects import GuildConfig, UserConfig, PremiumGuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
@@ -58,6 +58,11 @@ class State:
         )
 
         self.guild_configs: TimedCache = TimedCache(
+            global_ttl=timedelta(minutes=30),
+            lazy_eviction=False,
+            ttl_from_last_access=True,
+        )
+        self.premium_guild_configs: TimedCache = TimedCache(
             global_ttl=timedelta(minutes=30),
             lazy_eviction=False,
             ttl_from_last_access=True,
@@ -141,6 +146,10 @@ class State:
         return self.database.guild_configs
 
     @property
+    def premium_guild_config_db(self) -> Document:
+        return self.database.premium_guild_configs
+
+    @property
     def user_config_db(self) -> Document:
         return self.database.user_configs
 
@@ -161,6 +170,11 @@ class State:
 
     def refresh_guild_config(self, guild_config: GuildConfig) -> None:
         self.guild_configs.add_entry(guild_config.guild_id, guild_config, override=True)
+
+    def refresh_premium_guild_config(self, guild_config: PremiumGuildConfig) -> None:
+        self.premium_guild_configs.add_entry(
+            guild_config.guild_id, guild_config, override=True
+        )
 
     def refresh_user_config(self, user_config: UserConfig) -> None:
         self.user_configs.add_entry(user_config.user_id, user_config, override=True)

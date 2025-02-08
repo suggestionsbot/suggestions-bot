@@ -87,3 +87,6 @@ class SuggestionSecurityViolation(disnake.DiscordException):
         self.suggestion_id: str = sid
         self.user_facing_message = user_facing_message
         self.message = message if message is not None else self.__doc__
+
+class PremiumRequired(disnake.DiscordException):
+    """This command requires a premium subscription to run."""
