@@ -68,6 +68,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         )
+        # TODO Set redis and also auto set decoding from bytes to strings
         self.redis: redis.Redis = None
 
         # TODO Set this
