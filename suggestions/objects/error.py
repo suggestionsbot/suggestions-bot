@@ -2,6 +2,19 @@ import datetime
 
 
 class Error:
+    __slots__ = [
+        "_id",
+        "traceback",
+        "error",
+        "user_id",
+        "guild_id",
+        "command_name",
+        "cluster_id",
+        "shard_id",
+        "created_at",
+        "has_been_fixed",
+    ]
+
     def __init__(
         self,
         _id: str,

@@ -9,9 +9,8 @@ import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
-from commons.caching import NonExistentEntry
 from disnake import Embed
-from disnake.ext import commands, components
+from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import ErrorCode
@@ -61,6 +60,31 @@ class SuggestionState(Enum):
 
 class Suggestion:
     """An abstract wrapper encapsulating all suggestion functionality."""
+
+    __slots__ = [
+        "_id",
+        "guild_id",
+        "suggestion",
+        "suggestion_author_id",
+        "created_at",
+        "state",
+        "note",
+        "note_added_by",
+        "_total_up_votes",
+        "_total_down_votes",
+        "up_voted_by",
+        "down_voted_by",
+        "channel_id",
+        "message_id",
+        "resolved_by",
+        "resolution_note",
+        "resolved_at",
+        "image_url",
+        "uses_views_for_votes",
+        "is_anonymous",
+        "anonymous_resolution",
+        "thread_id",
+    ]
 
     def __init__(
         self,

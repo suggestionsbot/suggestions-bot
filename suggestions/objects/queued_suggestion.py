@@ -23,6 +23,23 @@ logger = Logger(__name__)
 
 
 class QueuedSuggestion:
+    __slots__ = [
+        "guild_id",
+        "suggestion",
+        "suggestion_author_id",
+        "created_at",
+        "_id",
+        "is_anonymous",
+        "still_in_queue",
+        "image_url",
+        "resolved_by",
+        "resolution_note",
+        "resolved_at",
+        "related_suggestion_id",
+        "message_id",
+        "channel_id",
+    ]
+
     def __init__(
         self,
         guild_id: int,

@@ -16,6 +16,8 @@ logger = Logger(__name__)
 class UserConfig:
     """Generic global user configuration"""
 
+    __slots__ = ["_id", "dm_messages_disabled", "ping_on_thread_creation"]
+
     def __init__(
         self,
         _id: int,

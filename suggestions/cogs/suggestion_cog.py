@@ -280,9 +280,14 @@ class SuggestionsCog(commands.Cog):
                 suggestion_id, interaction.guild_id, self.state
             )
             if suggestion.channel_id and suggestion.message_id:
-                await self.bot.delete_message(
-                    message_id=suggestion.message_id, channel_id=suggestion.channel_id
-                )
+                try:
+                    await self.bot.delete_message(
+                        message_id=suggestion.message_id,
+                        channel_id=suggestion.channel_id,
+                    )
+                except disnake.NotFound:
+                    # This is fine
+                    pass
 
             await suggestion.mark_cleared_by(self.state, interaction.user.id, response)
         except SuggestionNotFound:
@@ -292,9 +297,14 @@ class SuggestionsCog(commands.Cog):
                 suggestion_id, interaction.guild_id, self.state
             )
             if suggestion.channel_id and suggestion.message_id:
-                await self.bot.delete_message(
-                    message_id=suggestion.message_id, channel_id=suggestion.channel_id
-                )
+                try:
+                    await self.bot.delete_message(
+                        message_id=suggestion.message_id,
+                        channel_id=suggestion.channel_id,
+                    )
+                except disnake.NotFound:
+                    # This is fine
+                    pass
 
             suggestion.channel_id = None
             suggestion.message_id = None
