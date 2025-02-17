@@ -58,7 +58,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.29"
+        self.version: str = "Public Release 3.30"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
