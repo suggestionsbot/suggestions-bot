@@ -73,7 +73,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         # TODO Set this
         self.guild_subscription_sku_id: Final[int] = int(
-            os.environ.get("guild_subscription_sku_id")
+            os.environ.get("guild_subscription_sku_id", 0)
         )
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False

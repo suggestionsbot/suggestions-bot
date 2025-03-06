@@ -21,7 +21,7 @@ from suggestions.exceptions import (
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
-from suggestions.objects import UserConfig, GuildConfig, PremiumGuildConfig
+from suggestions.objects import UserConfig, GuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
@@ -1064,6 +1064,8 @@ class Suggestion:
         ]
 
         try:
+            from suggestions.objects import PremiumGuildConfig
+
             premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
                 self.guild_id, bot.state
             )

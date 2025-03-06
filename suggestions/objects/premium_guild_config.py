@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
 logger = logoo.Logger(__name__)
 
 
-class CooldownPeriod(Enum, str):
+class CooldownPeriod(str, Enum):
     HOUR = "hour"
     DAY = "day"
     WEEK = "week"
