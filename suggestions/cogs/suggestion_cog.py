@@ -16,7 +16,7 @@ from suggestions import checks, Stats, buttons
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
 from suggestions.exceptions import (
-    SuggestionTooLong,
+    MessageTooLong,
     ErrorHandled,
     MissingPermissionsToAccessQueueChannel,
     MissingQueueLogsChannel,
@@ -106,7 +106,7 @@ class SuggestionsCog(commands.Cog):
         anonymously: {{SUGGEST_ARG_ANONYMOUSLY}}
         """
         if len(suggestion) > 1000:
-            raise SuggestionTooLong(suggestion)
+            raise MessageTooLong(suggestion)
 
         ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
         if ih.has_premium:

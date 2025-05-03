@@ -8,9 +8,8 @@ from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import Stats
-from suggestions.checks import ensure_guild_has_subscription
 from suggestions.cooldown_bucket import InteractionBucket
-from suggestions.exceptions import InvalidGuildConfigOption
+from suggestions.exceptions import InvalidGuildConfigOption, MessageTooLong
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig
 from suggestions.objects.premium_guild_config import CooldownPeriod, PremiumGuildConfig
@@ -194,7 +193,47 @@ class GuildConfigCog(commands.Cog):
         )
 
     @config.sub_command()
-    # @ensure_guild_has_subscription()
+    async def suggestions_prefix(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        message: str = commands.Param(
+            default="",
+            description="The message to send before the suggestion. This can be a role ping.",
+        ),
+        applies_to: str = commands.Param(
+            default="Both",
+            description="Whether this message should be sent on suggestions or queued suggestions.",
+            choices=["Suggestion", "Queued Suggestion", "Both"],
+        ),
+    ):
+        """Set a custom message for the suggest command."""
+        ih: InteractionHandler = await InteractionHandler.new_handler(
+            interaction, requires_premium=True
+        )
+        if len(message) > 1000:
+            raise MessageTooLong(message)
+
+        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+            ih.interaction.guild_id, interaction.bot.state
+        )
+        if applies_to == "Suggestion":
+            premium_guild_config.suggestions_prefix = message
+        elif applies_to == "Queued Suggestion":
+            premium_guild_config.queued_suggestions_prefix = message
+        else:
+            premium_guild_config.suggestions_prefix = message
+            premium_guild_config.queued_suggestions_prefix = message
+
+        await self.bot.db.premium_guild_configs.upsert(
+            premium_guild_config, premium_guild_config
+        )
+        await ih.send(
+            "Thanks! I've saved your configuration changes for this. "
+            "That message will now be sent as a part of those suggestions going forward."
+        )
+        return None
+
+    @config.sub_command()
     async def suggestions_cooldown(
         self,
         interaction: disnake.GuildCommandInteraction,
@@ -208,7 +247,9 @@ class GuildConfigCog(commands.Cog):
         ),
     ):
         """Set a custom cooldown for the suggest command."""
-        ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
+        ih: InteractionHandler = await InteractionHandler.new_handler(
+            interaction, requires_premium=True
+        )
         premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
             ih.interaction.guild_id, interaction.bot.state
         )

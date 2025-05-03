@@ -5,7 +5,7 @@ from typing import cast, TYPE_CHECKING
 import disnake
 from commons.caching import NonExistentEntry
 
-from suggestions.exceptions import ConflictingHandlerInformation
+from suggestions.exceptions import ConflictingHandlerInformation, ErrorHandled
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
@@ -98,9 +98,14 @@ class InteractionHandler:
         ephemeral: bool = True,
         with_message: bool = True,
         i_just_want_an_instance: bool = False,
+        requires_premium: bool = False,
     ) -> InteractionHandler:
         """Generate a new instance and defer the interaction."""
         instance = cls(interaction, ephemeral, with_message)
+
+        if requires_premium and not instance.has_premium:
+            await interaction.response.require_premium()
+            raise ErrorHandled("Interaction requires premium.")
 
         if not i_just_want_an_instance:
             # TODO Remove this once BT-10 is resolved

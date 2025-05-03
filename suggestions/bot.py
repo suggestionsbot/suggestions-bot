@@ -33,7 +33,7 @@ from suggestions.exceptions import (
     MissingLogsChannel,
     ErrorHandled,
     SuggestionNotFound,
-    SuggestionTooLong,
+    MessageTooLong,
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
     UnhandledError,
@@ -550,9 +550,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 ephemeral=True,
             )
 
-        elif isinstance(exception, SuggestionTooLong):
+        elif isinstance(exception, MessageTooLong):
             logger.debug(
-                "SuggestionTooLong",
+                "MessageTooLong",
                 extra_metadata={
                     "guild_id": interaction.guild_id,
                     "author_id": interaction.author.id,
@@ -562,14 +562,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
-                    "Your suggestion content was too long, please limit it to 1000 characters or less.\n\n"
-                    "I have attached a file containing your suggestion content to save rewriting it entirely.",
+                    "Your content was too long, please limit it to 1000 characters or less.\n\n"
+                    "I have attached a file containing your content to save rewriting it entirely.",
                     error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
                     error=error,
                 ),
                 ephemeral=True,
                 file=disnake.File(
-                    io.StringIO(exception.suggestion_text), filename="suggestion.txt"
+                    io.StringIO(exception.message_text), filename="content.txt"
                 ),
             )
 
