@@ -1074,7 +1074,7 @@ class Suggestion:
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
-                content=premium_guild_config.suggestions_prefix or None,
+                content=premium_guild_config.get_suggestions_prefix(ih),
                 embed=await self.as_embed(bot),
                 components=[components_to_send],
             )

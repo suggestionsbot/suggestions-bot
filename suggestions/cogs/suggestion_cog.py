@@ -169,7 +169,7 @@ class SuggestionsCog(commands.Cog):
                 )
                 qs_embed: disnake.Embed = await qs.as_embed(self.bot)
                 msg = await queue_channel.send(
-                    content=premium_guild_config.queued_suggestions_prefix or None,
+                    content=premium_guild_config.get_queued_suggestions_prefix(ih),
                     embed=qs_embed,
                     components=[
                         await buttons.SuggestionsQueueApprove(

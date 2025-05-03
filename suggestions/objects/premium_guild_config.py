@@ -12,6 +12,7 @@ from commons.caching import NonExistentEntry
 
 if typing.TYPE_CHECKING:
     from suggestions import State
+    from suggestions.interaction_handler import InteractionHandler
 
 logger = logoo.Logger(__name__)
 
@@ -79,6 +80,18 @@ class PremiumGuildConfig:
 
     def __repr__(self):
         return f"PremiumGuildConfig({self.as_dict()})"
+
+    def get_suggestions_prefix(self, ih: InteractionHandler):
+        if not ih.has_premium:
+            return None
+
+        return self.suggestions_prefix or None
+
+    def get_queued_suggestions_prefix(self, ih: InteractionHandler):
+        if not ih.has_premium:
+            return None
+
+        return self.queued_suggestions_prefix or None
 
     @property
     def guild_id(self) -> int:
