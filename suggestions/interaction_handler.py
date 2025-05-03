@@ -48,6 +48,16 @@ class InteractionHandler:
     def bot(self) -> SuggestionsBot:
         return self.interaction.client  # type: ignore
 
+    @property
+    def has_premium(self) -> bool:
+        """Returns true if this guild is considered to have active premium"""
+        entitlements: list[disnake.Entitlement] = [
+            e
+            for e in self.interaction.entitlements
+            if e.is_active()  # and e.sku_id == interaction.bot.guild_subscription_sku_id
+        ]
+        return bool(entitlements)
+
     async def send(
         self,
         content: str | None = None,

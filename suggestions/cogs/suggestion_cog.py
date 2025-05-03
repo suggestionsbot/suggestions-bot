@@ -109,12 +109,7 @@ class SuggestionsCog(commands.Cog):
             raise SuggestionTooLong(suggestion)
 
         ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
-        entitlements: list[disnake.Entitlement] = [
-            e
-            for e in interaction.entitlements
-            if e.is_active()  # and e.sku_id == interaction.bot.guild_subscription_sku_id
-        ]
-        if entitlements or 1 == 1:
+        if ih.has_premium:
             # Premium, handle custom cooldowns
             await self.handle_custom_suggestion_cooldown(ih)
 
