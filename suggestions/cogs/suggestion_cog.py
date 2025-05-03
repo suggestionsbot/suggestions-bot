@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Optional
 
 import cooldowns
@@ -76,6 +77,9 @@ class SuggestionsCog(commands.Cog):
         await bot.redis.set(
             f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}",
             orjson.dumps(cooldown.get_state()),
+            # Expire after two months as we support up to
+            # a month so this will keep it clean
+            ex=int(datetime.timedelta(days=60).total_seconds()),
         )
         del cooldown
         return None

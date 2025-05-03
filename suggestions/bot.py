@@ -601,10 +601,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "error_code": ErrorCode.COMMAND_ON_COOLDOWN.value,
                 },
             )
+            natural_time = humanize.naturaldelta(exception.retry_after)
             return await interaction.send(
                 embed=self.error_embed(
                     "Command on Cooldown",
-                    f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
+                    f"Ahh man so fast! You must wait {natural_time} to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
                     error=error,
                 ),

@@ -100,17 +100,6 @@ class PremiumGuildConfig:
         PremiumGuildConfig
             The valid guilds config
         """
-        try:
-            gc = state.premium_guild_configs.get_entry(guild_id)
-            logger.debug(
-                "Found cached PremiumGuildConfig for guild %s",
-                guild_id,
-                extra_metadata={"guild_id": guild_id},
-            )
-            return gc
-        except NonExistentEntry:
-            pass
-
         guild_config: Optional[PremiumGuildConfig] = (
             await state.premium_guild_config_db.find(AQ(EQ("_id", guild_id)))
         )
@@ -122,5 +111,4 @@ class PremiumGuildConfig:
             )
             guild_config = self(_id=guild_id)
 
-        state.refresh_premium_guild_config(guild_config)
         return guild_config

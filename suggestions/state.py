@@ -62,11 +62,6 @@ class State:
             lazy_eviction=False,
             ttl_from_last_access=True,
         )
-        self.premium_guild_configs: TimedCache = TimedCache(
-            global_ttl=timedelta(minutes=30),
-            lazy_eviction=False,
-            ttl_from_last_access=True,
-        )
         self.user_configs: TimedCache = TimedCache(
             global_ttl=timedelta(minutes=30),
             lazy_eviction=False,
@@ -170,11 +165,6 @@ class State:
 
     def refresh_guild_config(self, guild_config: GuildConfig) -> None:
         self.guild_configs.add_entry(guild_config.guild_id, guild_config, override=True)
-
-    def refresh_premium_guild_config(self, guild_config: PremiumGuildConfig) -> None:
-        self.premium_guild_configs.add_entry(
-            guild_config.guild_id, guild_config, override=True
-        )
 
     def refresh_user_config(self, user_config: UserConfig) -> None:
         self.user_configs.add_entry(user_config.user_id, user_config, override=True)
