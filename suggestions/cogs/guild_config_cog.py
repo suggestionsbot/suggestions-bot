@@ -8,10 +8,12 @@ from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import Stats
+from suggestions.checks import ensure_guild_has_subscription
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.exceptions import InvalidGuildConfigOption
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig
+from suggestions.objects.premium_guild_config import CooldownPeriod, PremiumGuildConfig
 from suggestions.stats import StatsEnum
 
 if TYPE_CHECKING:
@@ -190,6 +192,32 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             self.stats.type.GUILD_CONFIG_REJECTED_QUEUE_CHANNEL,
         )
+
+    @config.sub_command()
+    # @ensure_guild_has_subscription()
+    async def suggestions_cooldown(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+        cooldown_amount: int = commands.Param(
+            default=None,
+            description="How many times users can run /suggest during the cooldown period.",
+        ),
+        cooldown_period: CooldownPeriod = commands.Param(
+            default=None,
+            description="The time period to allow cooldown_amount's during.",
+        ),
+    ):
+        """Set a custom cooldown for the suggest command."""
+        ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
+        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+            ih.interaction.guild_id, interaction.bot.state
+        )
+        premium_guild_config.cooldown_amount = cooldown_amount
+        premium_guild_config.cooldown_period = cooldown_period
+        await self.bot.db.premium_guild_configs.upsert(
+            premium_guild_config, premium_guild_config
+        )
+        await ih.send("Thanks! I've saved your configuration changes for this.")
 
     @config.sub_command()
     async def get(

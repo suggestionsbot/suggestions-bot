@@ -84,9 +84,9 @@ def ensure_guild_has_subscription():
         entitlements: list[disnake.Entitlement] = [
             e
             for e in interaction.entitlements
-            if e.is_active() and e.sku_id == interaction.bot.guild_subscription_sku_id
+            if e.is_active()  # and e.sku_id == interaction.bot.guild_subscription_sku_id
         ]
-        if entitlements is None:
+        if not entitlements:
             return await interaction.response.require_premium()
 
         return True

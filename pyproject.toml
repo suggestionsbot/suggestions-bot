@@ -13,7 +13,7 @@ package-mode = false
 python = "^3.10"
 disnake = {extras = ["speed"], version = "2.10.1"}
 alaric = "^1.5.0"
-function-cooldowns = "^2.1.0"
+function-cooldowns = "^2.2.0"
 httpx = "^0.28.1"
 orjson = "^3.10.11"
 skelmis-commons = "^1.4.0"
