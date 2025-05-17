@@ -208,10 +208,21 @@ class GuildConfigCog(commands.Cog):
     ):
         """Set a custom message for the suggest command."""
         ih: InteractionHandler = await InteractionHandler.new_handler(
-            interaction, requires_premium=True
+            interaction, requires_premium=False
         )
         if len(message) > 1000:
             raise MessageTooLong(message)
+
+        if (
+            "@everyone" in message
+            or "@here" in message
+            or f"<@&{interaction.guild_id}>" in message
+        ):
+            await ih.send(
+                "Sorry, prefixes cannot contain everyone or here pings. "
+                "We recommend setting a generic role instead."
+            )
+            return None
 
         premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
             ih.interaction.guild_id, interaction.bot.state
