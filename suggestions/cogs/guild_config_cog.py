@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
 from disnake.ext import commands
+from humanize import precisedelta, intcomma
 from logoo import Logger
 
 from suggestions import Stats
@@ -208,7 +210,7 @@ class GuildConfigCog(commands.Cog):
     ):
         """Set a custom message for the suggest command."""
         ih: InteractionHandler = await InteractionHandler.new_handler(
-            interaction, requires_premium=False
+            interaction, requires_premium=True
         )
         if len(message) > 1000:
             raise MessageTooLong(message)
@@ -680,6 +682,37 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             self.stats.type.GUILD_CONFIG_GET,
         )
+
+    @config.sub_command()
+    async def get_premium(
+        self,
+        interaction: disnake.GuildCommandInteraction,
+    ):
+        """Show the current premium configuration"""
+        ih = await InteractionHandler.new_handler(interaction)
+        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+            ih.interaction.guild_id, interaction.bot.state
+        )
+        cooldown_period = (
+            precisedelta(premium_guild_config.cooldown_period.as_timedelta())
+            if premium_guild_config.cooldown_period
+            else "Not set"
+        )
+        cooldown_amount = (
+            intcomma(premium_guild_config.cooldown_amount)
+            if premium_guild_config.cooldown_period
+            else "Not set"
+        )
+        embed = disnake.Embed(
+            title="Premium configuration for your guild",
+            color=self.bot.colors.embed_color,
+            timestamp=self.bot.state.now,
+            description=f"Cooldown period: `{cooldown_period}`\n"
+            f"Cooldown amount per period: `{cooldown_amount}`\n"
+            f"Suggestions prefix: {premium_guild_config.suggestions_prefix}\n"
+            f"Queued suggestions prefix: {premium_guild_config.queued_suggestions_prefix}\n",
+        )
+        await ih.send(embed=embed)
 
     @config.sub_command_group()
     async def dm(self, interaction: disnake.GuildCommandInteraction):
