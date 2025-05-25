@@ -71,11 +71,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         # TODO Set redis and also auto set decoding from bytes to strings
         self.redis: redis.Redis = None
 
-        # TODO Set this
-        self.guild_subscription_sku_id: Final[int] = int(
-            os.environ.get("guild_subscription_sku_id", 0)
-        )
-
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
 
         db = None
