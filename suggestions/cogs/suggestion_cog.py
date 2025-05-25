@@ -1,35 +1,45 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Optional
 
 import cooldowns
 import disnake
+import orjson
 from commons.caching import NonExistentEntry
+from cooldowns import Cooldown
 from disnake import ButtonStyle
-from disnake.ext import commands, components
+from disnake.ext import commands
 from logoo import Logger
 
 from suggestions import checks, Stats, buttons
-from suggestions.clunk2 import update_suggestion_message
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
 from suggestions.exceptions import (
-    SuggestionTooLong,
+    MessageTooLong,
     ErrorHandled,
     MissingPermissionsToAccessQueueChannel,
     MissingQueueLogsChannel,
     SuggestionNotFound,
 )
 from suggestions.interaction_handler import InteractionHandler
-from suggestions.objects import Suggestion, GuildConfig, QueuedSuggestion
-from suggestions.objects.suggestion import SuggestionState
-from suggestions.utility import r2, wrap_with_error_handler
+from suggestions.objects import (
+    Suggestion,
+    GuildConfig,
+    QueuedSuggestion,
+    PremiumGuildConfig,
+)
+from suggestions.utility import r2
 
 if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot, State
 
 logger = Logger(__name__)
+
+
+async def user_cooldown_bucket(inter: disnake.Interaction) -> tuple[int, int]:
+    return inter.author.id, inter.guild_id
 
 
 class SuggestionsCog(commands.Cog):
@@ -41,6 +51,38 @@ class SuggestionsCog(commands.Cog):
 
         self.qs_core: SuggestionsQueue = SuggestionsQueue(bot)
         self.resolution_core: SuggestionsResolutionCore = SuggestionsResolutionCore(bot)
+
+    async def handle_custom_suggestion_cooldown(self, ih: InteractionHandler):
+        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+            ih.interaction.guild_id, ih.bot.state
+        )
+        if (
+            premium_guild_config.cooldown_amount is None
+            or premium_guild_config.cooldown_period is None
+        ):
+            return True
+
+        bot: SuggestionsBot = ih.bot
+        redis_state = await bot.redis.get(f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}")
+        cooldown = Cooldown(
+            premium_guild_config.cooldown_amount,
+            premium_guild_config.cooldown_period.as_timedelta(),
+            bucket=user_cooldown_bucket,
+        )
+        if redis_state is not None and redis_state:
+            cooldown.load_from_state(orjson.loads(redis_state))
+
+        await cooldown.increment(ih.interaction)
+
+        await bot.redis.set(
+            f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}",
+            orjson.dumps(cooldown.get_state()),
+            # Expire after two months as we support up to
+            # a month so this will keep it clean
+            ex=int(datetime.timedelta(days=60).total_seconds()),
+        )
+        del cooldown
+        return None
 
     @commands.slash_command()
     @commands.contexts(guild=True)
@@ -64,9 +106,12 @@ class SuggestionsCog(commands.Cog):
         anonymously: {{SUGGEST_ARG_ANONYMOUSLY}}
         """
         if len(suggestion) > 1000:
-            raise SuggestionTooLong(suggestion)
+            raise MessageTooLong(suggestion)
 
-        await interaction.response.defer(ephemeral=True)
+        ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
+        if ih.has_premium:
+            # Premium, handle custom cooldowns
+            await self.handle_custom_suggestion_cooldown(ih)
 
         suggestion: str = suggestion.replace("\\n", "\n")
 
@@ -74,22 +119,20 @@ class SuggestionsCog(commands.Cog):
             interaction.guild_id, self.state
         )
         if anonymously and not guild_config.can_have_anonymous_suggestions:
-            await interaction.send(
+            await ih.send(
                 self.bot.get_locale(
                     "SUGGEST_INNER_NO_ANONYMOUS_SUGGESTIONS", interaction.locale
                 ),
-                ephemeral=True,
             )
             raise ErrorHandled
 
         image_url = None
         if image is not None:
             if not guild_config.can_have_images_in_suggestions:
-                await interaction.send(
+                await ih.send(
                     self.bot.get_locale(
                         "SUGGEST_INNER_NO_IMAGES_IN_SUGGESTIONS", interaction.locale
                     ),
-                    ephemeral=True,
                 )
                 raise ErrorHandled
 
@@ -121,8 +164,12 @@ class SuggestionsCog(commands.Cog):
                 except disnake.Forbidden as e:
                     raise MissingPermissionsToAccessQueueChannel from e
 
+                premium_guild_config: PremiumGuildConfig = (
+                    await PremiumGuildConfig.from_id(qs.guild_id, interaction.bot.state)
+                )
                 qs_embed: disnake.Embed = await qs.as_embed(self.bot)
                 msg = await queue_channel.send(
+                    content=premium_guild_config.get_queued_suggestions_prefix(ih),
                     embed=qs_embed,
                     components=[
                         await buttons.SuggestionsQueueApprove(
@@ -147,8 +194,7 @@ class SuggestionsCog(commands.Cog):
                     "guild_id": interaction.guild_id,
                 },
             )
-            return await interaction.send(
-                ephemeral=True,
+            return await ih.send(
                 content=self.bot.get_localized_string(
                     "SUGGEST_INNER_SENT_TO_QUEUE",
                     interaction,
@@ -168,9 +214,7 @@ class SuggestionsCog(commands.Cog):
         )
         await suggestion.setup_initial_messages(
             guild_config=guild_config,
-            ih=await InteractionHandler.new_handler(
-                interaction, i_just_want_an_instance=True
-            ),
+            ih=ih,
             cog=self,
             guild=guild,
             icon_url=icon_url,

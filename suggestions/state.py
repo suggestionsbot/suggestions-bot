@@ -17,7 +17,7 @@ from alaric.projections import PROJECTION, SHOW
 from commons.caching import NonExistentEntry, TimedCache
 from logoo import Logger
 
-from suggestions.objects import GuildConfig, UserConfig
+from suggestions.objects import GuildConfig, UserConfig, PremiumGuildConfig
 
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot
@@ -139,6 +139,10 @@ class State:
     @property
     def guild_config_db(self) -> Document:
         return self.database.guild_configs
+
+    @property
+    def premium_guild_config_db(self) -> Document:
+        return self.database.premium_guild_configs
 
     @property
     def user_config_db(self) -> Document:

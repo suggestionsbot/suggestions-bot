@@ -1064,11 +1064,17 @@ class Suggestion:
         ]
 
         try:
+            from suggestions.objects import PremiumGuildConfig
+
+            premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+                self.guild_id, bot.state
+            )
             channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
+                content=premium_guild_config.get_suggestions_prefix(ih),
                 embed=await self.as_embed(bot),
                 components=[components_to_send],
             )
