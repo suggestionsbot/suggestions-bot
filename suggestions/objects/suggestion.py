@@ -443,7 +443,7 @@ class Suggestion:
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
-        user = await bot.get_or_fetch_user(self.suggestion_author_id)
+        user = await bot.get_or_fetch_user(self.suggestion_author_id, strict=True)
 
         if self.resolved_by:
             return await self._as_resolved_embed(bot, user)
