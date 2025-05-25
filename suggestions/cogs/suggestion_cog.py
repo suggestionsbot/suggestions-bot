@@ -38,8 +38,8 @@ if TYPE_CHECKING:
 logger = Logger(__name__)
 
 
-async def user_cooldown_bucket(inter: disnake.Interaction) -> int:
-    return inter.author.id
+async def user_cooldown_bucket(inter: disnake.Interaction) -> tuple[int, int]:
+    return inter.author.id, inter.guild_id
 
 
 class SuggestionsCog(commands.Cog):
@@ -109,7 +109,7 @@ class SuggestionsCog(commands.Cog):
             raise MessageTooLong(suggestion)
 
         ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
-        if ih.has_premium:
+        if ih.has_premium or 1 == 1:
             # Premium, handle custom cooldowns
             await self.handle_custom_suggestion_cooldown(ih)
 
