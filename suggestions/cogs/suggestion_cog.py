@@ -109,7 +109,7 @@ class SuggestionsCog(commands.Cog):
             raise MessageTooLong(suggestion)
 
         ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
-        if ih.has_premium or 1 == 1:
+        if ih.has_premium:
             # Premium, handle custom cooldowns
             await self.handle_custom_suggestion_cooldown(ih)
 
