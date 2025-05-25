@@ -17,7 +17,7 @@ from suggestions import ErrorCode
 from suggestions.exceptions import (
     ErrorHandled,
     SuggestionNotFound,
-    SuggestionSecurityViolation,
+    SuggestionSecurityViolation, ConfiguredChannelNoLongerExists,
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
@@ -1087,6 +1087,10 @@ class Suggestion:
                 },
             )
         except disnake.Forbidden as e:
+            state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
+            await state.suggestions_db.delete(self.as_filter())
+            raise e
+        except ConfiguredChannelNoLongerExists as e:
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
             raise e
