@@ -268,30 +268,66 @@ class State:
         self.add_background_task(task_1)
 
         # Populate existing suggestion id's
-        suggestion_ids: List[Dict] = await self.suggestions_db.get_all(
-            {},
-            projections=PROJECTION(SHOW("_id")),
-            try_convert=False,
+        aggregate_pipeline = self.suggestions_db._document.aggregate(
+            [
+                {
+                    "$bucketAuto": {
+                        "groupBy": "$_id",
+                        "buckets": 1000,
+                        "output": {
+                            "count": {"$sum": 1},
+                            "ids": {"$addToSet": "$_id"},
+                        },
+                    }
+                },
+            ]
         )
-        for entry in suggestion_ids:
-            self.existing_suggestion_ids.add(entry["_id"])
+        for thing in await aggregate_pipeline.to_list(length=None):
+            for item in thing["ids"]:
+                self.existing_suggestion_ids.add(item)
+            del thing
+        del aggregate_pipeline
 
-        suggestion_ids: List[Dict] = await self.queued_suggestions_db.get_all(
-            {},
-            projections=PROJECTION(SHOW("_id")),
-            try_convert=False,
+        aggregate_pipeline = self.queued_suggestions_db._document.aggregate(
+            [
+                {
+                    "$bucketAuto": {
+                        "groupBy": "$_id",
+                        "buckets": 1000,
+                        "output": {
+                            "count": {"$sum": 1},
+                            "ids": {"$addToSet": "$_id"},
+                        },
+                    }
+                },
+            ]
         )
-        for entry in suggestion_ids:
-            if isinstance(entry["_id"], str) and len(entry["_id"]) == 8:
-                self.existing_suggestion_ids.add(entry["_id"])
+        for thing in await aggregate_pipeline.to_list(length=None):
+            for item in thing["ids"]:
+                if isinstance(item, str) and len(item) == 8:
+                    self.existing_suggestion_ids.add(item)
+            del thing
+        del aggregate_pipeline
 
-        error_ids: List[Dict] = await self.bot.db.error_tracking.get_all(
-            {},
-            projections=PROJECTION(SHOW("_id")),
-            try_convert=False,
+        aggregate_pipeline = self.bot.db.error_tracking._document.aggregate(
+            [
+                {
+                    "$bucketAuto": {
+                        "groupBy": "$_id",
+                        "buckets": 1000,
+                        "output": {
+                            "count": {"$sum": 1},
+                            "ids": {"$addToSet": "$_id"},
+                        },
+                    }
+                },
+            ]
         )
-        for entry in error_ids:
-            self.existing_error_ids.add(entry["_id"])
+        for thing in await aggregate_pipeline.to_list(length=None):
+            for item in thing["ids"]:
+                self.existing_error_ids.add(item)
+            del thing
+        del aggregate_pipeline
 
     async def fetch_channel(self, channel_id: int) -> disnake.TextChannel:
         try:
