@@ -93,9 +93,19 @@ class SuggestionsCog(commands.Cog):
                 )
                 raise ErrorHandled
 
+            file_data = await image.read(use_cached=True)
+            if len(file_data) >= 1024 * 1024 * 25:
+                await interaction.send(
+                    self.bot.get_locale(
+                        "SUGGEST_INNER_IMAGE_TOO_BIG", interaction.locale
+                    ),
+                    ephemeral=True,
+                )
+                raise ErrorHandled
+
             image_url = await r2.upload_file_to_r2(
                 file_name=image.filename,
-                file_data=await image.read(use_cached=True),
+                file_data=file_data,
                 guild_id=interaction.guild_id,
                 user_id=interaction.author.id,
             )
