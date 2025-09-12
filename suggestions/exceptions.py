@@ -35,11 +35,11 @@ class SuggestionNotFound(disnake.DiscordException):
     """Cannot find a suggestion with this id."""
 
 
-class SuggestionTooLong(disnake.DiscordException):
-    """The suggestion content was too long."""
+class MessageTooLong(disnake.DiscordException):
+    """The content provided was too long."""
 
-    def __init__(self, suggestion_text: str):
-        self.suggestion_text = suggestion_text
+    def __init__(self, text: str):
+        self.message_text = text
 
 
 class InvalidGuildConfigOption(disnake.DiscordException):
@@ -87,3 +87,7 @@ class SuggestionSecurityViolation(disnake.DiscordException):
         self.suggestion_id: str = sid
         self.user_facing_message = user_facing_message
         self.message = message if message is not None else self.__doc__
+
+
+class PremiumRequired(disnake.DiscordException):
+    """This command requires a premium subscription to run."""

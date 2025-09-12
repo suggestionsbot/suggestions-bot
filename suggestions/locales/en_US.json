@@ -4,7 +4,7 @@
   "SUGGEST_ARG_SUGGESTION_NAME": "suggestion",
   "SUGGEST_ARG_SUGGESTION_DESCRIPTION": "Your suggestion.",
   "SUGGEST_ARG_IMAGE_NAME": "image",
-  "SUGGEST_ARG_IMAGE_DESCRIPTION": "An image to add to your suggestion. Images currently expire after a couple weeks.",
+  "SUGGEST_ARG_IMAGE_DESCRIPTION": "An image to add to your suggestion.",
   "SUGGEST_ARG_ANONYMOUSLY_NAME": "anonymously",
   "SUGGEST_ARG_ANONYMOUSLY_DESCRIPTION": "Submit your suggestion anonymously.",
   "APPROVE_NAME": "approve",

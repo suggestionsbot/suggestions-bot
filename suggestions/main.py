@@ -13,6 +13,7 @@ import cooldowns
 import disnake
 from disnake import Locale
 from disnake.ext import commands
+import redis.asyncio as redis
 
 from suggestions import SuggestionsBot
 from suggestions.interaction_handler import InteractionHandler
@@ -58,6 +59,9 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     )
     if not bot.is_prod:
         bot._test_guilds = [737166408525283348]
+
+    # TODO Re-enable premium features at later date
+    # bot.redis = await redis.from_url(f"{os.environ['REDIS_URL']}?decode_responses=True")
 
     @bot.listen("on_ready")
     async def on_ready():

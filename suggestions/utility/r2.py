@@ -5,12 +5,21 @@ import secrets
 
 from aiobotocore.session import get_session
 from logoo import Logger
+from tenacity import retry, stop_after_attempt, wait_random, retry_if_not_exception_type
+
 
 from suggestions.exceptions import InvalidFileType
 
 logger = Logger(__name__)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_random(min=1, max=5),
+    retry=retry_if_not_exception_type(ValueError)
+    | retry_if_not_exception_type(AssertionError),
+    reraise=True,
+)
 async def upload_file_to_r2(
     *,
     file_name: str,

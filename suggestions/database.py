@@ -7,6 +7,7 @@ from suggestions.objects import (
     UserConfig,
     Error,
     QueuedSuggestion,
+    PremiumGuildConfig,
 )
 from suggestions.objects.stats import MemberStats
 
@@ -23,6 +24,9 @@ class SuggestionsMongoManager:
         )
         self.guild_configs: Document = Document(
             self.db, "guild_configs", converter=GuildConfig
+        )
+        self.premium_guild_configs: Document = Document(
+            self.db, "premium_guild_configs", converter=PremiumGuildConfig
         )
         self.user_configs: Document = Document(
             self.db, "user_configs", converter=UserConfig

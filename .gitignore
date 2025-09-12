@@ -12,6 +12,7 @@ test/
 *.prof
 profile.json
 profile.html
+.venv
 
 suggestions/telemetry/error_telemetry_tracebacks
 suggestions/telemetry/forbidden_errors
