@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional, Union, Any
+from typing import Type, Optional, Union, Any, Final
 
 import aiohttp
 import alaric
@@ -18,6 +18,7 @@ import botocore
 import commons
 import disnake
 import humanize
+import redis.asyncio as redis
 from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import Locale, LocalizationKeyError, Thread
@@ -33,7 +34,7 @@ from suggestions.exceptions import (
     MissingLogsChannel,
     ErrorHandled,
     SuggestionNotFound,
-    SuggestionTooLong,
+    MessageTooLong,
     InvalidGuildConfigOption,
     ConfiguredChannelNoLongerExists,
     UnhandledError,
@@ -59,7 +60,7 @@ logger = Logger(__name__)
 
 class SuggestionsBot(commands.AutoShardedInteractionBot):
     def __init__(self, *args, **kwargs):
-        self.version: str = "Public Release 3.30"
+        self.version: str = "Public Release 3.31"
         self.main_guild_id: int = 601219766258106399
         self.legacy_beta_role_id: int = 995588041991274547
         self.automated_beta_role_id: int = 998173237282361425
@@ -68,6 +69,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         )
+        # TODO Set redis and also auto set decoding from bytes to strings
+        self.redis: redis.Redis = None
 
         self.is_prod: bool = True if os.environ.get("PROD", None) else False
 
@@ -543,9 +546,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 ephemeral=True,
             )
 
-        elif isinstance(exception, SuggestionTooLong):
+        elif isinstance(exception, MessageTooLong):
             logger.debug(
-                "SuggestionTooLong",
+                "MessageTooLong",
                 extra_metadata={
                     "guild_id": interaction.guild_id,
                     "author_id": interaction.author.id,
@@ -555,14 +558,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             return await interaction.send(
                 embed=self.error_embed(
                     "Command failed",
-                    "Your suggestion content was too long, please limit it to 1000 characters or less.\n\n"
-                    "I have attached a file containing your suggestion content to save rewriting it entirely.",
+                    "Your content was too long, please limit it to 1000 characters or less.\n\n"
+                    "I have attached a file containing your content to save rewriting it entirely.",
                     error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
                     error=error,
                 ),
                 ephemeral=True,
                 file=disnake.File(
-                    io.StringIO(exception.suggestion_text), filename="suggestion.txt"
+                    io.StringIO(exception.message_text), filename="content.txt"
                 ),
             )
 
@@ -594,10 +597,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     "error_code": ErrorCode.COMMAND_ON_COOLDOWN.value,
                 },
             )
+            natural_time = humanize.naturaldelta(exception.retry_after)
             return await interaction.send(
                 embed=self.error_embed(
                     "Command on Cooldown",
-                    f"Ahh man so fast! You must wait {exception.retry_after} seconds to run this command again",
+                    f"Ahh man so fast! You must wait {natural_time} to run this command again",
                     error_code=ErrorCode.COMMAND_ON_COOLDOWN,
                     error=error,
                 ),
@@ -886,6 +890,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.state.notify_shutdown()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
+        await self.redis.aclose()
         log.info("Shutting down")
         await self.close()
 

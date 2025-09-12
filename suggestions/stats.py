@@ -102,7 +102,7 @@ class StatsEnum(Enum):
                 "View voters": cls.VIEW_VOTERS,
             }[name]
         except KeyError:
-            log.error("Failed to find StatsEnum for %s", name)
+            log.debug("Failed to find StatsEnum for %s", name)
             return None
 
 

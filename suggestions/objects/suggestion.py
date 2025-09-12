@@ -17,7 +17,7 @@ from suggestions import ErrorCode
 from suggestions.exceptions import (
     ErrorHandled,
     SuggestionNotFound,
-    SuggestionSecurityViolation,
+    SuggestionSecurityViolation, ConfiguredChannelNoLongerExists,
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
@@ -443,7 +443,7 @@ class Suggestion:
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
-        user = await bot.get_or_fetch_user(self.suggestion_author_id)
+        user = await bot.get_or_fetch_user(self.suggestion_author_id, strict=True)
 
         if self.resolved_by:
             return await self._as_resolved_embed(bot, user)
@@ -1064,11 +1064,17 @@ class Suggestion:
         ]
 
         try:
+            from suggestions.objects import PremiumGuildConfig
+
+            premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+                self.guild_id, bot.state
+            )
             channel = await bot.get_or_fetch_channel(
                 guild_config.suggestions_channel_id
             )
             channel: disnake.TextChannel = cast(disnake.TextChannel, channel)
             message: disnake.Message = await channel.send(
+                content=premium_guild_config.get_suggestions_prefix(ih),
                 embed=await self.as_embed(bot),
                 components=[components_to_send],
             )
@@ -1081,6 +1087,10 @@ class Suggestion:
                 },
             )
         except disnake.Forbidden as e:
+            state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
+            await state.suggestions_db.delete(self.as_filter())
+            raise e
+        except ConfiguredChannelNoLongerExists as e:
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
             await state.suggestions_db.delete(self.as_filter())
             raise e

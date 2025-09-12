@@ -1,9 +1,17 @@
-version: "2"
-
 services:
+  suggestions_redis:
+    image: redis:7.4-alpine
+    container_name: "suggestions_redis"
+    ports:
+      - '3001:3001'
+    command: redis-server --port 3001 --save 20 1 --loglevel warning --requirepass haziness-sloppy-cycle-deduct-superman-undertook
+    volumes:
+      - cache:/data
   suggestions_bot_cluster_1:
     container_name: "suggestions_bot_cluster_1"
     image: docker.pkg.github.com/suggestionsbot/suggestions-bot-rewrite/suggestions-bot-rewrite:latest
+    depends_on:
+      - suggestions_redis
     build:
       dockerfile: Dockerfile
       context: .
@@ -50,3 +58,7 @@ services:
       UPTIME_PATCH: ...
     extends:
       service: suggestions_bot_cluster_1
+
+volumes:
+  cache:
+    driver: local
