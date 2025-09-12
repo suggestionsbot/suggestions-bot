@@ -809,7 +809,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         logger.critical(
-            "Unhandled error encountered",
+            "Unhandled error encountered (%s)",
+            exception.__class__.__name__,
             extra_metadata={
                 "error_name": exception.__class__.__name__,
                 "traceback": commons.exception_as_string(exception),
