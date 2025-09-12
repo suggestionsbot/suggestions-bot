@@ -109,9 +109,10 @@ class SuggestionsCog(commands.Cog):
             raise MessageTooLong(suggestion)
 
         ih: InteractionHandler = await InteractionHandler.new_handler(interaction)
-        if ih.has_premium:
-            # Premium, handle custom cooldowns
-            await self.handle_custom_suggestion_cooldown(ih)
+        # TODO Re-enable premium features at later date
+        # if ih.has_premium:
+        #     # Premium, handle custom cooldowns
+        #     await self.handle_custom_suggestion_cooldown(ih)
 
         suggestion: str = suggestion.replace("\\n", "\n")
 
@@ -174,12 +175,13 @@ class SuggestionsCog(commands.Cog):
                 except disnake.Forbidden as e:
                     raise MissingPermissionsToAccessQueueChannel from e
 
-                premium_guild_config: PremiumGuildConfig = (
-                    await PremiumGuildConfig.from_id(qs.guild_id, interaction.bot.state)
-                )
+                # TODO Re-enable premium features at later date
+                # premium_guild_config: PremiumGuildConfig = (
+                #     await PremiumGuildConfig.from_id(qs.guild_id, interaction.bot.state)
+                # )
                 qs_embed: disnake.Embed = await qs.as_embed(self.bot)
                 msg = await queue_channel.send(
-                    content=premium_guild_config.get_queued_suggestions_prefix(ih),
+                    # content=premium_guild_config.get_queued_suggestions_prefix(ih),
                     embed=qs_embed,
                     components=[
                         await buttons.SuggestionsQueueApprove(

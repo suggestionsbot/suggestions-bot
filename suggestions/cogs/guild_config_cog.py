@@ -194,84 +194,85 @@ class GuildConfigCog(commands.Cog):
             self.stats.type.GUILD_CONFIG_REJECTED_QUEUE_CHANNEL,
         )
 
-    @config.sub_command()
-    async def suggestions_prefix(
-        self,
-        interaction: disnake.GuildCommandInteraction,
-        message: str = commands.Param(
-            default="",
-            description="The message to send before the suggestion. This can be a role ping.",
-        ),
-        applies_to: str = commands.Param(
-            default="Both",
-            description="Whether this message should be sent on suggestions or queued suggestions.",
-            choices=["Suggestion", "Queued Suggestion", "Both"],
-        ),
-    ):
-        """Set a custom message for the suggest command."""
-        ih: InteractionHandler = await InteractionHandler.new_handler(
-            interaction, requires_premium=True
-        )
-        if len(message) > 1000:
-            raise MessageTooLong(message)
-
-        if (
-            "@everyone" in message
-            or "@here" in message
-            or f"<@&{interaction.guild_id}>" in message
-        ):
-            await ih.send(
-                "Sorry, prefixes cannot contain everyone or here pings. "
-                "We recommend setting a generic role instead."
-            )
-            return None
-
-        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
-            ih.interaction.guild_id, interaction.bot.state
-        )
-        if applies_to == "Suggestion":
-            premium_guild_config.suggestions_prefix = message
-        elif applies_to == "Queued Suggestion":
-            premium_guild_config.queued_suggestions_prefix = message
-        else:
-            premium_guild_config.suggestions_prefix = message
-            premium_guild_config.queued_suggestions_prefix = message
-
-        await self.bot.db.premium_guild_configs.upsert(
-            premium_guild_config, premium_guild_config
-        )
-        await ih.send(
-            "Thanks! I've saved your configuration changes for this. "
-            "That message will now be sent as a part of those suggestions going forward."
-        )
-        return None
-
-    @config.sub_command()
-    async def suggestions_cooldown(
-        self,
-        interaction: disnake.GuildCommandInteraction,
-        cooldown_amount: int = commands.Param(
-            default=None,
-            description="How many times users can run /suggest during the cooldown period.",
-        ),
-        cooldown_period: CooldownPeriod = commands.Param(
-            default=None,
-            description="The time period to allow cooldown_amount's during.",
-        ),
-    ):
-        """Set a custom cooldown for the suggest command."""
-        ih: InteractionHandler = await InteractionHandler.new_handler(
-            interaction, requires_premium=True
-        )
-        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
-            ih.interaction.guild_id, interaction.bot.state
-        )
-        premium_guild_config.cooldown_amount = cooldown_amount
-        premium_guild_config.cooldown_period = cooldown_period
-        await self.bot.db.premium_guild_configs.upsert(
-            premium_guild_config, premium_guild_config
-        )
-        await ih.send("Thanks! I've saved your configuration changes for this.")
+    # TODO Re-enable premium features at later date
+    # @config.sub_command()
+    # async def suggestions_prefix(
+    #     self,
+    #     interaction: disnake.GuildCommandInteraction,
+    #     message: str = commands.Param(
+    #         default="",
+    #         description="The message to send before the suggestion. This can be a role ping.",
+    #     ),
+    #     applies_to: str = commands.Param(
+    #         default="Both",
+    #         description="Whether this message should be sent on suggestions or queued suggestions.",
+    #         choices=["Suggestion", "Queued Suggestion", "Both"],
+    #     ),
+    # ):
+    #     """Set a custom message for the suggest command."""
+    #     ih: InteractionHandler = await InteractionHandler.new_handler(
+    #         interaction, requires_premium=True
+    #     )
+    #     if len(message) > 1000:
+    #         raise MessageTooLong(message)
+    #
+    #     if (
+    #         "@everyone" in message
+    #         or "@here" in message
+    #         or f"<@&{interaction.guild_id}>" in message
+    #     ):
+    #         await ih.send(
+    #             "Sorry, prefixes cannot contain everyone or here pings. "
+    #             "We recommend setting a generic role instead."
+    #         )
+    #         return None
+    #
+    #     premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+    #         ih.interaction.guild_id, interaction.bot.state
+    #     )
+    #     if applies_to == "Suggestion":
+    #         premium_guild_config.suggestions_prefix = message
+    #     elif applies_to == "Queued Suggestion":
+    #         premium_guild_config.queued_suggestions_prefix = message
+    #     else:
+    #         premium_guild_config.suggestions_prefix = message
+    #         premium_guild_config.queued_suggestions_prefix = message
+    #
+    #     await self.bot.db.premium_guild_configs.upsert(
+    #         premium_guild_config, premium_guild_config
+    #     )
+    #     await ih.send(
+    #         "Thanks! I've saved your configuration changes for this. "
+    #         "That message will now be sent as a part of those suggestions going forward."
+    #     )
+    #     return None
+    #
+    # @config.sub_command()
+    # async def suggestions_cooldown(
+    #     self,
+    #     interaction: disnake.GuildCommandInteraction,
+    #     cooldown_amount: int = commands.Param(
+    #         default=None,
+    #         description="How many times users can run /suggest during the cooldown period.",
+    #     ),
+    #     cooldown_period: CooldownPeriod = commands.Param(
+    #         default=None,
+    #         description="The time period to allow cooldown_amount's during.",
+    #     ),
+    # ):
+    #     """Set a custom cooldown for the suggest command."""
+    #     ih: InteractionHandler = await InteractionHandler.new_handler(
+    #         interaction, requires_premium=True
+    #     )
+    #     premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+    #         ih.interaction.guild_id, interaction.bot.state
+    #     )
+    #     premium_guild_config.cooldown_amount = cooldown_amount
+    #     premium_guild_config.cooldown_period = cooldown_period
+    #     await self.bot.db.premium_guild_configs.upsert(
+    #         premium_guild_config, premium_guild_config
+    #     )
+    #     await ih.send("Thanks! I've saved your configuration changes for this.")
 
     @config.sub_command()
     async def get(
@@ -683,36 +684,37 @@ class GuildConfigCog(commands.Cog):
             self.stats.type.GUILD_CONFIG_GET,
         )
 
-    @config.sub_command()
-    async def get_premium(
-        self,
-        interaction: disnake.GuildCommandInteraction,
-    ):
-        """Show the current premium configuration"""
-        ih = await InteractionHandler.new_handler(interaction)
-        premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
-            ih.interaction.guild_id, interaction.bot.state
-        )
-        cooldown_period = (
-            precisedelta(premium_guild_config.cooldown_period.as_timedelta())
-            if premium_guild_config.cooldown_period
-            else "Not set"
-        )
-        cooldown_amount = (
-            intcomma(premium_guild_config.cooldown_amount)
-            if premium_guild_config.cooldown_period
-            else "Not set"
-        )
-        embed = disnake.Embed(
-            title="Premium configuration for your guild",
-            color=self.bot.colors.embed_color,
-            timestamp=self.bot.state.now,
-            description=f"Cooldown period: `{cooldown_period}`\n"
-            f"Cooldown amount per period: `{cooldown_amount}`\n"
-            f"Suggestions prefix: {premium_guild_config.suggestions_prefix}\n"
-            f"Queued suggestions prefix: {premium_guild_config.queued_suggestions_prefix}\n",
-        )
-        await ih.send(embed=embed)
+    # TODO Re-enable premium features at later date
+    # @config.sub_command()
+    # async def get_premium(
+    #     self,
+    #     interaction: disnake.GuildCommandInteraction,
+    # ):
+    #     """Show the current premium configuration"""
+    #     ih = await InteractionHandler.new_handler(interaction)
+    #     premium_guild_config: PremiumGuildConfig = await PremiumGuildConfig.from_id(
+    #         ih.interaction.guild_id, interaction.bot.state
+    #     )
+    #     cooldown_period = (
+    #         precisedelta(premium_guild_config.cooldown_period.as_timedelta())
+    #         if premium_guild_config.cooldown_period
+    #         else "Not set"
+    #     )
+    #     cooldown_amount = (
+    #         intcomma(premium_guild_config.cooldown_amount)
+    #         if premium_guild_config.cooldown_period
+    #         else "Not set"
+    #     )
+    #     embed = disnake.Embed(
+    #         title="Premium configuration for your guild",
+    #         color=self.bot.colors.embed_color,
+    #         timestamp=self.bot.state.now,
+    #         description=f"Cooldown period: `{cooldown_period}`\n"
+    #         f"Cooldown amount per period: `{cooldown_amount}`\n"
+    #         f"Suggestions prefix: {premium_guild_config.suggestions_prefix}\n"
+    #         f"Queued suggestions prefix: {premium_guild_config.queued_suggestions_prefix}\n",
+    #     )
+    #     await ih.send(embed=embed)
 
     @config.sub_command_group()
     async def dm(self, interaction: disnake.GuildCommandInteraction):

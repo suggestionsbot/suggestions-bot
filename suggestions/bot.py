@@ -890,7 +890,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.state.notify_shutdown()
         await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
-        await self.redis.aclose()
+        # TODO Re-enable premium features at later date
+        # await self.redis.aclose()
         log.info("Shutting down")
         await self.close()
 

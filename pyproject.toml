@@ -21,6 +21,7 @@ dependencies = [
     "humanize>=4.11.0,<5",
     "disnake-ext-components",
     "tenacity>=9.1.2",
+    "redis[hiredis]>=6.4.0",
 ]
 
 [dependency-groups]
