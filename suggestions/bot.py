@@ -14,6 +14,7 @@ from typing import Type, Optional, Union, Any
 
 import aiohttp
 import alaric
+import botocore
 import commons
 import disnake
 import humanize
@@ -783,6 +784,25 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     },
                 )
                 raise exception
+
+        elif isinstance(exception, botocore.exceptions.ClientError):
+            logger.error(
+                "An error occurred during the handling of files",
+                extra_metadata={
+                    "error_name": exception.__class__.__name__,
+                    "traceback": commons.exception_as_string(exception),
+                },
+            )
+            return await interaction.send(
+                embed=self.error_embed(
+                    "Command failed",
+                    "Something went wrong uploading your file.\n\n"
+                    "If this occurs more then once please report it to support.",
+                    error_code=ErrorCode.R2_UPLOAD_ISSUE,
+                    error=error,
+                ),
+                ephemeral=True,
+            )
 
         ih: InteractionHandler = await InteractionHandler.fetch_handler(
             interaction.id, self

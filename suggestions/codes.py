@@ -29,6 +29,7 @@ class ErrorCode(IntEnum):
     MISSING_QUEUE_LOG_CHANNEL = 23
     MISSING_PERMISSIONS_IN_QUEUE_CHANNEL = 24
     INVALID_FILE_TYPE = 25
+    R2_UPLOAD_ISSUE = 26
 
     @classmethod
     def from_value(cls, value: int) -> ErrorCode:
