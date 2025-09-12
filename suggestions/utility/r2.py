@@ -12,11 +12,12 @@ from suggestions.exceptions import InvalidFileType
 
 logger = Logger(__name__)
 
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_random(min=1, max=5),
     retry=retry_if_not_exception_type(ValueError)
-          | retry_if_not_exception_type(AssertionError),
+    | retry_if_not_exception_type(AssertionError),
     reraise=True,
 )
 async def upload_file_to_r2(

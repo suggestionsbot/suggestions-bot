@@ -17,7 +17,8 @@ from suggestions import ErrorCode
 from suggestions.exceptions import (
     ErrorHandled,
     SuggestionNotFound,
-    SuggestionSecurityViolation, ConfiguredChannelNoLongerExists,
+    SuggestionSecurityViolation,
+    ConfiguredChannelNoLongerExists,
 )
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import MessageEditing
