@@ -1,14 +1,18 @@
-FROM python:3.11-alpine
+FROM ghcr.io/astral-sh/uv:python3.13-alpine
+
+RUN apk update
+RUN apk add git
 
 WORKDIR /code
-RUN pip install poetry
+
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
 COPY ./pyproject.toml /code/pyproject.toml
-COPY ./poetry.lock /code/poetry.lock
+COPY ./uv.lock /code/uv.lock
 
-RUN poetry install
+RUN uv sync --frozen --no-dev
 
 COPY . /code
 
-
-CMD ["poetry", "run", "python", "main.py"]
+CMD ["uv", "run", "python", "-O", "main.py"]

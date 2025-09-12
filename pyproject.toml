@@ -1,41 +1,45 @@
-[tool.poetry]
-name = "suggestions bot"
-version = "3.31"
+[project]
+name = "suggestions-bot"
+version = "3.30"
 description = "A Discord bot designed to build better communities by encouraging a positive and constructive relationship between community and staff."
-authors = []
-license = "AGPL-3.0"
+authors = [{ name = "Suggestions Bot" }]
+requires-python = "~=3.13"
 readme = "readme.md"
+license = "AGPL-3.0"
+dependencies = [
+    "disnake[speed]==2.10.1",
+    "alaric>=1.5.0,<2",
+    "function-cooldowns>=2.0.1,<3",
+    "httpx>=0.28.1,<0.29",
+    "orjson>=3.10.11,<4",
+    "skelmis-commons>=1.4.0,<2",
+    "zonis>=2.1.0,<3",
+    "aiobotocore>=2.15.2,<3",
+    "logoo>=1.5.1,<2",
+    "typing-extensions>=4.12.2,<5",
+    "python-dotenv>=1.0.1,<2",
+    "humanize>=4.11.0,<5",
+    "disnake-ext-components",
+    "tenacity>=9.1.2",
+]
 
-[tool.poetry]
-package-mode = false
+[dependency-groups]
+dev = [
+    "causar>=0.2.0,<0.3",
+    "mongomock-motor>=0.0.34,<0.0.35",
+    "mongomock>=4.2.0.post1,<5",
+    "motor-stubs>=1.7.1,<2",
+    "pytest>=8.3.3,<9",
+    "pytest-asyncio>=0.24.0,<0.25",
+    "black>=24.10.0,<25",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-disnake = {extras = ["speed"], version = "2.10.1"}
-alaric = "^1.5.0"
-function-cooldowns = "^2.2.0"
-httpx = "^0.28.1"
-orjson = "^3.10.11"
-skelmis-commons = "^1.4.0"
-zonis = "^2.1.0"
-aiobotocore = "^2.15.2"
-logoo = "^1.5.1"
-typing-extensions = "^4.12.2"
-python-dotenv = "^1.0.1"
-humanize = "^4.11.0"
-disnake-ext-components = {git = "https://github.com/suggestionsbot/disnake-ext-components.git", rev = "docs"}
-redis = {extras = ["hiredis"], version = "^5.2.1"}
+[tool.uv]
+package = false
 
-
-[tool.poetry.group.dev.dependencies]
-causar = "^0.2.0"
-mongomock-motor = "^0.0.34"
-mongomock = "^4.2.0.post1"
-motor-stubs = "^1.7.1"
-pytest = "^8.3.3"
-pytest-asyncio = "^0.24.0"
-black = "^24.10.0"
+[tool.uv.sources]
+disnake-ext-components = { git = "https://github.com/suggestionsbot/disnake-ext-components.git", rev = "docs" }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
