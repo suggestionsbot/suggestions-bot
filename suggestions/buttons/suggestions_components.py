@@ -89,6 +89,7 @@ class SuggestionUpVote(components.RichButton):
                 extra_metadata={
                     "suggestion_id": self.suggestion_id,
                     "guild_id": inter.guild_id,
+                    "author_id": member_id,
                 },
             )
         else:
@@ -100,6 +101,7 @@ class SuggestionUpVote(components.RichButton):
                 extra_metadata={
                     "suggestion_id": self.suggestion_id,
                     "guild_id": inter.guild_id,
+                    "author_id": member_id,
                 },
             )
 
@@ -141,6 +143,7 @@ class SuggestionDownVote(components.RichButton):
                 extra_metadata={
                     "suggestion_id": self.suggestion_id,
                     "guild_id": inter.guild_id,
+                    "author_id": member_id,
                 },
             )
         else:
@@ -152,6 +155,7 @@ class SuggestionDownVote(components.RichButton):
                 extra_metadata={
                     "suggestion_id": self.suggestion_id,
                     "guild_id": inter.guild_id,
+                    "author_id": member_id,
                 },
             )
 
