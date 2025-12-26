@@ -60,7 +60,7 @@ async def run_bot():
             "bot_version": bot.version,
         },
     )
-    await logger.start_consumer()
+    # await logger.start_consumer()
 
     # Make sure we don't shutdown due to a previous shutdown request
     cursor: Cursor = (
