@@ -53,6 +53,7 @@ async def wrapper(
     # Run the component after updating parsers...
     tracer = trace.get_tracer("suggestions-bot-v3")
     with tracer.start_as_current_span(f"component {inter.component.custom_id}") as span:
+        span.set_attribute("bot.cluster.id", inter.bot.cluster_id)
         span.set_attribute("interaction.author.id", inter.author.id)
         span.set_attribute("interaction.author.global_name", inter.author.global_name)
         span.set_attribute("interaction.guild.id", inter.guild_id)

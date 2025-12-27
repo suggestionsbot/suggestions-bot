@@ -1083,6 +1083,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         )
         trace_name = self.get_qualified_name(interaction)
         with constants.TRACER.start_as_current_span(trace_name) as span:
+            span.set_attribute("bot.cluster.id", self.cluster_id)
             span.set_attribute("interaction.author.id", interaction.author.id)
             span.set_attribute(
                 "interaction.author.global_name", interaction.author.global_name
