@@ -293,581 +293,586 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         interaction: disnake.ApplicationCommandInteraction,
         exception: commands.CommandError,
     ) -> None:
-        await self._push_slash_error_stats(interaction)
         exception = getattr(exception, "original", exception)
-        error: Error = await self.persist_error(exception, interaction)
-
         if isinstance(exception, ErrorHandled):
-            return
+            return None
 
         with constants.TRACER.start_as_current_span("error handler") as child:
+            await self._push_slash_error_stats(interaction)
+            error: Error = await self.persist_error(exception, interaction)
+
             child.set_status(Status(StatusCode.ERROR))
             child.record_exception(exception)
 
-        if isinstance(exception, UnhandledError):
-            log.critical(
-                "An unhandled exception occurred",
-                extra={
-                    "error.id": error.id,
-                    "interaction.author.id": error.user_id,
-                    "interaction.guild.id": error.guild_id,
-                    "error.traceback": commons.exception_as_string(exception),
-                    "error.code": ErrorCode.UNHANDLED_ERROR.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Something went wrong",
-                    f"Please contact support.",
-                    error_code=ErrorCode.UNHANDLED_ERROR,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        attempt_code: Optional[ErrorCode] = try_parse_http_error(
-            "".join(traceback.format_exception(exception))
-        )
-        if attempt_code:
-            error.has_been_fixed = True
-            await self.db.error_tracking.update(error, error)
-
-        if attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
-            log.debug(
-                "MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": attempt_code.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Configuration Error",
-                    "I do not have permission to use your guilds configured suggestions channel.",
-                    error_code=attempt_code.value,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL:
-            log.debug(
-                "MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": attempt_code.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Configuration Error",
-                    "I do not have permission to use your guilds configured logs channel.",
-                    error_code=attempt_code,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif attempt_code == ErrorCode.MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL:
-            log.debug(
-                "MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": attempt_code.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Configuration Error",
-                    "I do not have permission to send messages in your guilds suggestion channel.",
-                    error_code=attempt_code,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        if isinstance(exception, BetaOnly):
-            log.critical(
-                "BetaOnly",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                },
-            )
-            embed: disnake.Embed = disnake.Embed(
-                title="Beta restrictions",
-                description="This command is restricted to beta guilds only, "
-                "please check back at a later date.",
-                colour=self.colors.beta_required,
-            )
-            return await interaction.send(embed=embed, ephemeral=True)
-
-        elif isinstance(exception, MissingSuggestionsChannel):
-            log.debug(
-                "MissingSuggestionsChannel",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_SUGGESTIONS_CHANNEL.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Missing Suggestions Channel",
-                    "This command requires a suggestion channel to use.\n"
-                    "Please contact an administrator and ask them to set one up "
-                    "using the following command.\n`/config channel`",
-                    error_code=ErrorCode.MISSING_SUGGESTIONS_CHANNEL,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, MissingLogsChannel):
-            log.debug(
-                "MissingLogsChannel",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_LOG_CHANNEL.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Missing Logs Channel",
-                    "This command requires a log channel to use.\n"
-                    "Please contact an administrator and ask them to set one up "
-                    "using the following command.\n`/config logs`",
-                    error_code=ErrorCode.MISSING_LOG_CHANNEL,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, MissingQueueLogsChannel):
-            log.debug(
-                "MissingQueueLogsChannel",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_QUEUE_LOG_CHANNEL.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Missing Queue Logs Channel",
-                    "This command requires a queue log channel to use.\n"
-                    "Please contact an administrator and ask them to set one up "
-                    "using the following command.\n`/config queue_channel`",
-                    error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
-            log.debug(
-                "MissingPermissionsToAccessQueueChannel",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    title="Missing permissions within queue logs channel",
-                    description="The bot does not have the required permissions in your queue channel. "
-                    "Please contact an administrator and ask them to fix this.",
-                    error=error,
-                    error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
+            if isinstance(exception, UnhandledError):
+                log.critical(
+                    "An unhandled exception occurred",
+                    extra={
+                        "error.id": error.id,
+                        "interaction.author.id": error.user_id,
+                        "interaction.guild.id": error.guild_id,
+                        "error.traceback": commons.exception_as_string(exception),
+                        "error.code": ErrorCode.UNHANDLED_ERROR.value,
+                    },
                 )
-            )
-
-        elif isinstance(exception, SuggestionSecurityViolation):
-            log.critical(
-                "User %s looked up a suggestion from a different guild",
-                interaction.author.id,
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "suggestion_id": exception.suggestion_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    exception.user_facing_message,
-                    error_code=ErrorCode.SUGGESTION_NOT_FOUND,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, commands.MissingPermissions):
-            perms = ",".join(i for i in exception.missing_permissions)
-            log.debug(
-                "commands.MissingPermissions: %s",
-                perms,
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_PERMISSIONS.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Missing Permissions",
-                    f"I need the following permissions in order to run this command.\n{perms}\n"
-                    f"Please contact an administrator and ask them to provide them for me.",
-                    error_code=ErrorCode.MISSING_PERMISSIONS,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, SuggestionNotFound):
-            log.debug(
-                "SuggestionNotFound",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    str(exception),
-                    error_code=ErrorCode.SUGGESTION_NOT_FOUND,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, MessageTooLong):
-            log.debug(
-                "MessageTooLong",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.SUGGESTION_CONTENT_TOO_LONG.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "Your content was too long, please limit it to 1000 characters or less.\n\n"
-                    "I have attached a file containing your content to save rewriting it entirely.",
-                    error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
-                    error=error,
-                ),
-                ephemeral=True,
-                file=disnake.File(
-                    io.StringIO(exception.message_text), filename="content.txt"
-                ),
-            )
-
-        elif isinstance(exception, InvalidGuildConfigOption):
-            log.debug(
-                "InvalidGuildConfigOption",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.INVALID_GUILD_CONFIG_CHOICE.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "The provided guild config choice doesn't exist.",
-                    error_code=ErrorCode.INVALID_GUILD_CONFIG_CHOICE,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, CallableOnCooldown):
-            log.debug(
-                "CallableOnCooldown",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.COMMAND_ON_COOLDOWN.value,
-                },
-            )
-            natural_time = humanize.naturaldelta(exception.retry_after)
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command on Cooldown",
-                    f"Ahh man so fast! You must wait {natural_time} to run this command again",
-                    error_code=ErrorCode.COMMAND_ON_COOLDOWN,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, BlocklistedUser):
-            log.debug(
-                "BlocklistedUser",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.BLOCKLISTED_USER.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Blocked Action",
-                    "Administrators from this guild have removed your ability to run this action.",
-                    error_code=ErrorCode.BLOCKLISTED_USER,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, InvalidFileType):
-            log.debug(
-                "InvalidFileType",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.INVALID_FILE_TYPE.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Invalid file type",
-                    "The file you attempted to upload is not an accepted type.\n\n"
-                    "If you believe this is an error please reach out to us via our support discord.",
-                    error_code=ErrorCode.INVALID_FILE_TYPE,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, ConfiguredChannelNoLongerExists):
-            log.debug(
-                "ConfiguredChannelNoLongerExists",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Configuration Error",
-                    "I cannot find your configured channel for this command.\n"
-                    "Please ask an administrator to reconfigure one.\n"
-                    "This can be done using: `/config channel`",
-                    error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, LocalizationKeyError):
-            gid = interaction.guild_id if interaction.guild_id else None
-            log.debug(
-                "LocalizationKeyError",
-                extra={
-                    "interaction.guild.id": gid,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.MISSING_TRANSLATION.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Something went wrong",
-                    f"Please contact support.\n\nGuild ID: {gid}",
-                    error_code=ErrorCode.MISSING_TRANSLATION,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, QueueImbalance):
-            log.debug(
-                "QueueImbalance",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.QUEUE_IMBALANCE.value,
-                },
-            )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Queue Imbalance",
-                    f"This suggestion has already been handled in another queue.",
-                    error_code=ErrorCode.QUEUE_IMBALANCE,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        elif isinstance(exception, disnake.NotFound):
-            log.debug("disnake.NotFound: %s", exception.text)
-            log.debug(
-                "disnake.NotFound: %s",
-                exception.text,
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.traceback": commons.exception_as_string(exception),
-                    "error.code": ErrorCode.GENERIC_NOT_FOUND.value,
-                },
-            )
-            gid = interaction.guild_id if interaction.guild_id else None
-            await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "I've failed to find something, please retry whatever you were doing.\n"
-                    f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
-                    error_code=ErrorCode.GENERIC_NOT_FOUND,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-            raise exception
-
-        elif isinstance(exception, disnake.Forbidden):
-            log.debug("disnake.Forbidden: %s", exception.text)
-            log.debug(
-                "disnake.Forbidden: %s",
-                exception.text,
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.GENERIC_FORBIDDEN.value,
-                },
-            )
-            await interaction.send(
-                embed=self.error_embed(
-                    exception.text,
-                    "Looks like something went wrong. "
-                    "Please make sure I have all the correct permissions in your configured channels.",
-                    error_code=ErrorCode.GENERIC_FORBIDDEN,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-            raise exception
-
-        elif isinstance(exception, commands.NotOwner):
-            log.debug(
-                "commands.NotOwner",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.OWNER_ONLY.value,
-                },
-            )
-            await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "You do not have permission to run this command.",
-                    error_code=ErrorCode.OWNER_ONLY,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-            raise exception
-
-        elif isinstance(exception, disnake.HTTPException):
-            if exception.code == 40060:
-                log.debug(
-                    "disnake.HTTPException: Interaction has already been acknowledged"
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Something went wrong",
+                        f"Please contact support.",
+                        error_code=ErrorCode.UNHANDLED_ERROR,
+                        error=error,
+                    ),
+                    ephemeral=True,
                 )
+
+            attempt_code: Optional[ErrorCode] = try_parse_http_error(
+                "".join(traceback.format_exception(exception))
+            )
+            if attempt_code:
+                error.has_been_fixed = True
+                await self.db.error_tracking.update(error, error)
+
+            if (
+                attempt_code
+                == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL
+            ):
                 log.debug(
-                    "disnake.HTTPException: Interaction has already been acknowledged",
+                    "MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": attempt_code.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Configuration Error",
+                        "I do not have permission to use your guilds configured suggestions channel.",
+                        error_code=attempt_code.value,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL:
+                log.debug(
+                    "MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": attempt_code.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Configuration Error",
+                        "I do not have permission to use your guilds configured logs channel.",
+                        error_code=attempt_code,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif (
+                attempt_code == ErrorCode.MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL
+            ):
+                log.debug(
+                    "MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": attempt_code.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Configuration Error",
+                        "I do not have permission to send messages in your guilds suggestion channel.",
+                        error_code=attempt_code,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            if isinstance(exception, BetaOnly):
+                log.critical(
+                    "BetaOnly",
                     extra={
                         "interaction.guild.id": interaction.guild_id,
                         "interaction.author.id": interaction.author.id,
                         "interaction.author.global_name": interaction.author.global_name,
                     },
                 )
+                embed: disnake.Embed = disnake.Embed(
+                    title="Beta restrictions",
+                    description="This command is restricted to beta guilds only, "
+                    "please check back at a later date.",
+                    colour=self.colors.beta_required,
+                )
+                return await interaction.send(embed=embed, ephemeral=True)
+
+            elif isinstance(exception, MissingSuggestionsChannel):
+                log.debug(
+                    "MissingSuggestionsChannel",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_SUGGESTIONS_CHANNEL.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Missing Suggestions Channel",
+                        "This command requires a suggestion channel to use.\n"
+                        "Please contact an administrator and ask them to set one up "
+                        "using the following command.\n`/config channel`",
+                        error_code=ErrorCode.MISSING_SUGGESTIONS_CHANNEL,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, MissingLogsChannel):
+                log.debug(
+                    "MissingLogsChannel",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_LOG_CHANNEL.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Missing Logs Channel",
+                        "This command requires a log channel to use.\n"
+                        "Please contact an administrator and ask them to set one up "
+                        "using the following command.\n`/config logs`",
+                        error_code=ErrorCode.MISSING_LOG_CHANNEL,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, MissingQueueLogsChannel):
+                log.debug(
+                    "MissingQueueLogsChannel",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_QUEUE_LOG_CHANNEL.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Missing Queue Logs Channel",
+                        "This command requires a queue log channel to use.\n"
+                        "Please contact an administrator and ask them to set one up "
+                        "using the following command.\n`/config queue_channel`",
+                        error_code=ErrorCode.MISSING_QUEUE_LOG_CHANNEL,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
+                log.debug(
+                    "MissingPermissionsToAccessQueueChannel",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        title="Missing permissions within queue logs channel",
+                        description="The bot does not have the required permissions in your queue channel. "
+                        "Please contact an administrator and ask them to fix this.",
+                        error=error,
+                        error_code=ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL,
+                    )
+                )
+
+            elif isinstance(exception, SuggestionSecurityViolation):
+                log.critical(
+                    "User %s looked up a suggestion from a different guild",
+                    interaction.author.id,
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "suggestion_id": exception.suggestion_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        exception.user_facing_message,
+                        error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, commands.MissingPermissions):
+                perms = ",".join(i for i in exception.missing_permissions)
+                log.debug(
+                    "commands.MissingPermissions: %s",
+                    perms,
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_PERMISSIONS.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Missing Permissions",
+                        f"I need the following permissions in order to run this command.\n{perms}\n"
+                        f"Please contact an administrator and ask them to provide them for me.",
+                        error_code=ErrorCode.MISSING_PERMISSIONS,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, SuggestionNotFound):
+                log.debug(
+                    "SuggestionNotFound",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        str(exception),
+                        error_code=ErrorCode.SUGGESTION_NOT_FOUND,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, MessageTooLong):
+                log.debug(
+                    "MessageTooLong",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.SUGGESTION_CONTENT_TOO_LONG.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        "Your content was too long, please limit it to 1000 characters or less.\n\n"
+                        "I have attached a file containing your content to save rewriting it entirely.",
+                        error_code=ErrorCode.SUGGESTION_CONTENT_TOO_LONG,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                    file=disnake.File(
+                        io.StringIO(exception.message_text), filename="content.txt"
+                    ),
+                )
+
+            elif isinstance(exception, InvalidGuildConfigOption):
+                log.debug(
+                    "InvalidGuildConfigOption",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.INVALID_GUILD_CONFIG_CHOICE.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        "The provided guild config choice doesn't exist.",
+                        error_code=ErrorCode.INVALID_GUILD_CONFIG_CHOICE,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, CallableOnCooldown):
+                log.debug(
+                    "CallableOnCooldown",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.COMMAND_ON_COOLDOWN.value,
+                    },
+                )
+                natural_time = humanize.naturaldelta(exception.retry_after)
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command on Cooldown",
+                        f"Ahh man so fast! You must wait {natural_time} to run this command again",
+                        error_code=ErrorCode.COMMAND_ON_COOLDOWN,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, BlocklistedUser):
+                log.debug(
+                    "BlocklistedUser",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.BLOCKLISTED_USER.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Blocked Action",
+                        "Administrators from this guild have removed your ability to run this action.",
+                        error_code=ErrorCode.BLOCKLISTED_USER,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, InvalidFileType):
+                log.debug(
+                    "InvalidFileType",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.INVALID_FILE_TYPE.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Invalid file type",
+                        "The file you attempted to upload is not an accepted type.\n\n"
+                        "If you believe this is an error please reach out to us via our support discord.",
+                        error_code=ErrorCode.INVALID_FILE_TYPE,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, ConfiguredChannelNoLongerExists):
+                log.debug(
+                    "ConfiguredChannelNoLongerExists",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Configuration Error",
+                        "I cannot find your configured channel for this command.\n"
+                        "Please ask an administrator to reconfigure one.\n"
+                        "This can be done using: `/config channel`",
+                        error_code=ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, LocalizationKeyError):
+                gid = interaction.guild_id if interaction.guild_id else None
+                log.debug(
+                    "LocalizationKeyError",
+                    extra={
+                        "interaction.guild.id": gid,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.MISSING_TRANSLATION.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Something went wrong",
+                        f"Please contact support.\n\nGuild ID: {gid}",
+                        error_code=ErrorCode.MISSING_TRANSLATION,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, QueueImbalance):
+                log.debug(
+                    "QueueImbalance",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.QUEUE_IMBALANCE.value,
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Queue Imbalance",
+                        f"This suggestion has already been handled in another queue.",
+                        error_code=ErrorCode.QUEUE_IMBALANCE,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            elif isinstance(exception, disnake.NotFound):
+                log.debug("disnake.NotFound: %s", exception.text)
+                log.debug(
+                    "disnake.NotFound: %s",
+                    exception.text,
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.traceback": commons.exception_as_string(exception),
+                        "error.code": ErrorCode.GENERIC_NOT_FOUND.value,
+                    },
+                )
+                gid = interaction.guild_id if interaction.guild_id else None
+                await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        "I've failed to find something, please retry whatever you were doing.\n"
+                        f"If this error persists please contact support.\n\nGuild ID: `{gid}`",
+                        error_code=ErrorCode.GENERIC_NOT_FOUND,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
                 raise exception
 
-        elif isinstance(exception, botocore.exceptions.ClientError):
-            log.error(
-                "An error occurred during the handling of files",
+            elif isinstance(exception, disnake.Forbidden):
+                log.debug("disnake.Forbidden: %s", exception.text)
+                log.debug(
+                    "disnake.Forbidden: %s",
+                    exception.text,
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.GENERIC_FORBIDDEN.value,
+                    },
+                )
+                await interaction.send(
+                    embed=self.error_embed(
+                        exception.text,
+                        "Looks like something went wrong. "
+                        "Please make sure I have all the correct permissions in your configured channels.",
+                        error_code=ErrorCode.GENERIC_FORBIDDEN,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+                raise exception
+
+            elif isinstance(exception, commands.NotOwner):
+                log.debug(
+                    "commands.NotOwner",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.OWNER_ONLY.value,
+                    },
+                )
+                await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        "You do not have permission to run this command.",
+                        error_code=ErrorCode.OWNER_ONLY,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+                raise exception
+
+            elif isinstance(exception, disnake.HTTPException):
+                if exception.code == 40060:
+                    log.debug(
+                        "disnake.HTTPException: Interaction has already been acknowledged"
+                    )
+                    log.debug(
+                        "disnake.HTTPException: Interaction has already been acknowledged",
+                        extra={
+                            "interaction.guild.id": interaction.guild_id,
+                            "interaction.author.id": interaction.author.id,
+                            "interaction.author.global_name": interaction.author.global_name,
+                        },
+                    )
+                    raise exception
+
+            elif isinstance(exception, botocore.exceptions.ClientError):
+                log.error(
+                    "An error occurred during the handling of files",
+                    extra={
+                        "error.name": exception.__class__.__name__,
+                        "error.traceback": commons.exception_as_string(exception),
+                    },
+                )
+                return await interaction.send(
+                    embed=self.error_embed(
+                        "Command failed",
+                        "Something went wrong uploading your file.\n\n"
+                        "If this occurs more then once please report it to support.",
+                        error_code=ErrorCode.R2_UPLOAD_ISSUE,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            ih: InteractionHandler = await InteractionHandler.fetch_handler(
+                interaction.id, self
+            )
+            if ih is not None and not ih.has_sent_something:
+                log.critical(
+                    "Interaction was never ack'd",
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
+                        "error.code": ErrorCode.UNHANDLED_ERROR.value,
+                    },
+                )
+                gid = interaction.guild_id if interaction.guild_id else None
+                # Fix "Bot is thinking" hanging on edge cases...
+                await interaction.send(
+                    embed=self.error_embed(
+                        "Something went wrong",
+                        f"Please contact support.\n\nGuild ID: {gid}",
+                        error_code=ErrorCode.UNHANDLED_ERROR,
+                        error=error,
+                    ),
+                    ephemeral=True,
+                )
+
+            log.critical(
+                "Unhandled error encountered (%s)",
+                exception.__class__.__name__,
                 extra={
                     "error.name": exception.__class__.__name__,
                     "error.traceback": commons.exception_as_string(exception),
                 },
             )
-            return await interaction.send(
-                embed=self.error_embed(
-                    "Command failed",
-                    "Something went wrong uploading your file.\n\n"
-                    "If this occurs more then once please report it to support.",
-                    error_code=ErrorCode.R2_UPLOAD_ISSUE,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        ih: InteractionHandler = await InteractionHandler.fetch_handler(
-            interaction.id, self
-        )
-        if ih is not None and not ih.has_sent_something:
-            log.critical(
-                "Interaction was never ack'd",
-                extra={
-                    "interaction.guild.id": interaction.guild_id,
-                    "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
-                    "error.code": ErrorCode.UNHANDLED_ERROR.value,
-                },
-            )
-            gid = interaction.guild_id if interaction.guild_id else None
-            # Fix "Bot is thinking" hanging on edge cases...
-            await interaction.send(
-                embed=self.error_embed(
-                    "Something went wrong",
-                    f"Please contact support.\n\nGuild ID: {gid}",
-                    error_code=ErrorCode.UNHANDLED_ERROR,
-                    error=error,
-                ),
-                ephemeral=True,
-            )
-
-        log.critical(
-            "Unhandled error encountered (%s)",
-            exception.__class__.__name__,
-            extra={
-                "error.name": exception.__class__.__name__,
-                "error.traceback": commons.exception_as_string(exception),
-            },
-        )
-        raise exception
+            raise exception
 
     async def on_button_error(
         self,
