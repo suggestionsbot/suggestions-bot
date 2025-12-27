@@ -91,3 +91,9 @@ def get_secret(secret_name: str, infisical_client: InfisicalSDKClient) -> str:
 
 
 TRACER = trace.get_tracer(__name__)
+CF_R2_ACCESS_KEY = get_secret("CF_R2_ACCESS_KEY", infisical_client)
+CF_R2_SECRET_ACCESS_KEY = get_secret("CF_R2_SECRET_ACCESS_KEY", infisical_client)
+CF_R2_BUCKET = get_secret("CF_R2_BUCKET", infisical_client)
+CF_R2_URL = get_secret("CF_R2_URL", infisical_client)
+BOT_TOKEN = get_secret("BOT_TOKEN", infisical_client)
+MONGO_URL = get_secret("MONGO_URL", infisical_client)

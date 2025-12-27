@@ -24,7 +24,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
     log = logging.getLogger(__name__)
     intents = disnake.Intents.none()
     intents.guilds = True
-    is_prod: bool = True if os.environ.get("PROD", None) else False
+    is_prod: bool = True if os.environ.get("INFISICAL_SLUG", None) == "prod" else False
 
     if is_prod:
         total_shards = int(os.environ["TOTAL_SHARDS"])

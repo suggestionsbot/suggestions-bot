@@ -74,7 +74,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         # TODO Set redis and also auto set decoding from bytes to strings
         self.redis: redis.Redis = None
 
-        self.is_prod: bool = True if os.environ.get("PROD", None) else False
+        self.is_prod: bool = (
+            True if os.environ.get("INFISICAL_SLUG", None) == "prod" else False
+        )
 
         db = None
         if "database_wrapper" in kwargs:
@@ -84,9 +86,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             self.db = db
         else:
             self.db: SuggestionsMongoManager = SuggestionsMongoManager(
-                os.environ["PROD_MONGO_URL"]
-                if self.is_prod
-                else os.environ["MONGO_URL"]
+                constants.MONGO_URL
             )
 
         self.colors: Type[Colors] = Colors
@@ -935,7 +935,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         async def process_update_bot_listings():
             await self.wait_until_ready()
 
-            headers = {"Authorization": os.environ["SUGGESTIONS_API_KEY"]}
+            headers = {
+                "Authorization": constants.get_secret(
+                    "LISTS_API_KEY", constants.infisical_client
+                )
+            }
             while not state.is_closing:
                 app_data = await self.application_info()
                 total_guilds = app_data.approximate_guild_count
@@ -946,9 +950,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 }
                 async with aiohttp.ClientSession(headers=headers) as session:
                     async with session.post(
-                        os.environ[
-                            "SUGGESTIONS_STATS_API_URL"
-                        ],  # This is the bot list API # lists.suggestions.gg
+                        constants.get_secret(
+                            "LISTS_API_URL", constants.infisical_client
+                        ),  # This is the bot list API # lists.suggestions.gg
                         json=body,
                     ) as r:
                         if r.status != 200:

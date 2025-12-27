@@ -45,11 +45,9 @@ async def run_bot():
     bot = await suggestions.create_bot()
 
     await bot.load()
-    TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
-
     log.info("About to start SuggestionsBot | %s", bot.version)
     log.info("We are in prod" if bot.is_prod else "We are launching in non-prod")
-    await bot.start(TOKEN)
+    await bot.start(constants.BOT_TOKEN)
 
 
 asyncio.run(run_bot())
