@@ -251,63 +251,6 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             await InteractionHandler.new_handler(ctx, i_just_want_an_instance=True)
         )
 
-    @bot.slash_command(
-        guild_ids=[601219766258106399, 737166408525283348],
-        default_member_permissions=disnake.Permissions(administrator=True),
-    )
-    @commands.contexts(guild=True)
-    @commands.is_owner()
-    async def shutdown(
-        interaction: disnake.ApplicationCommandInteraction,
-        cluster_id=commands.Param(
-            default=None,
-            choices=[str(i) for i in range(1, 7)],
-            description="The specific cluster you wish to shut down",
-        ),
-    ):
-        """Gracefully shut the bot down."""
-        await interaction.send("Initiating shutdown now.", ephemeral=True)
-        if not bot.is_prod:
-            await bot.graceful_shutdown()
-            return
-
-        if cluster_id:
-            cluster_id = int(cluster_id)
-            if cluster_id not in list(range(1, 7)):
-                return interaction.send("Invalid cluster id", ephemeral=True)
-
-            if cluster_id == bot.cluster_id:
-                # Only shut ourselves down
-                await bot.graceful_shutdown()
-                return
-
-            # Mark all other clusters as responded
-            # so only the one we want shuts down
-            responded_clusters = list(range(1, 7))
-            responded_clusters.remove(cluster_id)
-            await bot.db.cluster_shutdown_requests.insert(
-                {
-                    "responded_clusters": responded_clusters,
-                    "timestamp": bot.state.now,
-                    "issuer_cluster_id": bot.cluster_id,
-                }
-            )
-            log.info("Asked cluster %s to shut down", cluster_id)
-            return
-
-        # We need to notify other clusters to shut down
-        responded_clusters = [bot.cluster_id]
-        await bot.db.cluster_shutdown_requests.insert(
-            {
-                "responded_clusters": responded_clusters,
-                "timestamp": bot.state.now,
-                "issuer_cluster_id": bot.cluster_id,
-            }
-        )
-        log.info("Notified other clusters to shutdown")
-
-        await bot.graceful_shutdown()
-
     async def graceful_shutdown(bot: SuggestionsBot, _):
         await bot.graceful_shutdown()
 

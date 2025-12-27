@@ -44,20 +44,6 @@ async def run_bot():
     log = logging.getLogger(__name__)
     bot = await suggestions.create_bot()
 
-    # Make sure we don't shutdown due to a previous shutdown request
-    cursor: Cursor = (
-        Cursor.from_document(bot.db.cluster_shutdown_requests)
-        .set_sort(("timestamp", alaric.Descending))
-        .set_limit(1)
-    )
-    items = await cursor.execute()
-    if items:
-        entry = items[0]
-        if bot.cluster_id not in entry["responded_clusters"]:
-            entry["responded_clusters"].append(bot.cluster_id)
-            await bot.db.cluster_shutdown_requests.upsert({"_id": entry["_id"]}, entry)
-            log.debug("Marked old shutdown request as satisfied")
-
     await bot.load()
     TOKEN = os.environ["PROD_TOKEN"] if bot.is_prod else os.environ["TOKEN"]
 

@@ -904,7 +904,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
-        await self.watch_for_shutdown_request()
         await self.load_cogs()
 
     async def graceful_shutdown(self) -> None:
@@ -919,57 +918,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         # await self.redis.aclose()
         log.info("Shutting down")
         await self.close()
-
-    async def watch_for_shutdown_request(self):
-        if not self.is_prod:
-            log.info("Not watching for shutdown as not on prod")
-            return
-
-        state: State = self.state
-
-        async def process_watch_for_shutdown():
-            await self.wait_until_ready()
-            log.debug("Started listening for shutdown requests")
-
-            while not state.is_closing:
-                cursor: Cursor = (
-                    Cursor.from_document(self.db.cluster_shutdown_requests)
-                    .set_sort(("timestamp", alaric.Descending))
-                    .set_limit(1)
-                )
-                items = await cursor.execute()
-                if not items:
-                    await commons.sleep_with_condition(
-                        15, lambda: self.state.is_closing
-                    )
-                    continue
-
-                entry = items[0]
-                if not entry or (
-                    entry and self.cluster_id in entry["responded_clusters"]
-                ):
-                    await commons.sleep_with_condition(
-                        15, lambda: self.state.is_closing
-                    )
-                    continue
-
-                # We need to respond
-                log.info(
-                    "Received request to shutdown from cluster %s",
-                    entry["issuer_cluster_id"],
-                )
-                entry["responded_clusters"].append(self.cluster_id)
-                await self.db.cluster_shutdown_requests.upsert(
-                    {"_id": entry["_id"]}, entry
-                )
-                state.remove_background_task(process_watch_for_shutdown.__task)
-                break
-
-            asyncio.create_task(self.graceful_shutdown())
-
-        task_1 = asyncio.create_task(process_watch_for_shutdown())
-        process_watch_for_shutdown.__task = task_1
-        state.add_background_task(task_1)
 
     async def update_bot_listings(self) -> None:
         """Updates the bot lists with current stats."""
