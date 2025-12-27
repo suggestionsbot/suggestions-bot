@@ -21,13 +21,21 @@ import humanize
 import redis.asyncio as redis
 from alaric import Cursor
 from cooldowns import CallableOnCooldown
-from disnake import Locale, LocalizationKeyError, Thread
+from disnake import (
+    Locale,
+    LocalizationKeyError,
+    Thread,
+    ApplicationCommandInteraction,
+    InteractionType,
+    ApplicationCommandType,
+)
 from disnake.abc import PrivateChannel, GuildChannel
 from disnake.ext import commands, components
 from disnake.state import AutoShardedConnectionState
-from logoo import Logger
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
-from suggestions import State, Colors, Emojis, ErrorCode, Garven
+from suggestions import State, Colors, Emojis, ErrorCode, Garven, constants
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
@@ -55,7 +63,6 @@ from suggestions.database import SuggestionsMongoManager
 from suggestions.zonis_routes import ZonisRoutes
 
 log = logging.getLogger(__name__)
-logger = Logger(__name__)
 
 
 class SuggestionsBot(commands.AutoShardedInteractionBot):
@@ -235,7 +242,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     text=f"Error code {error_code.value} | Cluster ID {self.cluster_id}"
                 )
 
-            logger.debug("Encountered %s", error_code.name)
+            log.debug("Encountered %s", error_code.name)
         elif error:
             embed.set_footer(text=f"Error ID {error.id}")
 
@@ -301,15 +308,19 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         if isinstance(exception, ErrorHandled):
             return
 
+        with constants.TRACER.start_as_current_span("error handler") as child:
+            child.set_status(Status(StatusCode.ERROR))
+            child.record_exception(exception)
+
         if isinstance(exception, UnhandledError):
-            logger.critical(
+            log.critical(
                 "An unhandled exception occurred",
-                extra_metadata={
-                    "error_id": error.id,
-                    "author_id": error.user_id,
-                    "guild_id": error.guild_id,
-                    "traceback": commons.exception_as_string(exception),
-                    "error_code": ErrorCode.UNHANDLED_ERROR.value,
+                extra={
+                    "error.id": error.id,
+                    "interaction.author.id": error.user_id,
+                    "interaction.guild.id": error.guild_id,
+                    "error.traceback": commons.exception_as_string(exception),
+                    "error.code": ErrorCode.UNHANDLED_ERROR.value,
                 },
             )
             return await interaction.send(
@@ -330,12 +341,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             await self.db.error_tracking.update(error, error)
 
         if attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL:
-            logger.debug(
+            log.debug(
                 "MISSING_FETCH_PERMISSIONS_IN_SUGGESTIONS_CHANNEL",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": attempt_code.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": attempt_code.value,
                 },
             )
             return await interaction.send(
@@ -349,12 +361,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif attempt_code == ErrorCode.MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL:
-            logger.debug(
+            log.debug(
                 "MISSING_FETCH_PERMISSIONS_IN_LOGS_CHANNEL",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": attempt_code.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": attempt_code.value,
                 },
             )
             return await interaction.send(
@@ -368,12 +381,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif attempt_code == ErrorCode.MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL:
-            logger.debug(
+            log.debug(
                 "MISSING_SEND_PERMISSIONS_IN_SUGGESTION_CHANNEL",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": attempt_code.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": attempt_code.value,
                 },
             )
             return await interaction.send(
@@ -387,11 +401,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         if isinstance(exception, BetaOnly):
-            logger.critical(
+            log.critical(
                 "BetaOnly",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
                 },
             )
             embed: disnake.Embed = disnake.Embed(
@@ -403,12 +418,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             return await interaction.send(embed=embed, ephemeral=True)
 
         elif isinstance(exception, MissingSuggestionsChannel):
-            logger.debug(
+            log.debug(
                 "MissingSuggestionsChannel",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_SUGGESTIONS_CHANNEL.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_SUGGESTIONS_CHANNEL.value,
                 },
             )
             return await interaction.send(
@@ -424,12 +440,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingLogsChannel):
-            logger.debug(
+            log.debug(
                 "MissingLogsChannel",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_LOG_CHANNEL.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_LOG_CHANNEL.value,
                 },
             )
             return await interaction.send(
@@ -445,12 +462,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingQueueLogsChannel):
-            logger.debug(
+            log.debug(
                 "MissingQueueLogsChannel",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_QUEUE_LOG_CHANNEL.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_QUEUE_LOG_CHANNEL.value,
                 },
             )
             return await interaction.send(
@@ -466,12 +484,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MissingPermissionsToAccessQueueChannel):
-            logger.debug(
+            log.debug(
                 "MissingPermissionsToAccessQueueChannel",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_PERMISSIONS_IN_QUEUE_CHANNEL.value,
                 },
             )
             return await interaction.send(
@@ -485,14 +504,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, SuggestionSecurityViolation):
-            logger.critical(
+            log.critical(
                 "User %s looked up a suggestion from a different guild",
                 interaction.author.id,
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
                     "suggestion_id": exception.suggestion_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.SUGGESTION_NOT_FOUND.value,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
                 },
             )
             return await interaction.send(
@@ -507,13 +527,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, commands.MissingPermissions):
             perms = ",".join(i for i in exception.missing_permissions)
-            logger.debug(
+            log.debug(
                 "commands.MissingPermissions: %s",
                 perms,
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_PERMISSIONS.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_PERMISSIONS.value,
                 },
             )
             return await interaction.send(
@@ -528,12 +549,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, SuggestionNotFound):
-            logger.debug(
+            log.debug(
                 "SuggestionNotFound",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.SUGGESTION_NOT_FOUND.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.SUGGESTION_NOT_FOUND.value,
                 },
             )
             return await interaction.send(
@@ -547,12 +569,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, MessageTooLong):
-            logger.debug(
+            log.debug(
                 "MessageTooLong",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.SUGGESTION_CONTENT_TOO_LONG.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.SUGGESTION_CONTENT_TOO_LONG.value,
                 },
             )
             return await interaction.send(
@@ -570,12 +593,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, InvalidGuildConfigOption):
-            logger.debug(
+            log.debug(
                 "InvalidGuildConfigOption",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.INVALID_GUILD_CONFIG_CHOICE.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.INVALID_GUILD_CONFIG_CHOICE.value,
                 },
             )
             return await interaction.send(
@@ -589,12 +613,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, CallableOnCooldown):
-            logger.debug(
+            log.debug(
                 "CallableOnCooldown",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.COMMAND_ON_COOLDOWN.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.COMMAND_ON_COOLDOWN.value,
                 },
             )
             natural_time = humanize.naturaldelta(exception.retry_after)
@@ -609,12 +634,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, BlocklistedUser):
-            logger.debug(
+            log.debug(
                 "BlocklistedUser",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.BLOCKLISTED_USER.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.BLOCKLISTED_USER.value,
                 },
             )
             return await interaction.send(
@@ -628,12 +654,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, InvalidFileType):
-            logger.debug(
+            log.debug(
                 "InvalidFileType",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.INVALID_FILE_TYPE.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.INVALID_FILE_TYPE.value,
                 },
             )
             return await interaction.send(
@@ -648,12 +675,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, ConfiguredChannelNoLongerExists):
-            logger.debug(
+            log.debug(
                 "ConfiguredChannelNoLongerExists",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.CONFIGURED_CHANNEL_NO_LONGER_EXISTS.value,
                 },
             )
             return await interaction.send(
@@ -670,12 +698,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, LocalizationKeyError):
             gid = interaction.guild_id if interaction.guild_id else None
-            logger.debug(
+            log.debug(
                 "LocalizationKeyError",
-                extra_metadata={
-                    "guild_id": gid,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.MISSING_TRANSLATION.value,
+                extra={
+                    "interaction.guild.id": gid,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.MISSING_TRANSLATION.value,
                 },
             )
             return await interaction.send(
@@ -689,12 +718,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             )
 
         elif isinstance(exception, QueueImbalance):
-            logger.debug(
+            log.debug(
                 "QueueImbalance",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.QUEUE_IMBALANCE.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.QUEUE_IMBALANCE.value,
                 },
             )
             return await interaction.send(
@@ -709,14 +739,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, disnake.NotFound):
             log.debug("disnake.NotFound: %s", exception.text)
-            logger.debug(
+            log.debug(
                 "disnake.NotFound: %s",
                 exception.text,
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "traceback": commons.exception_as_string(exception),
-                    "error_code": ErrorCode.GENERIC_NOT_FOUND.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.traceback": commons.exception_as_string(exception),
+                    "error.code": ErrorCode.GENERIC_NOT_FOUND.value,
                 },
             )
             gid = interaction.guild_id if interaction.guild_id else None
@@ -734,13 +765,14 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
         elif isinstance(exception, disnake.Forbidden):
             log.debug("disnake.Forbidden: %s", exception.text)
-            logger.debug(
+            log.debug(
                 "disnake.Forbidden: %s",
                 exception.text,
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.GENERIC_FORBIDDEN.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.GENERIC_FORBIDDEN.value,
                 },
             )
             await interaction.send(
@@ -756,12 +788,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             raise exception
 
         elif isinstance(exception, commands.NotOwner):
-            logger.debug(
+            log.debug(
                 "commands.NotOwner",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.OWNER_ONLY.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.OWNER_ONLY.value,
                 },
             )
             await interaction.send(
@@ -780,21 +813,22 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 log.debug(
                     "disnake.HTTPException: Interaction has already been acknowledged"
                 )
-                logger.debug(
+                log.debug(
                     "disnake.HTTPException: Interaction has already been acknowledged",
-                    extra_metadata={
-                        "guild_id": interaction.guild_id,
-                        "author_id": interaction.author.id,
+                    extra={
+                        "interaction.guild.id": interaction.guild_id,
+                        "interaction.author.id": interaction.author.id,
+                        "interaction.author.global_name": interaction.author.global_name,
                     },
                 )
                 raise exception
 
         elif isinstance(exception, botocore.exceptions.ClientError):
-            logger.error(
+            log.error(
                 "An error occurred during the handling of files",
-                extra_metadata={
-                    "error_name": exception.__class__.__name__,
-                    "traceback": commons.exception_as_string(exception),
+                extra={
+                    "error.name": exception.__class__.__name__,
+                    "error.traceback": commons.exception_as_string(exception),
                 },
             )
             return await interaction.send(
@@ -812,12 +846,13 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             interaction.id, self
         )
         if ih is not None and not ih.has_sent_something:
-            logger.critical(
+            log.critical(
                 "Interaction was never ack'd",
-                extra_metadata={
-                    "guild_id": interaction.guild_id,
-                    "author_id": interaction.author.id,
-                    "error_code": ErrorCode.UNHANDLED_ERROR.value,
+                extra={
+                    "interaction.guild.id": interaction.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
+                    "error.code": ErrorCode.UNHANDLED_ERROR.value,
                 },
             )
             gid = interaction.guild_id if interaction.guild_id else None
@@ -832,12 +867,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 ephemeral=True,
             )
 
-        logger.critical(
+        log.critical(
             "Unhandled error encountered (%s)",
             exception.__class__.__name__,
-            extra_metadata={
-                "error_name": exception.__class__.__name__,
-                "traceback": commons.exception_as_string(exception),
+            extra={
+                "error.name": exception.__class__.__name__,
+                "error.traceback": commons.exception_as_string(exception),
             },
         )
         raise exception
@@ -879,7 +914,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.update_bot_listings()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
-        await self.zonis.start()
+        # await self.zonis.start()
 
     async def graceful_shutdown(self) -> None:
         """Gracefully shutdown the bot.
@@ -985,7 +1020,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                         json=body,
                     ) as r:
                         if r.status != 200:
-                            logger.warning("%s", r.text)
+                            log.warning("%s", r.text)
 
                 log.debug("Updated bot listings")
                 await commons.sleep_with_condition(
@@ -1035,9 +1070,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             value = values.get("en-GB")
             if value is None:
                 value = values["en-US"]
-                logger.critical(
+                log.critical(
                     "Missing translation in en-GB file",
-                    extra_metadata={"translation_key": key},
+                    extra={"translation.key": key},
                 )
 
             return value
@@ -1053,8 +1088,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
     ):
         base_config = {
             "CHANNEL_ID": interaction.channel_id,
-            "GUILD_ID": interaction.guild_id,
-            "AUTHOR_ID": interaction.author.id,
+            "interaction.guild.id": interaction.guild_id,
+            "interaction.author.id": interaction.author.id,
+            "interaction.author.global_name": interaction.author.global_name,
         }
         if extras is not None:
             base_config = {**base_config, **extras}
@@ -1101,10 +1137,48 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             {
                 "locale": str(interaction.locale),
                 "user_id": interaction.user.id,
-                "guild_id": interaction.guild_id,
+                "interaction.guild.id": interaction.guild_id,
             }
         )
-        await self.process_application_commands(interaction)
+        trace_name = self.get_qualified_name(interaction)
+        with constants.TRACER.start_as_current_span(trace_name) as span:
+            span.set_attribute("interaction.author.id", interaction.author.id)
+            span.set_attribute(
+                "interaction.author.global_name", interaction.author.global_name
+            )
+            span.set_attribute("interaction.guild.id", interaction.guild_id)
+            span.set_attribute(
+                "interaction.command.name", self.get_qualified_name(interaction)
+            )
+            await self.process_application_commands(interaction)
+
+    @staticmethod
+    def get_qualified_name(inter: disnake.ApplicationCommandInteraction) -> str:
+        base = io.StringIO()
+        if inter.data.type == ApplicationCommandType.chat_input:
+            base.write("/")
+
+        base.write(inter.data.get("name"))
+
+        try:
+            opts = inter.data.get("options", [False])
+            for item in opts:
+                if item["type"] not in (1, 2):
+                    # param
+                    continue
+
+                base.write(f" {item['name']}")
+                if item.get("options"):
+                    for nested in item["options"]:
+                        if nested["type"] != 1:
+                            # param
+                            continue
+
+                        base.write(f" {nested['name']}")
+        except:
+            pass
+
+        return base.getvalue()
 
     async def delete_message(self, *, message_id: int, channel_id: int):
         await self._connection.http.delete_message(channel_id, message_id)

@@ -1,3 +1,5 @@
+import logging
+
 import disnake
 
 from suggestions.interaction_handler import InteractionHandler

@@ -1,10 +1,7 @@
 import asyncio
 import logging
 
-from logoo import Logger
-
 log = logging.getLogger(__name__)
-logger = Logger(__name__)
 
 
 # Modified from https://stackoverflow.com/a/55185488
@@ -28,7 +25,7 @@ async def exception_aware_scheduler(
 
             await asyncio.sleep(sleep_between_tries)
 
-        logger.debug(
+        log.debug(
             "exception_aware_scheduler for %s has run out of retries", str(caller)
         )
 

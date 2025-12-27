@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import logging
 import typing
 from datetime import timedelta
 from enum import Enum
 from typing import Optional
 
-import logoo
 from alaric import AQ
 from alaric.comparison import EQ
 from commons.caching import NonExistentEntry
@@ -14,7 +14,7 @@ if typing.TYPE_CHECKING:
     from suggestions import State
     from suggestions.interaction_handler import InteractionHandler
 
-logger = logoo.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CooldownPeriod(str, Enum):
@@ -120,7 +120,7 @@ class PremiumGuildConfig:
             logger.info(
                 "Created new PremiumGuildConfig for %s",
                 guild_id,
-                extra_metadata={"guild_id": guild_id},
+                extra={"interaction.guild.id": guild_id},
             )
             guild_config = self(_id=guild_id)
 

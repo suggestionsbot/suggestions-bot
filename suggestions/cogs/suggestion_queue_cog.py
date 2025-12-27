@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 import cooldowns
 import disnake
 from disnake.ext import commands, components
-from logoo import Logger
 
 from suggestions import checks
 from suggestions.cooldown_bucket import InteractionBucket
@@ -11,7 +12,7 @@ from suggestions.core import SuggestionsQueue
 from suggestions.interaction_handler import InteractionHandler
 
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SuggestionsQueueCog(commands.Cog):

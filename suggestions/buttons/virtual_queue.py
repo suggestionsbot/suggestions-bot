@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import logging
 import typing
 
 import disnake
-import logoo
 from disnake.ext import components
 
 from suggestions.interaction_handler import InteractionHandler
@@ -12,7 +12,7 @@ from suggestions.utility import wrap_with_error_handler
 if typing.TYPE_CHECKING:
     from suggestions.cogs.suggestion_queue_cog import SuggestionsQueueCog
 
-logger = logoo.Logger(__name__)
+log = logging.getLogger(__name__)
 manager = components.get_manager("suggestions")
 
 

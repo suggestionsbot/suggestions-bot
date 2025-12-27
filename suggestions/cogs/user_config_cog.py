@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import cooldowns
 import disnake
 from disnake.ext import commands
-from logoo import Logger
 
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.objects import UserConfig
@@ -13,7 +13,7 @@ from suggestions.objects import UserConfig
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Stats
 
-logger = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
 class UserConfigCog(commands.Cog):
@@ -36,10 +36,13 @@ class UserConfigCog(commands.Cog):
         user_config.dm_messages_disabled = False
         await self.bot.db.user_configs.upsert(user_config, user_config)
         await interaction.send("I have enabled DM messages for you.", ephemeral=True)
-        logger.debug(
+        log.debug(
             "Enabled DM messages for member %s",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -56,10 +59,13 @@ class UserConfigCog(commands.Cog):
         user_config.dm_messages_disabled = True
         await self.bot.db.user_configs.upsert(user_config, user_config)
         await interaction.send("I have disabled DM messages for you.", ephemeral=True)
-        logger.debug(
+        log.debug(
             "Disabled DM messages for member %s",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -77,10 +83,13 @@ class UserConfigCog(commands.Cog):
         await interaction.send(
             f"I {text} DM you on actions such as suggest.", ephemeral=True
         )
-        logger.debug(
+        log.debug(
             "User %s viewed their DM configuration",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -110,10 +119,13 @@ class UserConfigCog(commands.Cog):
         await interaction.send(
             "I have enabled pings on thread creation for you.", ephemeral=True
         )
-        logger.debug(
+        log.debug(
             "Enabled pings on thread creation for member %s",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -134,10 +146,13 @@ class UserConfigCog(commands.Cog):
         await interaction.send(
             "I have disabled pings on thread creation for you.", ephemeral=True
         )
-        logger.debug(
+        log.debug(
             "Disabled pings on thread creation for member %s",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,
@@ -158,10 +173,13 @@ class UserConfigCog(commands.Cog):
             f"I {text} ping you on when a new thread is created for a suggestion.",
             ephemeral=True,
         )
-        logger.debug(
+        log.debug(
             "User %s viewed their ping configuration",
             interaction.author.id,
-            extra_metadata={"author_id": interaction.author.id},
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+            },
         )
         await self.stats.log_stats(
             interaction.author.id,

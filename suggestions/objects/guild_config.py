@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Dict, Optional
 
 from alaric import AQ
 from alaric.comparison import EQ
 from commons.caching import NonExistentEntry
-from logoo import Logger
 
 if TYPE_CHECKING:
     from suggestions import State
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class GuildConfig:
@@ -98,7 +98,7 @@ class GuildConfig:
             logger.debug(
                 "Found cached GuildConfig for guild %s",
                 guild_id,
-                extra_metadata={"guild_id": guild_id},
+                extra={"interaction.guild.id": guild_id},
             )
             return gc
         except NonExistentEntry:
@@ -111,7 +111,7 @@ class GuildConfig:
             logger.info(
                 "Created new GuildConfig for %s",
                 guild_id,
-                extra_metadata={"guild_id": guild_id},
+                extra={"interaction.guild.id": guild_id},
             )
             guild_config = cls(_id=guild_id)
 

@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 import asyncio
@@ -6,10 +7,9 @@ import traceback
 import concurrent.futures
 
 import disnake
-import logoo
 from disnake.ext import commands
 
-log = logoo.Logger(__name__)
+log = logging.getLogger(__name__)
 
 
 # https://gist.github.com/imayhaveborkedit/97ccc3fd654873b7b0c1540c94b5a069
@@ -99,7 +99,7 @@ class StackMonitor(threading.Thread):
             print("".join(stack))
             log.critical(
                 f"Future took longer than {self.block_threshold}s to return",
-                extra_metadata={"stack": "".join(stack)},
+                extra={"stack": "".join(stack)},
             )
 
             self.last_stack = stack

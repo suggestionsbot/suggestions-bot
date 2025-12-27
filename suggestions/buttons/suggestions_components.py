@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 import typing
 
 import disnake
-import logoo
 from disnake.ext import components
 from disnake.ext.components import fields as component_fields
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
 from suggestions.clunk2 import update_suggestion_message
 from suggestions.interaction_handler import InteractionHandler
@@ -16,7 +18,7 @@ from suggestions.utility import wrap_with_error_handler
 if typing.TYPE_CHECKING:
     from suggestions.cogs.suggestion_cog import SuggestionsCog
 
-logger = logoo.Logger(__name__)
+log = logging.getLogger(__name__)
 manager = components.get_manager("suggestions")
 
 
@@ -49,7 +51,12 @@ async def wrapper(
             parser.base = new_base
 
     # Run the component after updating parsers...
-    yield
+    tracer = trace.get_tracer("suggestions-bot-v3")
+    with tracer.start_as_current_span(f"component {inter.component.custom_id}") as span:
+        span.set_attribute("interaction.author.id", inter.author.id)
+        span.set_attribute("interaction.author.global_name", inter.author.global_name)
+        span.set_attribute("interaction.guild.id", inter.guild_id)
+        yield
 
 
 @manager.register(identifier="suggestion_up_vote")
@@ -84,24 +91,24 @@ class SuggestionUpVote(components.RichButton):
             # await suggestion.update_vote_count(self.bot, inter)
             # lock.enqueue(suggestion.update_vote_count(self.bot, inter))
             await ih.send(translation_key="SUGGESTION_UP_VOTE_INNER_MODIFIED_VOTE")
-            logger.debug(
+            log.debug(
                 f"Member {member_id} modified their vote on {self.suggestion_id} to a up vote",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": inter.guild_id,
-                    "author_id": member_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": inter.guild_id,
+                    "interaction.author.id": member_id,
                 },
             )
         else:
             suggestion.up_voted_by.add(member_id)
             await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
             await ih.send(translation_key="SUGGESTION_UP_VOTE_INNER_REGISTERED_VOTE")
-            logger.debug(
+            log.debug(
                 f"Member {member_id} up voted {self.suggestion_id}",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": inter.guild_id,
-                    "author_id": member_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": inter.guild_id,
+                    "interaction.author.id": member_id,
                 },
             )
 
@@ -138,24 +145,24 @@ class SuggestionDownVote(components.RichButton):
             suggestion.down_voted_by.add(member_id)
             await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
             await ih.send(translation_key="SUGGESTION_DOWN_VOTE_INNER_MODIFIED_VOTE")
-            logger.debug(
+            log.debug(
                 f"Member {member_id} modified their vote on {self.suggestion_id} to a down vote",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": inter.guild_id,
-                    "author_id": member_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": inter.guild_id,
+                    "interaction.author.id": member_id,
                 },
             )
         else:
             suggestion.down_voted_by.add(member_id)
             await ih.bot.state.suggestions_db.upsert(suggestion, suggestion)
             await ih.send(translation_key="SUGGESTION_DOWN_VOTE_INNER_REGISTERED_VOTE")
-            logger.debug(
+            log.debug(
                 f"Member {member_id} down voted {self.suggestion_id}",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": inter.guild_id,
-                    "author_id": member_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": inter.guild_id,
+                    "interaction.author.id": member_id,
                 },
             )
 

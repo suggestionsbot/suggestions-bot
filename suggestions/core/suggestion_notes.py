@@ -1,13 +1,14 @@
+import logging
+
 import disnake
 from disnake import Embed
-from logoo import Logger
 
 from suggestions import Colors
 from suggestions.core import BaseCore
 from suggestions.objects import Suggestion, UserConfig, GuildConfig
 from suggestions.interaction_handler import InteractionHandler
 
-logger: Logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SuggestionsNotesCore(BaseCore):
@@ -42,10 +43,10 @@ class SuggestionsNotesCore(BaseCore):
                 "Not dm'ing %s for a note changed on suggestion %s as they have dm's disabled",
                 suggestion_author_id,
                 suggestion_id,
-                extra_metadata={
-                    "guild_id": ih.interaction.guild_id,
-                    "suggestion_id": suggestion_id,
-                    "author_id": suggestion_author_id,
+                extra={
+                    "interaction.guild.id": ih.interaction.guild_id,
+                    "suggestion.id": suggestion_id,
+                    "interaction.author.id": suggestion_author_id,
                 },
             )
             return
@@ -58,9 +59,9 @@ class SuggestionsNotesCore(BaseCore):
                 "Not dm'ing %s for a note changed on suggestion %s as the guilds has dm's disabled",
                 ih.interaction.author.id,
                 suggestion_id,
-                extra_metadata={
-                    "guild_id": ih.interaction.guild_id,
-                    "suggestion_id": suggestion_id,
+                extra={
+                    "interaction.guild.id": ih.interaction.guild_id,
+                    "suggestion.id": suggestion_id,
                 },
             )
             return

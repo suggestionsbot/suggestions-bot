@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import Optional, TYPE_CHECKING
 
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from disnake import Embed
-from logoo import Logger
 
 from suggestions.exceptions import (
     UnhandledError,
@@ -19,7 +19,7 @@ from suggestions.objects import Suggestion
 if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class QueuedSuggestion:

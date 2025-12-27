@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import disnake
 from commons.caching import NonExistentEntry
 from disnake.ext import commands
-from logoo import Logger
 
 from suggestions.objects import GuildConfig, Suggestion
 
 if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class BlacklistCog(commands.Cog):
@@ -67,9 +67,10 @@ class BlacklistCog(commands.Cog):
             interaction.author.id,
             suggestion.suggestion_author_id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.guild.id": interaction.guild_id,
             },
         )
 
@@ -124,9 +125,10 @@ class BlacklistCog(commands.Cog):
             interaction.author.id,
             user_id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.guild.id": interaction.guild_id,
             },
         )
 
@@ -150,7 +152,7 @@ class BlacklistCog(commands.Cog):
                 logger.debug(
                     "Values was found, but empty in guild %s thus populating",
                     interaction.guild_id,
-                    extra_metadata={"guild_id": interaction.guild_id},
+                    extra={"interaction.guild.id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id

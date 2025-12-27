@@ -13,12 +13,11 @@ import cooldowns
 import disnake
 from disnake import Locale
 from disnake.ext import commands
-import redis.asyncio as redis
 
 from suggestions import SuggestionsBot
+from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.utility import DisnakePaginator
-from suggestions.cooldown_bucket import InteractionBucket
 
 
 async def create_bot(database_wrapper=None) -> SuggestionsBot:
