@@ -52,7 +52,17 @@ async def wrapper(
 
     # Run the component after updating parsers...
     tracer = trace.get_tracer("suggestions-bot-v3")
-    with tracer.start_as_current_span(f"component {inter.component.custom_id}") as span:
+    btn_name: str = inter.component.custom_id
+    try:
+        if ":" in btn_name:
+            btn_name = btn_name.split(":")[0]
+
+        elif "|" in btn_name:
+            btn_name = btn_name.split("|")[0][:-1]
+    except:
+        pass
+
+    with tracer.start_as_current_span(f"component {btn_name}") as span:
         span.set_attribute("bot.cluster.id", inter.bot.cluster_id)
         span.set_attribute("interaction.author.id", inter.author.id)
         span.set_attribute("interaction.author.global_name", inter.author.global_name)
