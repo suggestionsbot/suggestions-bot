@@ -203,7 +203,11 @@ class SuggestionsCog(commands.Cog):
                 f" suggestion in guild {interaction.guild_id}",
                 extra={
                     "interaction.author.id": interaction.author.id,
-                    "interaction.author.global_name": interaction.author.global_name,
+                    "interaction.author.global_name": (
+                        interaction.author.global_name
+                        if interaction.author.global_name
+                        else ""
+                    ),
                     "interaction.guild.id": interaction.guild_id,
                 },
             )
@@ -238,7 +242,11 @@ class SuggestionsCog(commands.Cog):
             f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
                 "suggestion.id": suggestion.suggestion_id,
             },
@@ -381,7 +389,11 @@ class SuggestionsCog(commands.Cog):
             f" {suggestion_id} in guild {interaction.guild_id}",
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
                 "suggestion.id": suggestion_id,
                 "suggestion.type": suggestion_type,

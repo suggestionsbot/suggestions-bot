@@ -41,7 +41,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(
@@ -64,7 +68,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(
@@ -88,7 +96,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(
@@ -124,7 +136,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(
@@ -151,7 +167,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(
@@ -178,7 +198,11 @@ class UserConfigCog(commands.Cog):
             interaction.author.id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             },
         )
         await self.stats.log_stats(

@@ -64,7 +64,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -100,7 +104,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -148,7 +156,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -188,7 +200,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -509,7 +525,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -680,7 +700,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )
@@ -1089,7 +1113,11 @@ class GuildConfigCog(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "interaction.guild.id": interaction.guild_id,
             },
         )

@@ -1086,7 +1086,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             span.set_attribute("bot.cluster.id", self.cluster_id)
             span.set_attribute("interaction.author.id", interaction.author.id)
             span.set_attribute(
-                "interaction.author.global_name", interaction.author.global_name
+                "interaction.author.global_name",
+                (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
             )
             span.set_attribute("interaction.guild.id", interaction.guild_id)
             span.set_attribute(

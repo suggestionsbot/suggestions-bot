@@ -65,7 +65,11 @@ class SuggestionsMessageCommands(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "suggestion.id": suggestion.suggestion_id,
                 "interaction.guild.id": interaction.guild_id,
             },
@@ -114,7 +118,11 @@ class SuggestionsMessageCommands(commands.Cog):
             interaction.guild_id,
             extra={
                 "interaction.author.id": interaction.author.id,
-                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
                 "suggestion.id": suggestion.suggestion_id,
                 "interaction.guild.id": interaction.guild_id,
             },
