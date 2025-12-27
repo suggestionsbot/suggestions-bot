@@ -45,8 +45,9 @@ async def run_bot():
     bot = await suggestions.create_bot()
 
     await bot.load()
-    log.info("About to start SuggestionsBot | %s", bot.version)
-    log.info("We are in prod" if bot.is_prod else "We are launching in non-prod")
+    log.info(f"About to start SuggestionsBot | %s", bot.version)
+    print(f"About to start SuggestionsBot | {bot.version}", bot.version)
+    print("We are in prod" if bot.is_prod else "We are launching in non-prod")
     await bot.start(constants.BOT_TOKEN)
 
 
