@@ -62,10 +62,6 @@ class BlocklistedUser(CheckFailure):
     """This user is blocked from taking this action in this guild."""
 
 
-class PartialResponse(Exception):
-    """A garven route returned a partial response when we require a full response"""
-
-
 class ConflictingHandlerInformation(disnake.DiscordException):
     """Raised when an InteractionHandler class gets both content and a translation key"""
 

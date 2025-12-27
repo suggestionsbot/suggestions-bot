@@ -113,7 +113,6 @@ class Stats:
         self.state: State = bot.state
         self.bot: SuggestionsBot = bot
         self.database: SuggestionsMongoManager = bot.db
-        self._old_guild_count: Optional[int] = None
         self.cluster_guild_cache: TimedCache = TimedCache(lazy_eviction=False)
         self.member_stats_cache: TimedCache = TimedCache(lazy_eviction=False)
         self.type: Type[StatsEnum] = StatsEnum
@@ -162,48 +161,10 @@ class Stats:
         )
 
     async def fetch_global_guild_count(self) -> int:
-        if not self.bot.is_prod:
-            return len(self.bot.guild_ids)
-
-        total_count: int = 0
-        cursor: Cursor = (
-            Cursor.from_document(self.database.cluster_guild_counts)
-            .set_sort(("timestamp", alaric.Descending))
-            .set_limit(1)
-        )
-        total_cluster_count = self.bot.total_cluster_count
-        for i in range(1, total_cluster_count + 1):
-            if i not in self.cluster_guild_cache:
-                cursor = cursor.copy().set_filter(AQ(EQ("cluster_id", i)))
-                items = await cursor.execute()
-                entry = items[0]
-                self.cluster_guild_cache.add_entry(
-                    i,
-                    entry["guild_count"],
-                    ttl=datetime.timedelta(minutes=5),
-                )
-                total_count += entry["guild_count"]
-                continue
-
-            total_count += self.cluster_guild_cache.get_entry(i)
-
-        return total_count
+        app_data = await self.bot.application_info()
+        return app_data.approximate_guild_count
 
     async def load(self):
-        try:
-            cursor: Cursor = (
-                Cursor.from_document(self.database.cluster_shutdown_requests)
-                .set_sort(("timestamp", alaric.Descending))
-                .set_limit(1)
-                .set_filter(AQ(EQ("cluster_id", self.bot.cluster_id)))
-            )
-            items = await cursor.execute()
-            entry = items[0]
-            self._old_guild_count = entry["guild_count"]
-        except:
-            pass
-
-        self.state.add_background_task(asyncio.create_task(self.push_stats()))
         self.state.add_background_task(asyncio.create_task(self.push_inter_stats()))
 
     async def push_inter_stats(self):
@@ -226,25 +187,6 @@ class Stats:
                     "cluster": self.bot.cluster_id,
                 }
             )
-
-    async def push_stats(self):
-        while not self.state.is_closing:
-            current_count = len(self.bot.guild_ids)
-            if current_count != self._old_guild_count and current_count != 0:
-                # Let's actually change it
-                await self.database.cluster_guild_counts.insert(
-                    {
-                        "cluster_id": self.bot.cluster_id,
-                        "guild_count": current_count,
-                        "timestamp": self.state.now,
-                    }
-                )
-                self._old_guild_count = current_count
-                log.debug(
-                    "Cluster %s now sees %s guilds", self.bot.cluster_id, current_count
-                )
-
-            await commons.sleep_with_condition(5 * 60, lambda: self.state.is_closing)
 
     def increment_event_type(self, event_type: str):
         # We only want interactions for now

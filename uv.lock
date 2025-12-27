@@ -1164,7 +1164,6 @@ dependencies = [
     { name = "skelmis-commons" },
     { name = "tenacity" },
     { name = "typing-extensions" },
-    { name = "zonis" },
 ]
 
 [package.dev-dependencies]
@@ -1197,7 +1196,6 @@ requires-dist = [
     { name = "skelmis-commons", specifier = ">=1.4.0,<2" },
     { name = "tenacity", specifier = ">=9.1.2" },
     { name = "typing-extensions", specifier = ">=4.12.2,<5" },
-    { name = "zonis", specifier = ">=2.1.0,<3" },
 ]
 
 [package.metadata.requires-dev]
@@ -1237,12 +1235,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795, upload-time = "2025-06-18T14:07:40.39Z" },
 ]
-
-[[package]]
-name = "websockets"
-version = "10.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/85/dc/549a807a53c13fd4a8dac286f117a7a71260defea9ec0c05d6027f2ae273/websockets-10.4.tar.gz", hash = "sha256:eef610b23933c54d5d921c92578ae5f89813438fded840c2e9809d378dc765d3", size = 84877, upload-time = "2022-10-25T20:12:37.712Z" }
 
 [[package]]
 name = "wrapt"
@@ -1338,16 +1330,4 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e3/02/0f2892c661036d50ede074e376733dca2ae7c6eb617489437771209d4180/zipp-3.23.0.tar.gz", hash = "sha256:a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166", size = 25547, upload-time = "2025-06-08T17:06:39.4Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl", hash = "sha256:071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e", size = 10276, upload-time = "2025-06-08T17:06:38.034Z" },
-]
-
-[[package]]
-name = "zonis"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "websockets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/87/27/eb91834388a4d783c0d6af63bfd47d102160614270790a4ed1acc20ac3f8/zonis-2.1.0.tar.gz", hash = "sha256:aea29117ab4b3772c59fa6a0a9b2dfff5e3711485ea3b26974eb73831f0460c0", size = 11495, upload-time = "2024-06-14T10:50:02.437Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/f3/32cbb95a35f7b37064da5b8e2eba6160527c210803d30224100a6939e8f5/zonis-2.1.0-py3-none-any.whl", hash = "sha256:08e7750dc1da9ca6e69a14a74388d0e4df427cd6aeb0f899f104ea1eed214c11", size = 14177, upload-time = "2024-06-14T10:50:00.349Z" },
 ]

@@ -30,7 +30,6 @@ async def bot(monkeypatch, mocked_database):
         AsyncMock(),
     )
     monkeypatch.setenv("ZONIS_SECRET_KEY", "test")
-    monkeypatch.setenv("GARVEN_API_KEY", "test")
 
     bot = await suggestions.create_bot(mocked_database)
     await bot.load_cogs()

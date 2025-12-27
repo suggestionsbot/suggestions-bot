@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from string import Template
-from typing import Type, Optional, Union, Any, Final
+from typing import Type, Optional, Union, Any
 
 import aiohttp
 import alaric
@@ -25,17 +25,15 @@ from disnake import (
     Locale,
     LocalizationKeyError,
     Thread,
-    ApplicationCommandInteraction,
-    InteractionType,
     ApplicationCommandType,
 )
 from disnake.abc import PrivateChannel, GuildChannel
 from disnake.ext import commands, components
 from disnake.state import AutoShardedConnectionState
-from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
-from suggestions import State, Colors, Emojis, ErrorCode, Garven, constants
+from suggestions import State, Colors, Emojis, ErrorCode, constants
+from suggestions.database import SuggestionsMongoManager
 from suggestions.exceptions import (
     BetaOnly,
     MissingSuggestionsChannel,
@@ -48,7 +46,6 @@ from suggestions.exceptions import (
     UnhandledError,
     QueueImbalance,
     BlocklistedUser,
-    PartialResponse,
     MissingQueueLogsChannel,
     MissingPermissionsToAccessQueueChannel,
     InvalidFileType,
@@ -59,8 +56,6 @@ from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import PatchedConnectionState
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
-from suggestions.database import SuggestionsMongoManager
-from suggestions.zonis_routes import ZonisRoutes
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +92,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self.colors: Type[Colors] = Colors
         self.state: State = State(self.db, self)
         self.stats: Stats = Stats(self)
-        self.garven: Garven = Garven(self)
         self.suggestion_emojis: Emojis = Emojis(self)
         self.old_prefixed_commands: set[str] = {
             "changelog",
@@ -130,15 +124,11 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             # gateway_params=GatewayParams(zlib=False),
         )
 
-        from suggestions import buttons
-
         self.component_manager = components.get_manager()
         self.component_manager.add_to_bot(self)  # type: ignore
 
         self._has_dispatched_initial_ready: bool = False
         self._initial_ready_future: asyncio.Future = asyncio.Future()
-
-        self.zonis: ZonisRoutes = ZonisRoutes(self)
 
         # This exists on the basis we have patched state
         self.guild_ids: set[int] = self._connection.guild_ids
@@ -186,6 +176,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self._initial_ready_future.set_result(None)
         log.info("Suggestions main: Ready")
         log.info("Startup took: %s", self.get_uptime())
+        print("Suggestions main: Ready")
+        print(f"Startup took: {self.get_uptime()}")
         await self.suggestion_emojis.populate_emojis()
 
     @property
@@ -914,7 +906,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.update_bot_listings()
         await self.watch_for_shutdown_request()
         await self.load_cogs()
-        # await self.zonis.start()
 
     async def graceful_shutdown(self) -> None:
         """Gracefully shutdown the bot.
@@ -923,7 +914,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         """
         log.debug("Attempting to shutdown")
         self.state.notify_shutdown()
-        await self.zonis.client.close()
         await asyncio.gather(*self.state.background_tasks)
         # TODO Re-enable premium features at later date
         # await self.redis.aclose()
@@ -999,14 +989,8 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
             headers = {"Authorization": os.environ["SUGGESTIONS_API_KEY"]}
             while not state.is_closing:
-                try:
-                    total_guilds = await self.garven.get_total_guilds()
-                except PartialResponse:
-                    await commons.sleep_with_condition(
-                        time_between_updates.total_seconds(),
-                        lambda: self.state.is_closing,
-                    )
-                    continue
+                app_data = await self.application_info()
+                total_guilds = app_data.approximate_guild_count
 
                 body = {
                     "guild_count": int(total_guilds),
