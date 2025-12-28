@@ -218,6 +218,14 @@ class QueuedSuggestion:
             _id=_id,
         )
         await state.queued_suggestions_db.insert(suggestion)
+        logger.debug(
+            "Created new queued suggestion",
+            extra={
+                "queued_suggestion.id": _id,
+                "interaction.author.id": author_id,
+                "interaction.guild.id": guild_id,
+            },
+        )
 
         # Try to populate id on returned object
         return await state.queued_suggestions_db.find(suggestion.as_dict())
