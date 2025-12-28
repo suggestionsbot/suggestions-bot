@@ -300,9 +300,38 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         with constants.TRACER.start_as_current_span("error handler") as child:
             await self._push_slash_error_stats(interaction)
             error: Error = await self.persist_error(exception, interaction)
+            child.set_attribute("error.id", error.id)
+            child.set_attribute("error.name", error.error)
 
-            child.set_status(Status(StatusCode.ERROR))
-            child.record_exception(exception)
+            ignorable_exception_types = (
+                BetaOnly,
+                MissingSuggestionsChannel,
+                MissingLogsChannel,
+                MissingQueueLogsChannel,
+                MissingPermissionsToAccessQueueChannel,
+                commands.MissingPermissions,
+                SuggestionNotFound,
+                MessageTooLong,
+                InvalidGuildConfigOption,
+                CallableOnCooldown,
+                BlocklistedUser,
+                InvalidFileType,
+                ConfiguredChannelNoLongerExists,
+                QueueImbalance,
+                commands.NotOwner,
+            )
+            if isinstance(exception, ignorable_exception_types):
+                # all these we dont need to care about being logged
+                # as we handle them enough for end users to
+                # theoretically fix themselves
+                child.set_attribute("error.handled", True)
+
+            else:
+                # We want to propagate these as 'unhandled errors'
+                # that should be taken a look at by a dev
+                child.set_attribute("error.handled", False)
+                child.set_status(Status(StatusCode.ERROR))
+                child.record_exception(exception)
 
             if isinstance(exception, UnhandledError):
                 log.critical(
