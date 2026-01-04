@@ -142,6 +142,23 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             loop=self.loop,
         )
 
+    @staticmethod
+    async def get_accurate_guild_count() -> int:
+        """Returns a count of how many guilds are present.
+
+        Notes
+        -----
+        While this doesnt block Redis, it takes
+        awhile to return results. 15-45 seconds it seems.
+        """
+        total_guilds: int = 0
+        async for _ in constants.REDIS_CLIENT.scan_iter(
+            "bot:guilds:is_in:*", count=1000
+        ):
+            total_guilds += 1
+
+        return total_guilds
+
     async def launch_shard(
         self, _gateway: str, shard_id: int, *, initial: bool = False
     ) -> None:
@@ -975,8 +992,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 )
             }
             while not state.is_closing:
-                app_data = await self.application_info()
-                total_guilds = app_data.approximate_guild_count
+                total_guilds = await self.get_accurate_guild_count()
 
                 body = {
                     "guild_count": int(total_guilds),

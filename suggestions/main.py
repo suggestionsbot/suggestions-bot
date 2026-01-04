@@ -90,7 +90,7 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             color=bot.colors.embed_color,
             timestamp=bot.state.now,
         )
-        guilds: int = await bot.stats.fetch_global_guild_count()
+        guilds: int = await bot.stats.fetch_approximate_global_guild_count()
         embed.add_field(name="Guilds", value=guilds)
         embed.add_field(name="Total shards", value=bot.total_shards)
         embed.add_field(name="Cluster Uptime", value=bot.get_uptime())

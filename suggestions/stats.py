@@ -160,7 +160,7 @@ class Stats:
             ttl=datetime.timedelta(minutes=15),
         )
 
-    async def fetch_global_guild_count(self) -> int:
+    async def fetch_approximate_global_guild_count(self) -> int:
         app_data = await self.bot.application_info()
         return app_data.approximate_guild_count
 
