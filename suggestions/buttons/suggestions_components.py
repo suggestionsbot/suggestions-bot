@@ -59,6 +59,12 @@ async def wrapper(
 
         elif "|" in btn_name:
             btn_name = btn_name.split("|")[0][:-1]
+
+        elif btn_name.startswith("queue_approve") or btn_name.startswith(
+            "queue_reject"
+        ):
+            # No id's means no | to match on
+            btn_name = btn_name[:-1]
     except:
         pass
 
