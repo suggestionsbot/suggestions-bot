@@ -69,7 +69,8 @@ async def wrapper(
             "interaction.author.global_name",
             inter.author.global_name if inter.author.global_name else "",
         )
-        span.set_attribute("interaction.guild.id", inter.guild_id)
+        if inter.guild_id:
+            span.set_attribute("interaction.guild.id", inter.guild_id)
         yield
 
 

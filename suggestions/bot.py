@@ -1161,7 +1161,9 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                     else ""
                 ),
             )
-            span.set_attribute("interaction.guild.id", interaction.guild_id)
+            if interaction.guild_id:
+                span.set_attribute("interaction.guild.id", interaction.guild_id)
+
             span.set_attribute(
                 "interaction.command.name", self.get_qualified_name(interaction)
             )
