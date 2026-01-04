@@ -21,6 +21,7 @@ from opentelemetry.sdk.resources import (
 )
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from redis import asyncio as aioredis
 
 load_dotenv()
 infisical_client = InfisicalSDKClient(host="https://secrets.skelmis.co.nz")
@@ -97,3 +98,4 @@ CF_R2_BUCKET = get_secret("CF_R2_BUCKET", infisical_client)
 CF_R2_URL = get_secret("CF_R2_URL", infisical_client)
 BOT_TOKEN = get_secret("BOT_TOKEN", infisical_client)
 MONGO_URL = get_secret("MONGO_URL", infisical_client)
+REDIS_CLIENT = aioredis.from_url(get_secret("REDIS_URL", infisical_client))

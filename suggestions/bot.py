@@ -8,6 +8,7 @@ import logging
 import math
 import os
 import traceback
+from copy import deepcopy
 from pathlib import Path
 from string import Template
 from typing import Type, Optional, Union, Any
@@ -18,7 +19,7 @@ import botocore
 import commons
 import disnake
 import humanize
-import redis.asyncio as redis
+import orjson
 from alaric import Cursor
 from cooldowns import CallableOnCooldown
 from disnake import (
@@ -71,8 +72,6 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         self._uptime: datetime.datetime = datetime.datetime.now(
             tz=datetime.timezone.utc
         )
-        # TODO Set redis and also auto set decoding from bytes to strings
-        self.redis: redis.Redis = None
 
         self.is_prod: bool = (
             True if os.environ.get("INFISICAL_SLUG", None) == "prod" else False
@@ -938,6 +937,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         await self.state.load()
         await self.stats.load()
         await self.update_bot_listings()
+        await self.update_redis()
         await self.load_cogs()
 
     async def graceful_shutdown(self) -> None:
@@ -1001,6 +1001,45 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         task_1 = asyncio.create_task(process_update_bot_listings())
         state.add_background_task(task_1)
         log.info("Setup bot list updates")
+
+    async def update_redis(self) -> None:
+        """Updates redis with bot specific info such as guilds"""
+        state: State = self.state
+        time_between_updates: datetime.timedelta = datetime.timedelta(
+            minutes=2, seconds=30
+        )
+
+        async def process_update():
+            await self.wait_until_ready()
+
+            # This is set to 15 minutes to handle
+            # bot restarts and the fact thats about how
+            # long it takes to get the bot running and repopulate redis
+            #
+            # We also don't mind if edits occur in a short period
+            # after the bot leaves as thats basically a noop
+            time_to_cache = datetime.timedelta(minutes=15)
+
+            while not state.is_closing:
+                local_guild_ids = deepcopy(self.guild_ids)
+                for guild_id in local_guild_ids:
+                    await constants.REDIS_CLIENT.set(
+                        f"bot:guilds:is_in:{guild_id}",
+                        orjson.dumps(guild_id),
+                        ex=int(time_to_cache.total_seconds()),
+                    )
+
+                log.debug(
+                    "Updated redis with current guilds for cluster %s", self.cluster_id
+                )
+                await commons.sleep_with_condition(
+                    time_between_updates.total_seconds(),
+                    lambda: self.state.is_closing,
+                )
+
+        task_1 = asyncio.create_task(process_update())
+        state.add_background_task(task_1)
+        log.info("Setup bot redis updates")
 
     @property
     def is_primary_cluster(self) -> bool:

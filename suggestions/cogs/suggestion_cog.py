@@ -12,7 +12,7 @@ from cooldowns import Cooldown
 from disnake import ButtonStyle
 from disnake.ext import commands
 
-from suggestions import checks, Stats, buttons
+from suggestions import checks, Stats, buttons, constants
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
 from suggestions.exceptions import (
@@ -63,7 +63,7 @@ class SuggestionsCog(commands.Cog):
             return True
 
         bot: SuggestionsBot = ih.bot
-        redis_state = await bot.redis.get(f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}")
+        redis_state = await constants.REDIS_CLIENT.get(f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}")
         cooldown = Cooldown(
             premium_guild_config.cooldown_amount,
             premium_guild_config.cooldown_period.as_timedelta(),
@@ -74,7 +74,7 @@ class SuggestionsCog(commands.Cog):
 
         await cooldown.increment(ih.interaction)
 
-        await bot.redis.set(
+        await constants.REDIS_CLIENT.set(
             f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}",
             orjson.dumps(cooldown.get_state()),
             # Expire after two months as we support up to
