@@ -983,7 +983,7 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
             return
 
         state: State = self.state
-        time_between_updates: datetime.timedelta = datetime.timedelta(minutes=30)
+        time_between_updates: datetime.timedelta = datetime.timedelta(hours=1)
 
         async def process_update_bot_listings():
             await self.wait_until_ready()
@@ -993,6 +993,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
                 async with httpx.AsyncClient() as client:
                     await bot_lists.update_top_gg(
                         client, guild_count=total_guilds, total_shards=self.shard_count
+                    )
+                    await bot_lists.update_discord_bots_gg(
+                        client, guild_count=total_guilds, total_shards=self.shard_count
+                    )
+                    await bot_lists.update_discord_bot_list(
+                        client, guild_count=total_guilds
+                    )
+                    await bot_lists.update_discords_dot_com(
+                        client, guild_count=total_guilds
                     )
 
                 log.debug("Updated bot listings")

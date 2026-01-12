@@ -54,9 +54,24 @@ async def update_discord_bot_list(client: httpx.AsyncClient, *, guild_count: int
         )
 
 
+async def update_discords_dot_com(client: httpx.AsyncClient, *, guild_count: int):
+    resp = await client.post(
+        "https://discords.com/bots/api/bot/474051954998509571/setservers",
+        headers={"Authorization": constants.LISTS_DISCORDS_DOT_COM_API_KEY},
+        json={"server_count": guild_count},
+    )
+    if resp.status_code != 200:
+        log.critical(
+            "discords.com bot stats update failed with code %s",
+            resp.status_code,
+            extra={"response.body": resp.text},
+        )
+
+
 async def main():
+    return
     async with httpx.AsyncClient() as client:
-        await update_discord_bot_list(client, guild_count=87500)
+        await update_discords_dot_com(client, guild_count=87500)
 
 
 if __name__ == "__main__":
