@@ -102,3 +102,6 @@ REDIS_CLIENT = aioredis.from_url(get_secret("REDIS_URL", infisical_client))
 
 # Lists
 LISTS_TOP_GG_API_KEY = get_secret("LISTS_TOP_GG_API_KEY", infisical_client)
+LISTS_DISCORD_BOTS_GG_API_KEY = get_secret(
+    "LISTS_DISCORD_BOTS_GG_API_KEY", infisical_client
+)
