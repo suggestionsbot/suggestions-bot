@@ -90,7 +90,13 @@ async def create_bot(database_wrapper=None) -> SuggestionsBot:
             color=bot.colors.embed_color,
             timestamp=bot.state.now,
         )
-        guilds: int = await bot.stats.fetch_approximate_global_guild_count()
+        if interaction.user.id == 271612318947868673:
+            # I want accurate stats
+            await interaction.response.defer(with_message=True)
+            guilds: int = await bot.get_accurate_guild_count()
+        else:
+            guilds: int = await bot.stats.fetch_approximate_global_guild_count()
+
         embed.add_field(name="Guilds", value=guilds)
         embed.add_field(name="Total shards", value=bot.total_shards)
         embed.add_field(name="Cluster Uptime", value=bot.get_uptime())
