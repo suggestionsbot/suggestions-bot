@@ -99,3 +99,6 @@ CF_R2_URL = get_secret("CF_R2_URL", infisical_client)
 BOT_TOKEN = get_secret("BOT_TOKEN", infisical_client)
 MONGO_URL = get_secret("MONGO_URL", infisical_client)
 REDIS_CLIENT = aioredis.from_url(get_secret("REDIS_URL", infisical_client))
+
+# Lists
+LISTS_TOP_GG_API_KEY = get_secret("LISTS_TOP_GG_API_KEY", infisical_client)

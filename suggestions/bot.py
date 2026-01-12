@@ -18,6 +18,7 @@ import alaric
 import botocore
 import commons
 import disnake
+import httpx
 import humanize
 import orjson
 from alaric import Cursor
@@ -57,6 +58,7 @@ from suggestions.interaction_handler import InteractionHandler
 from suggestions.low_level import PatchedConnectionState
 from suggestions.objects import Error, GuildConfig, UserConfig
 from suggestions.stats import Stats, StatsEnum
+from suggestions.utility import bot_lists
 
 log = logging.getLogger(__name__)
 
@@ -986,27 +988,12 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
         async def process_update_bot_listings():
             await self.wait_until_ready()
 
-            headers = {
-                "Authorization": constants.get_secret(
-                    "LISTS_API_KEY", constants.infisical_client
-                )
-            }
             while not state.is_closing:
                 total_guilds = await self.get_accurate_guild_count()
-
-                body = {
-                    "guild_count": int(total_guilds),
-                    "shard_count": int(self.shard_count),
-                }
-                async with aiohttp.ClientSession(headers=headers) as session:
-                    async with session.post(
-                        constants.get_secret(
-                            "LISTS_API_URL", constants.infisical_client
-                        ),  # This is the bot list API # lists.suggestions.gg
-                        json=body,
-                    ) as r:
-                        if r.status != 200:
-                            log.warning("%s", r.text)
+                async with httpx.AsyncClient() as client:
+                    await bot_lists.update_top_gg(
+                        client, guild_count=total_guilds, total_shards=self.shard_count
+                    )
 
                 log.debug("Updated bot listings")
                 await commons.sleep_with_condition(
