@@ -990,6 +990,15 @@ class SuggestionsBot(commands.AutoShardedInteractionBot):
 
             while not state.is_closing:
                 total_guilds = await self.get_accurate_guild_count()
+                if total_guilds < 85000:
+                    # Something broke, redis isnt populated yet clearly
+                    total_guilds = (
+                        await self.stats.fetch_approximate_global_guild_count()
+                    )
+                    log.warning(
+                        "Updating bot list sites with an unpopulated redis cache"
+                    )
+
                 async with httpx.AsyncClient() as client:
                     await bot_lists.update_top_gg(
                         client, guild_count=total_guilds, total_shards=self.shard_count
