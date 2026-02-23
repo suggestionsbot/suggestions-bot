@@ -70,6 +70,7 @@ async def wrapper(
 
     with tracer.start_as_current_span(f"component {btn_name}") as span:
         span.set_attribute("bot.cluster.id", inter.bot.cluster_id)
+        span.set_attribute("interaction.event.custom_id", inter.component.custom_id)
         span.set_attribute("interaction.author.id", inter.author.id)
         span.set_attribute(
             "interaction.author.global_name",
