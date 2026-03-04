@@ -57,7 +57,7 @@ class SuggestionsNotesCore(BaseCore):
         if guild_config.dm_messages_disabled:
             logger.debug(
                 "Not dm'ing %s for a note changed on suggestion %s as the guilds has dm's disabled",
-                ih.interaction.author.id,
+                suggestion.suggestion_author_id,
                 suggestion_id,
                 extra={
                     "interaction.guild.id": ih.interaction.guild_id,
