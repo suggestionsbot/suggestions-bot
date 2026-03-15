@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
-from logoo import Logger
 
 from suggestions.exceptions import QueueImbalance
 from suggestions.objects import QueuedSuggestion
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from suggestions import SuggestionsBot
 
 
-logger = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
 class QueuedSuggestionsPaginator:
@@ -78,11 +78,12 @@ class QueuedSuggestionsPaginator:
             suggestion: QueuedSuggestion = await self.get_current_queued_suggestion()
         except QueueImbalance:
             await self.remove_current_page()
-            logger.warning(
+            log.warning(
                 "Hit QueueImbalance",
-                extra_metadata={
-                    "author_id": self.original_interaction.author.id,
-                    "guild_id": self.original_interaction.guild_id,
+                extra={
+                    "interaction.author.id": self.original_interaction.author.id,
+                    "interaction.author.global_name": self.original_interaction.author.global_name,
+                    "interaction.guild.id": self.original_interaction.guild_id,
                 },
             )
         else:

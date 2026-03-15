@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Union, Optional, cast
 
@@ -11,7 +12,6 @@ from alaric.comparison import EQ
 from alaric.logical import AND
 from disnake import Embed
 from disnake.ext import commands
-from logoo import Logger
 
 from suggestions import ErrorCode
 from suggestions.exceptions import (
@@ -27,7 +27,7 @@ from suggestions.objects import UserConfig, GuildConfig
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State, Colors
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SuggestionState(Enum):
@@ -390,7 +390,11 @@ class Suggestion:
 
         logger.debug(
             "Created new suggestion",
-            extra_metadata={**suggestion.as_dict(), "suggestion_id": suggestion_id},
+            extra={
+                "suggestion.id": suggestion_id,
+                "interaction.author.id": author_id,
+                "interaction.guild.id": guild_id,
+            },
         )
         return suggestion
 
@@ -680,7 +684,7 @@ class Suggestion:
             logger.error(
                 "Failed to find our emojis on suggestion %s",
                 self.suggestion_id,
-                extra_metadata={"suggestion_id": self.suggestion_id},
+                extra={"suggestion.id": self.suggestion_id},
             )
 
         await bot.db.suggestions.update(self, self)
@@ -694,9 +698,9 @@ class Suggestion:
                 "User %s has dm messages disabled, failed to notify change to suggestion %s",
                 self.suggestion_author_id,
                 self.suggestion_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "author_id": self.suggestion_author_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.author.id": self.suggestion_author_id,
                 },
             )
             return
@@ -708,10 +712,10 @@ class Suggestion:
                 self.guild_id,
                 self.suggestion_author_id,
                 self.suggestion_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "author_id": self.suggestion_author_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.author.id": self.suggestion_author_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
             return
@@ -747,9 +751,9 @@ class Suggestion:
             logger.debug(
                 "Failed to dm %s to tell them about their suggestion",
                 user.id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "author_id": user.id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.author.id": user.id,
                 },
             )
 
@@ -767,7 +771,7 @@ class Suggestion:
         await ih.bot.db.suggestions.update(self, self)
         logger.debug(
             f"Created a thread for suggestion {self.suggestion_id}",
-            extra_metadata={"suggestion_id": self.suggestion_id},
+            extra={"suggestion.id": self.suggestion_id},
         )
         if self.is_anonymous:
             # Don't expose the anon author
@@ -895,9 +899,9 @@ class Suggestion:
             logger.debug(
                 "Guild %s does not want threads archived",
                 guild_config.guild_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
             return
@@ -906,7 +910,7 @@ class Suggestion:
             # I don't know why this is none tbh
             logger.critical(
                 "Suggestion channel id was none",
-                extra_metadata={**self.as_dict(), "suggestion_id": self.suggestion_id},
+                extra={"suggestion.id": self.suggestion_id},
             )
 
             # Don't hard crash so we can hopefully keep going
@@ -925,9 +929,9 @@ class Suggestion:
                         "No thread for suggestion %s, should have one: %s",
                         self.suggestion_id,
                         "yes" if guild_config.threads_for_suggestions else "no",
-                        extra_metadata={
-                            "suggestion_id": self.suggestion_id,
-                            "guild_id": self.guild_id,
+                        extra={
+                            "suggestion.id": self.suggestion_id,
+                            "interaction.guild.id": self.guild_id,
                         },
                     )
                     return
@@ -949,9 +953,9 @@ class Suggestion:
                 "Thread on suggestion %s is owned by %s",
                 self.suggestion_id,
                 thread.owner_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
             return
@@ -962,9 +966,9 @@ class Suggestion:
             logger.debug(
                 "Thread on suggestion %s is already archived or locked",
                 self.suggestion_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
             return
@@ -976,9 +980,9 @@ class Suggestion:
         logger.debug(
             "Locked thread for suggestion %s",
             self.suggestion_id,
-            extra_metadata={
-                "suggestion_id": self.suggestion_id,
-                "guild_id": self.guild_id,
+            extra={
+                "suggestion.id": self.suggestion_id,
+                "interaction.guild.id": self.guild_id,
             },
         )
 
@@ -994,9 +998,9 @@ class Suggestion:
         logger.debug(
             "Attempting to resolve suggestion %s",
             self.suggestion_id,
-            extra_metadata={
-                "suggestion_id": self.suggestion_id,
-                "guild_id": self.guild_id,
+            extra={
+                "suggestion.id": self.suggestion_id,
+                "interaction.guild.id": self.guild_id,
             },
         )
         self.anonymous_resolution = guild_config.anonymous_resolutions
@@ -1010,9 +1014,9 @@ class Suggestion:
                 "Resolving suggestion %s received a resolution_type of %s",
                 self.suggestion_id,
                 resolution_type,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
             await interaction.send(
@@ -1083,9 +1087,9 @@ class Suggestion:
             logger.debug(
                 "Sent suggestion %s to channel",
                 self.suggestion_id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
                 },
             )
         except disnake.Forbidden as e:
@@ -1099,9 +1103,9 @@ class Suggestion:
         except Exception as e:
             logger.critical(
                 "Error creating the initial message for a suggestion",
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "traceback": commons.exception_as_string(e),
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "error.traceback": commons.exception_as_string(e),
                 },
             )
             state.remove_sid_from_cache(interaction.guild_id, self.suggestion_id)
@@ -1119,9 +1123,9 @@ class Suggestion:
                 logger.debug(
                     "Failed to create a thread on suggestion %s",
                     self.suggestion_id,
-                    extra_metadata={
-                        "suggestion_id": self.suggestion_id,
-                        "guild_id": self.guild_id,
+                    extra={
+                        "suggestion.id": self.suggestion_id,
+                        "interaction.guild.id": self.guild_id,
                     },
                 )
                 did_delete = await self.try_delete(
@@ -1149,9 +1153,9 @@ class Suggestion:
                 logger.debug(
                     "Created a thread on suggestion %s",
                     self.suggestion_id,
-                    extra_metadata={
-                        "suggestion_id": self.suggestion_id,
-                        "guild_id": self.guild_id,
+                    extra={
+                        "suggestion.id": self.suggestion_id,
+                        "interaction.guild.id": self.guild_id,
                     },
                 )
 
@@ -1198,10 +1202,10 @@ class Suggestion:
                     logger.debug(
                         "Failed to DM %s regarding their suggestion being created from queue",
                         self.suggestion_author_id,
-                        extra_metadata={
-                            "suggestion_id": self.suggestion_id,
-                            "guild_id": self.guild_id,
-                            "author_id": self.suggestion_author_id,
+                        extra={
+                            "suggestion.id": self.suggestion_id,
+                            "interaction.guild.id": self.guild_id,
+                            "interaction.author.id": self.suggestion_author_id,
                         },
                     )
                     return
@@ -1226,9 +1230,10 @@ class Suggestion:
             logger.debug(
                 "Failed to DM %s regarding their suggestion",
                 interaction.author.id,
-                extra_metadata={
-                    "suggestion_id": self.suggestion_id,
-                    "guild_id": self.guild_id,
-                    "author_id": interaction.author.id,
+                extra={
+                    "suggestion.id": self.suggestion_id,
+                    "interaction.guild.id": self.guild_id,
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": interaction.author.global_name,
                 },
             )

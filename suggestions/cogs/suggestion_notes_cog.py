@@ -1,14 +1,15 @@
+import logging
+
 import cooldowns
 import disnake
 from commons.caching import NonExistentEntry
 from disnake.ext import commands
-from logoo import Logger
 
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsNotesCore
 from suggestions.interaction_handler import InteractionHandler
 
-logger: Logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SuggestionNotesCog(commands.Cog):
@@ -82,7 +83,7 @@ class SuggestionNotesCog(commands.Cog):
             if not values:
                 logger.debug(
                     f"Values was found, but empty in guild {interaction.guild_id} thus populating",
-                    extra_metadata={"guild_id": interaction.guild_id},
+                    extra={"interaction.guild.id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id

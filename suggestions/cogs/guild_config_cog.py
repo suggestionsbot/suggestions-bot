@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -7,7 +8,6 @@ import cooldowns
 import disnake
 from disnake.ext import commands
 from humanize import precisedelta, intcomma
-from logoo import Logger
 
 from suggestions import Stats
 from suggestions.cooldown_bucket import InteractionBucket
@@ -20,7 +20,7 @@ from suggestions.stats import StatsEnum
 if TYPE_CHECKING:
     from suggestions import SuggestionsBot, State
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class GuildConfigCog(commands.Cog):
@@ -62,9 +62,14 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             channel.id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -97,9 +102,14 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             channel.id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -144,9 +154,14 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             channel.id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -183,9 +198,14 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             channel.id if channel is not None else None,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -503,9 +523,14 @@ class GuildConfigCog(commands.Cog):
             interaction.author.id,
             config,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -673,9 +698,14 @@ class GuildConfigCog(commands.Cog):
             "User %s viewed the global config in guild %s",
             interaction.author.id,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(
@@ -1081,9 +1111,14 @@ class GuildConfigCog(commands.Cog):
         logger.debug(
             log_message,
             interaction.guild_id,
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
             },
         )
         await self.stats.log_stats(

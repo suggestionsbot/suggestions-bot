@@ -1,12 +1,13 @@
+import logging
+
 from alaric.comparison import EQ
-from logoo import Logger
 
 from suggestions.core import BaseCore, SuggestionsQueue
 from suggestions.interaction_handler import InteractionHandler
 from suggestions.objects import GuildConfig, Suggestion, QueuedSuggestion
 from suggestions.objects.suggestion import SuggestionState
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SuggestionsResolutionCore(BaseCore):
@@ -63,10 +64,11 @@ class SuggestionsResolutionCore(BaseCore):
         logger.debug(
             f"User {ih.interaction.author.id} approved suggestion "
             f"{suggestion.suggestion_id} in guild {ih.interaction.guild_id}",
-            extra_metadata={
-                "author_id": ih.interaction.author.id,
-                "guild_id": ih.interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
+            extra={
+                "interaction.author.id": ih.interaction.author.id,
+                "interaction.author.global_name": ih.interaction.author.global_name,
+                "interaction.guild.id": ih.interaction.guild_id,
+                "suggestion.id": suggestion.suggestion_id,
             },
         )
         await ih.bot.stats.log_stats(
@@ -126,10 +128,11 @@ class SuggestionsResolutionCore(BaseCore):
         logger.debug(
             f"User {interaction.author} rejected suggestion {suggestion.suggestion_id} "
             f"in guild {interaction.guild_id}",
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": interaction.author.global_name,
+                "interaction.guild.id": interaction.guild_id,
+                "suggestion.id": suggestion.suggestion_id,
             },
         )
         await ih.bot.stats.log_stats(

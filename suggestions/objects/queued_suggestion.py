@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import Optional, TYPE_CHECKING
 
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
 from disnake import Embed
-from logoo import Logger
 
 from suggestions.exceptions import (
     UnhandledError,
@@ -19,7 +19,7 @@ from suggestions.objects import Suggestion
 if TYPE_CHECKING:
     from suggestions import State, SuggestionsBot
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class QueuedSuggestion:
@@ -218,6 +218,14 @@ class QueuedSuggestion:
             _id=_id,
         )
         await state.queued_suggestions_db.insert(suggestion)
+        logger.debug(
+            "Created new queued suggestion",
+            extra={
+                "queued_suggestion.id": _id,
+                "interaction.author.id": author_id,
+                "interaction.guild.id": guild_id,
+            },
+        )
 
         # Try to populate id on returned object
         return await state.queued_suggestions_db.find(suggestion.as_dict())

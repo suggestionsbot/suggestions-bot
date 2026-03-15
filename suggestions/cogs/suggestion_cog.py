@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import TYPE_CHECKING, Optional
 
 import cooldowns
@@ -10,9 +11,8 @@ from commons.caching import NonExistentEntry
 from cooldowns import Cooldown
 from disnake import ButtonStyle
 from disnake.ext import commands
-from logoo import Logger
 
-from suggestions import checks, Stats, buttons
+from suggestions import checks, Stats, buttons, constants
 from suggestions.cooldown_bucket import InteractionBucket
 from suggestions.core import SuggestionsQueue, SuggestionsResolutionCore
 from suggestions.exceptions import (
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from alaric import Document
     from suggestions import SuggestionsBot, State
 
-logger = Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 async def user_cooldown_bucket(inter: disnake.Interaction) -> tuple[int, int]:
@@ -63,7 +63,7 @@ class SuggestionsCog(commands.Cog):
             return True
 
         bot: SuggestionsBot = ih.bot
-        redis_state = await bot.redis.get(f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}")
+        redis_state = await constants.REDIS_CLIENT.get(f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}")
         cooldown = Cooldown(
             premium_guild_config.cooldown_amount,
             premium_guild_config.cooldown_period.as_timedelta(),
@@ -74,7 +74,7 @@ class SuggestionsCog(commands.Cog):
 
         await cooldown.increment(ih.interaction)
 
-        await bot.redis.set(
+        await constants.REDIS_CLIENT.set(
             f"PREMIUM_COOLDOWN:{ih.interaction.guild_id}",
             orjson.dumps(cooldown.get_state()),
             # Expire after two months as we support up to
@@ -201,9 +201,14 @@ class SuggestionsCog(commands.Cog):
             logger.debug(
                 f"User {interaction.author.id} created new queued"
                 f" suggestion in guild {interaction.guild_id}",
-                extra_metadata={
-                    "author_id": interaction.author.id,
-                    "guild_id": interaction.guild_id,
+                extra={
+                    "interaction.author.id": interaction.author.id,
+                    "interaction.author.global_name": (
+                        interaction.author.global_name
+                        if interaction.author.global_name
+                        else ""
+                    ),
+                    "interaction.guild.id": interaction.guild_id,
                 },
             )
             return await ih.send(
@@ -235,10 +240,15 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.author.id} created new suggestion "
             f"{suggestion.suggestion_id} in guild {interaction.guild_id}",
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion.suggestion_id,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
+                "suggestion.id": suggestion.suggestion_id,
             },
         )
         await self.stats.log_stats(
@@ -377,11 +387,16 @@ class SuggestionsCog(commands.Cog):
         logger.debug(
             f"User {interaction.user.id} cleared suggestion"
             f" {suggestion_id} in guild {interaction.guild_id}",
-            extra_metadata={
-                "author_id": interaction.author.id,
-                "guild_id": interaction.guild_id,
-                "suggestion_id": suggestion_id,
-                "suggestion_type": suggestion_type,
+            extra={
+                "interaction.author.id": interaction.author.id,
+                "interaction.author.global_name": (
+                    interaction.author.global_name
+                    if interaction.author.global_name
+                    else ""
+                ),
+                "interaction.guild.id": interaction.guild_id,
+                "suggestion.id": suggestion_id,
+                "suggestion.type": suggestion_type,
             },
         )
         await self.stats.log_stats(
@@ -411,7 +426,7 @@ class SuggestionsCog(commands.Cog):
             if not values:
                 logger.debug(
                     f"Values was found, but empty in guild {interaction.guild_id} thus populating",
-                    extra_metadata={"guild_id": interaction.guild_id},
+                    extra={"interaction.guild.id": interaction.guild_id},
                 )
                 values: list[str] = await self.state.populate_sid_cache(
                     interaction.guild_id
