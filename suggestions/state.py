@@ -336,7 +336,7 @@ class State:
             return self.object_cache.get_entry(channel_id)
         except NonExistentEntry:
             chan = await self.bot.fetch_channel(channel_id)
-            self.object_cache.add_entry(channel_id, chan)
+            self.object_cache.add_entry(channel_id, chan, override=True)
             return chan  # type: ignore
 
     async def fetch_user(self, user_id: int) -> disnake.User:
@@ -344,7 +344,7 @@ class State:
             return self.object_cache.get_entry(user_id)
         except NonExistentEntry:
             user = await self.bot.fetch_user(user_id)
-            self.object_cache.add_entry(user_id, user)
+            self.object_cache.add_entry(user_id, user, override=True)
             return user
 
     async def fetch_guild(self, guild_id: int) -> disnake.Guild:
@@ -353,7 +353,7 @@ class State:
             return self.guild_cache.get_entry(guild_id)
         except NonExistentEntry:
             guild = await self.bot.fetch_guild(guild_id)
-            self.guild_cache.add_entry(guild_id, guild)
+            self.guild_cache.add_entry(guild_id, guild, override=True)
             return guild
 
     async def evict_caches(self):

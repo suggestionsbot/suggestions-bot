@@ -4,6 +4,7 @@ import datetime
 import logging
 from typing import Optional, TYPE_CHECKING
 
+import disnake
 from alaric import AQ
 from alaric.comparison import EQ
 from alaric.logical import AND
@@ -269,7 +270,9 @@ class QueuedSuggestion:
         return data
 
     async def as_embed(self, bot: SuggestionsBot) -> Embed:
-        user = await bot.get_or_fetch_user(self.suggestion_author_id)
+        user: disnake.User = await bot.get_or_fetch_user(
+            self.suggestion_author_id, strict=True
+        )
         if self.is_anonymous:
             submitter = "Anonymous"
         else:
